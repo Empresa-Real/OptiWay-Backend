@@ -4,17 +4,18 @@ public class Usuario {
     private Long id;
     private String nombre;
     private String email;
-    // TODO: reemplazar por un enum cuando se definan los roles permitidos.
-    private String rol;
+    private Rol rol;
+    private String creadoPor;
 
     public Usuario() {
     }
 
-    public Usuario(Long id, String nombre, String email, String rol) {
+    public Usuario(Long id, String nombre, String email, Rol rol, String creadoPor) {
         this.id = id;
         this.nombre = nombre;
         this.email = email;
         this.rol = rol;
+        this.creadoPor = creadoPor; // UUID del Admin que creo el usuario
     }
 
     public Long getId() {
@@ -41,11 +42,19 @@ public class Usuario {
         this.email = email;
     }
 
-    public String getRol() {
+    public Rol getRol() {
         return rol;
     }
 
-    public void setRol(String rol) {
+    public void setRol(Rol rol) {
         this.rol = rol;
+    }
+
+    public String getCreadoPor() {
+        return creadoPor;
+    }
+
+    public void setCreadoPor(String creadoPor) {
+        this.creadoPor = creadoPor;
     }
 }
