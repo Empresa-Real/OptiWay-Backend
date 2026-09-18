@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## 2026-09-18
 
 ### Added
 
@@ -23,3 +23,21 @@
 - Definir los roles definitivos y reemplazar el texto por un enum.
 - Implementar el envio de informacion de acceso por correo.
 - Integrar OAuth con Google mediante Supabase en una etapa posterior.
+
+## YYYY-MM-DD
+
+### Added
+
+- Describe aqui las funcionalidades nuevas.
+
+### Changed
+
+- Describe aqui los cambios sobre funcionalidades existentes.
+
+### Fixed
+
+- Describe aqui los errores corregidos.
+
+### Pending
+
+- Describe aqui el trabajo pendiente relacionado con este bloque.
