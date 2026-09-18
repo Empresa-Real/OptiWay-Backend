@@ -1,20 +1,24 @@
 package com.example.optiway.domain.model;
 
+import java.util.UUID;
+
 public class Usuario {
     private Long id;
+    private UUID authUserId;
     private String nombre;
     private String email;
-    // TODO: reemplazar por un enum cuando se definan los roles permitidos.
-    private String rol;
+    private Rol rol;
+    private UUID creadoPor;
 
     public Usuario() {
     }
 
-    public Usuario(Long id, String nombre, String email, String rol) {
+    public Usuario(Long id, String nombre, String email, Rol rol, UUID creadoPor) {
         this.id = id;
         this.nombre = nombre;
         this.email = email;
         this.rol = rol;
+        this.creadoPor = creadoPor; // UUID del Admin que creo el usuario de la tabal Users
     }
 
     public Long getId() {
@@ -23,6 +27,14 @@ public class Usuario {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public UUID getAuthUserId() {
+        return authUserId;
+    }
+
+    public void setAuthUserId(UUID authUserId) {
+        this.authUserId = authUserId;
     }
 
     public String getNombre() {
@@ -41,11 +53,19 @@ public class Usuario {
         this.email = email;
     }
 
-    public String getRol() {
+    public Rol getRol() {
         return rol;
     }
 
-    public void setRol(String rol) {
+    public void setRol(Rol rol) {
         this.rol = rol;
+    }
+
+    public UUID getCreadoPor() {
+        return creadoPor;
+    }
+
+    public void setCreadoPor(UUID creadoPor) {
+        this.creadoPor = creadoPor;
     }
 }

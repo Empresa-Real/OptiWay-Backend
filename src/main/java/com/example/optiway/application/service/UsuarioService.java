@@ -2,7 +2,7 @@ package com.example.optiway.application.service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
@@ -10,23 +10,30 @@ import com.example.optiway.application.port.in.CrearUsuarioUseCase;
 import com.example.optiway.application.port.in.EliminarUsuarioUseCase;
 import com.example.optiway.application.port.in.ObtenerUsuarioUseCase;
 import com.example.optiway.application.port.in.ObtenerUsuariosUseCase;
+import com.example.optiway.application.port.out.InvitarUsuarioPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
+import com.example.optiway.domain.model.Rol;
 import com.example.optiway.domain.model.Usuario;
 
 @Service
 public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCase,
     ObtenerUsuarioUseCase, EliminarUsuarioUseCase {
-    private static final Set<String> ROLES_VALIDOS =
-            Set.of("ADMINISTRADOR", "ENCARGADO_TIENDA", "ENCARGADO_CENTRO_DISTRIBUCION", "CONDUCTOR", "CLIENTE"); // Capaz Conductor y Cliente no va, no se han definido todos los roles
-
     private final UsuarioRepositoryPort usuarioRepositoryPort;
+    private final InvitarUsuarioPort invitarUsuarioPort;
 
-    public UsuarioService(UsuarioRepositoryPort usuarioRepositoryPort) {
+    public UsuarioService(
+            UsuarioRepositoryPort usuarioRepositoryPort,
+            InvitarUsuarioPort invitarUsuarioPort) {
         this.usuarioRepositoryPort = usuarioRepositoryPort;
+        this.invitarUsuarioPort = invitarUsuarioPort;
     }
 
     @Override
-    public Usuario crearUsuario(Usuario usuario) {
+    public Usuario crearUsuario(Usuario usuario, UUID authUserId) {
+        if (authUserId == null || !esAdministrador(authUserId)) {
+            throw new AccesoDenegadoException("Solo un administrador puede crear usuarios");
+        }
+
         if(usuario.getNombre() == null || usuario.getNombre().isBlank()) {
             throw new IllegalArgumentException("El nombre del usuario no puede estar vacio");
         }
@@ -39,12 +46,21 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
             throw new UsuarioDuplicadoException("El correo ya esta registrado");
         }
 
-        if (usuario.getRol() == null || !ROLES_VALIDOS.contains(usuario.getRol())) {
+        if (usuario.getRol() == null) {
             throw new IllegalArgumentException("El rol no es valido");
         }
 
         usuario.setEmail(email);
+        usuario.setCreadoPor(authUserId);
+        usuario.setAuthUserId(invitarUsuarioPort.invitar(email));
         return usuarioRepositoryPort.guardar(usuario);
+    }
+
+    private boolean esAdministrador(UUID authUserId) {
+        return usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)
+                .map(Usuario::getRol)
+                .filter(Rol.ADMINISTRADOR::equals)
+                .isPresent();
     }
 
     @Override
@@ -55,6 +71,11 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
     @Override
     public Optional<Usuario> obtenerUsuario(Long id) {
         return usuarioRepositoryPort.obtenerPorID(id);
+    }
+
+    @Override
+    public Optional<Usuario> obtenerUsuarioPorAuthId(UUID authUserId) {
+        return usuarioRepositoryPort.obtenerPorAuthUserId(authUserId);
     }
 
     @Override

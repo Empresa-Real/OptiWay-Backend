@@ -181,3 +181,23 @@ Después de implementar la funcionalidad:
 4. Actualizar `CHANGELOG.md` con la fecha y el cambio.
 
 La regla práctica es: el controlador recibe la petición, el servicio decide, el puerto define el contrato y el adaptador se conecta con el sistema externo.
+
+## Flujo de autenticacion y rol
+
+La autenticacion pertenece a infraestructura, pero la decision de negocio se mantiene en aplicación:
+
+```text
+Supabase Auth
+        ↓ JWT validado por Spring Security
+UsuarioController
+        ↓ jwt.getSubject()
+ObtenerUsuarioUseCase.obtenerUsuarioPorAuthId(UUID)
+        ↓
+UsuarioService
+        ↓
+UsuarioRepositoryPort
+        ↓
+usuarios.auth_user_id y usuarios.rol
+```
+
+El controlador no autoriza usando el email del body. El claim `sub` del JWT identifica al usuario de `auth.users`; el servicio busca ese UUID en la tabla local y aplica la regla `rol == ADMINISTRADOR` cuando corresponde.
