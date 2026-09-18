@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Usuarios</title>
+</head>
+<body>
+    <h1>Crear usuario</h1>
+
+    <form id="usuario-form">
+        <label>
+            Nombre
+            <input id="nombre" name="nombre" required>
+        </label>
+        <br>
+        <label>
+            Correo
+            <input id="email" name="email" type="email" required>
+        </label>
+        <br>
+        <label>
+            Rol
+            <!-- Temporal: reemplazar este input por un select basado en un enum de roles permitidos. -->
+            <input id="rol" name="rol" placeholder="ADMINISTRADOR" required>
+        </label>
+        <br>
+        <button type="submit">Crear usuario</button>
+    </form>
+
+    <p id="resultado"></p>
+
+    <script>
+        const form = document.getElementById('usuario-form');
+        const resultado = document.getElementById('resultado');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const usuario = {
+                nombre: document.getElementById('nombre').value,
+                email: document.getElementById('email').value,
+                rol: document.getElementById('rol').value
+            };
+
+            const response = await fetch('/api/usuarios', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(usuario)
+            });
+
+            const body = await response.text();
+            resultado.textContent = response.ok
+                ? 'Usuario creado: ' + body
+                : 'Error ' + response.status + ': ' + body;
+        });
+    </script>
+</body>
+</html>
