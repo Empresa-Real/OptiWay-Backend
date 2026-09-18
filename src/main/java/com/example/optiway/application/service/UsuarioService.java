@@ -10,22 +10,27 @@ import com.example.optiway.application.port.in.CrearUsuarioUseCase;
 import com.example.optiway.application.port.in.EliminarUsuarioUseCase;
 import com.example.optiway.application.port.in.ObtenerUsuarioUseCase;
 import com.example.optiway.application.port.in.ObtenerUsuariosUseCase;
+import com.example.optiway.application.port.out.InvitarUsuarioPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
-import com.example.optiway.domain.model.Usuario;
 import com.example.optiway.domain.model.Rol;
+import com.example.optiway.domain.model.Usuario;
 
 @Service
 public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCase,
     ObtenerUsuarioUseCase, EliminarUsuarioUseCase {
     private final UsuarioRepositoryPort usuarioRepositoryPort;
+    private final InvitarUsuarioPort invitarUsuarioPort;
 
-    public UsuarioService(UsuarioRepositoryPort usuarioRepositoryPort) {
+    public UsuarioService(
+            UsuarioRepositoryPort usuarioRepositoryPort,
+            InvitarUsuarioPort invitarUsuarioPort) {
         this.usuarioRepositoryPort = usuarioRepositoryPort;
+        this.invitarUsuarioPort = invitarUsuarioPort;
     }
 
     @Override
-    public Usuario crearUsuario(Usuario usuario, String emailAdministrador, UUID authUserId) {
-        if (emailAdministrador == null || authUserId == null || !esAdministrador(emailAdministrador)) {
+    public Usuario crearUsuario(Usuario usuario, UUID authUserId) {
+        if (authUserId == null || !esAdministrador(authUserId)) {
             throw new AccesoDenegadoException("Solo un administrador puede crear usuarios");
         }
 
@@ -47,11 +52,12 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
 
         usuario.setEmail(email);
         usuario.setCreadoPor(authUserId);
+        usuario.setAuthUserId(invitarUsuarioPort.invitar(email));
         return usuarioRepositoryPort.guardar(usuario);
     }
 
-    private boolean esAdministrador(String email) {
-        return usuarioRepositoryPort.obtenerPorEmail(email)
+    private boolean esAdministrador(UUID authUserId) {
+        return usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)
                 .map(Usuario::getRol)
                 .filter(Rol.ADMINISTRADOR::equals)
                 .isPresent();
@@ -65,6 +71,11 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
     @Override
     public Optional<Usuario> obtenerUsuario(Long id) {
         return usuarioRepositoryPort.obtenerPorID(id);
+    }
+
+    @Override
+    public Optional<Usuario> obtenerUsuarioPorAuthId(UUID authUserId) {
+        return usuarioRepositoryPort.obtenerPorAuthUserId(authUserId);
     }
 
     @Override

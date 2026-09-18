@@ -2,6 +2,7 @@ package com.example.optiway.infraestructure.adapter.out.persistence;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.stereotype.Component;
 
@@ -55,6 +56,12 @@ public class UsuarioRepositoryAdapter implements UsuarioRepositoryPort {
     }
 
     @Override
+    public Optional<Usuario> obtenerPorAuthUserId(UUID authUserId) {
+        return usuarioJpaRepository.findByAuthUserId(authUserId)
+                .map(this::toDomain);
+    }
+
+    @Override
     public Void eliminar(Long id) {
 
         usuarioJpaRepository.deleteById(id);
@@ -65,6 +72,7 @@ public class UsuarioRepositoryAdapter implements UsuarioRepositoryPort {
 
         return new UsuarioJpaEntity(
                 usuario.getId(),
+            usuario.getAuthUserId(),
                 usuario.getNombre(),
             usuario.getEmail(),
                 usuario.getRol(),
@@ -74,12 +82,14 @@ public class UsuarioRepositoryAdapter implements UsuarioRepositoryPort {
 
     private Usuario toDomain(UsuarioJpaEntity entity) {
 
-        return new Usuario(
+        Usuario usuario = new Usuario(
                 entity.getId(),
                 entity.getNombre(),
             entity.getEmail(),
                 entity.getRol(),
                 entity.getCreadoPor()
         );
+        usuario.setAuthUserId(entity.getAuthUserId());
+        return usuario;
     }
 }

@@ -4,6 +4,7 @@ import java.util.UUID;
 
 public class Usuario {
     private Long id;
+    private UUID authUserId;
     private String nombre;
     private String email;
     private Rol rol;
@@ -26,6 +27,14 @@ public class Usuario {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public UUID getAuthUserId() {
+        return authUserId;
+    }
+
+    public void setAuthUserId(UUID authUserId) {
+        this.authUserId = authUserId;
     }
 
     public String getNombre() {

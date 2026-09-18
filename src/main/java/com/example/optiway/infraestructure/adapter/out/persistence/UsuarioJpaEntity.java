@@ -1,5 +1,9 @@
 package com.example.optiway.infraestructure.adapter.out.persistence;
 
+import java.util.UUID;
+
+import com.example.optiway.domain.model.Rol;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -9,15 +13,14 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-import com.example.optiway.domain.model.Rol;
-import java.util.UUID;
-
 @Entity
 @Table(name = "usuarios")
 public class UsuarioJpaEntity {
     @Id
     @GeneratedValue (strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(name = "auth_user_id", unique = true)
+    private UUID authUserId;
     private String nombre;
     @Column(nullable = false, unique = true)
     private String email;
@@ -30,8 +33,9 @@ public class UsuarioJpaEntity {
     public UsuarioJpaEntity() {
     }
 
-    public UsuarioJpaEntity (Long id, String nombre, String email, Rol rol, UUID creadoPor) {
+    public UsuarioJpaEntity (Long id, UUID authUserId, String nombre, String email, Rol rol, UUID creadoPor) {
         this.id = id;
+        this.authUserId = authUserId;
         this.nombre = nombre;
         this.email =  email;
         this.rol = rol;
@@ -44,6 +48,14 @@ public class UsuarioJpaEntity {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public UUID getAuthUserId() {
+        return authUserId;
+    }
+
+    public void setAuthUserId(UUID authUserId) {
+        this.authUserId = authUserId;
     }
 
     public String getNombre() {

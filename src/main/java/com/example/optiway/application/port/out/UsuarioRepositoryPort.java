@@ -1,9 +1,10 @@
 package com.example.optiway.application.port.out;
 
-import com.example.optiway.domain.model.Usuario;
-
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
+
+import com.example.optiway.domain.model.Usuario;
 
 public interface UsuarioRepositoryPort {
 
@@ -16,6 +17,8 @@ public interface UsuarioRepositoryPort {
     boolean existePorEmail(String email);
 
     Optional<Usuario> obtenerPorEmail(String email);
+
+    Optional<Usuario> obtenerPorAuthUserId(UUID authUserId);
 
     Void eliminar(Long id);
 }
