@@ -1,58 +1,63 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
-    <title>Usuarios</title>
+    <title>Acceso administrador</title>
 </head>
-<body>
-    <h1>Crear usuario</h1>
 
-    <form id="usuario-form">
-        <label>
-            Nombre
-            <input id="nombre" name="nombre" required>
-        </label>
-        <br>
-        <label>
-            Correo
-            <input id="email" name="email" type="email" required>
-        </label>
-        <br>
-        <label>
-            Rol
-            <!-- Temporal: reemplazar este input por un select basado en un enum de roles permitidos. -->
-            <input id="rol" name="rol" placeholder="ADMINISTRADOR" required>
-        </label>
-        <br>
-        <button type="submit">Crear usuario</button>
-    </form>
+<body>
+    <section id="login-section">
+        <h1>Acceso administrador</h1>
+
+        <form id="login-form">
+            <label>
+                Correo
+                <input id="login-email" type="email" required>
+            </label>
+            <br>
+            <label>
+                Contraseña
+                <input id="login-password" type="password" required>
+            </label>
+            <br>
+            <button type="submit">Iniciar sesión</button>
+        </form>
+    </section>
 
     <p id="resultado"></p>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/config.js"></script>
     <script>
-        const form = document.getElementById('usuario-form');
+        const SUPABASE_URL = window.APP_CONFIG.supabaseUrl;
+        const SUPABASE_ANON_KEY = window.APP_CONFIG.supabaseAnonKey;
+    </script>
+    <script>
+        const supabaseClient = window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_ANON_KEY
+        );
+
+        const loginForm = document.getElementById('login-form');
         const resultado = document.getElementById('resultado');
 
-        form.addEventListener('submit', async (event) => {
+        loginForm.addEventListener('submit', async (event) => {
             event.preventDefault();
 
-            const usuario = {
-                nombre: document.getElementById('nombre').value,
-                email: document.getElementById('email').value,
-                rol: document.getElementById('rol').value
-            };
-
-            const response = await fetch('/api/usuarios', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(usuario)
+            const { error } = await supabaseClient.auth.signInWithPassword({
+                email: document.getElementById('login-email').value,
+                password: document.getElementById('login-password').value
             });
 
-            const body = await response.text();
-            resultado.textContent = response.ok
-                ? 'Usuario creado: ' + body
-                : 'Error ' + response.status + ': ' + body;
+            if (error) {
+                resultado.textContent = 'Error de login: ' + error.message;
+                return;
+            }
+
+            window.location.href = '/main.html';
         });
     </script>
 </body>
+
 </html>
