@@ -2,7 +2,6 @@ package com.example.optiway.application.service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
@@ -12,13 +11,11 @@ import com.example.optiway.application.port.in.ObtenerUsuarioUseCase;
 import com.example.optiway.application.port.in.ObtenerUsuariosUseCase;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.domain.model.Usuario;
+import com.example.optiway.domain.model.Rol;
 
 @Service
 public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCase,
     ObtenerUsuarioUseCase, EliminarUsuarioUseCase {
-    private static final Set<String> ROLES_VALIDOS =
-            Set.of("ADMINISTRADOR", "ENCARGADO_TIENDA", "ENCARGADO_CENTRO_DISTRIBUCION", "CONDUCTOR", "CLIENTE"); // Capaz Conductor y Cliente no va, no se han definido todos los roles
-
     private final UsuarioRepositoryPort usuarioRepositoryPort;
 
     public UsuarioService(UsuarioRepositoryPort usuarioRepositoryPort) {
@@ -26,7 +23,11 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
     }
 
     @Override
-    public Usuario crearUsuario(Usuario usuario) {
+    public Usuario crearUsuario(Usuario usuario, String emailAdministrador) {
+        if (emailAdministrador == null || !esAdministrador(emailAdministrador)) {
+            throw new AccesoDenegadoException("Solo un administrador puede crear usuarios");
+        }
+
         if(usuario.getNombre() == null || usuario.getNombre().isBlank()) {
             throw new IllegalArgumentException("El nombre del usuario no puede estar vacio");
         }
@@ -39,12 +40,20 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
             throw new UsuarioDuplicadoException("El correo ya esta registrado");
         }
 
-        if (usuario.getRol() == null || !ROLES_VALIDOS.contains(usuario.getRol())) {
+        if (usuario.getRol() == null) {
             throw new IllegalArgumentException("El rol no es valido");
         }
 
         usuario.setEmail(email);
+        usuario.setCreadoPor(emailAdministrador);
         return usuarioRepositoryPort.guardar(usuario);
+    }
+
+    private boolean esAdministrador(String email) {
+        return usuarioRepositoryPort.obtenerPorEmail(email)
+                .map(Usuario::getRol)
+                .filter(Rol.ADMINISTRADOR::equals)
+                .isPresent();
     }
 
     @Override
