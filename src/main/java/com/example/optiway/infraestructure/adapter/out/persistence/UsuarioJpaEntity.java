@@ -1,5 +1,6 @@
 package com.example.optiway.infraestructure.adapter.out.persistence;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -13,15 +14,18 @@ public class UsuarioJpaEntity {
     @GeneratedValue (strategy = GenerationType.IDENTITY)
     private Long id;
     private String nombre;
+    @Column(nullable = false, unique = true)
     private String email;
+    private String rol;
 
     public UsuarioJpaEntity() {
     }
 
-    public UsuarioJpaEntity (Long id, String nombre, String email) {
+    public UsuarioJpaEntity (Long id, String nombre, String email, String rol) {
         this.id = id;
         this.nombre = nombre;
         this.email =  email;
+        this.rol = rol;
     }
 
     public Long getId() {
@@ -46,6 +50,14 @@ public class UsuarioJpaEntity {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getRol() {
+        return rol;
+    }
+
+    public void setRol(String rol) {
+        this.rol = rol;
     }
 }
 

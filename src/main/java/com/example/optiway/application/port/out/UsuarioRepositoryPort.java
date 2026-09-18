@@ -13,5 +13,7 @@ public interface UsuarioRepositoryPort {
 
     Optional<Usuario> obtenerPorID(Long id);
 
+    boolean existePorEmail(String email);
+
     Void eliminar(Long id);
 }
