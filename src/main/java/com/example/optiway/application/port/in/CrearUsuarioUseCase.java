@@ -3,5 +3,5 @@ import com.example.optiway.domain.model.Usuario;
 import java.util.UUID;
 
 public interface CrearUsuarioUseCase {
-    Usuario crearUsuario(Usuario usuario, String emailAdministrador, UUID authUserId);
+    Usuario crearUsuario(Usuario usuario, UUID authUserId);
 }
