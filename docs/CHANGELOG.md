@@ -4,6 +4,7 @@
 
 ### Added
 
+- Guia de HU-29 para login por rol, redireccion y restricciones futuras por ubicacion.
 - Enum `Rol` con `ADMINISTRADOR`, `ENCARGADO_TIENDA`, `ENCARGADO_CD` y `PLANIFICADOR`.
 - Autenticacion JWT con Supabase para la API.
 - Restriccion de creacion de usuarios al administrador autenticado.
