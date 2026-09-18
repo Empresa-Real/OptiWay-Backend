@@ -10,6 +10,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 @RestController
 @RequestMapping("/api/usuarios")
@@ -35,9 +39,13 @@ public class UsuarioController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Usuario crearUsuario(
-            @RequestBody Usuario usuario) {
+            @RequestBody Usuario usuario,
+            @AuthenticationPrincipal Jwt jwt) {
 
-        return crearUsuarioUseCase.crearUsuario(usuario);
+        return crearUsuarioUseCase.crearUsuario(
+            usuario,
+            jwt.getClaimAsString("email"),
+            UUID.fromString(jwt.getSubject()));
     }
 
     @GetMapping

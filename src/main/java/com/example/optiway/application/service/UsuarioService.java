@@ -2,6 +2,7 @@ package com.example.optiway.application.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
@@ -23,8 +24,8 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
     }
 
     @Override
-    public Usuario crearUsuario(Usuario usuario, String emailAdministrador) {
-        if (emailAdministrador == null || !esAdministrador(emailAdministrador)) {
+    public Usuario crearUsuario(Usuario usuario, String emailAdministrador, UUID authUserId) {
+        if (emailAdministrador == null || authUserId == null || !esAdministrador(emailAdministrador)) {
             throw new AccesoDenegadoException("Solo un administrador puede crear usuarios");
         }
 
@@ -45,7 +46,7 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
         }
 
         usuario.setEmail(email);
-        usuario.setCreadoPor(emailAdministrador);
+        usuario.setCreadoPor(authUserId);
         return usuarioRepositoryPort.guardar(usuario);
     }
 

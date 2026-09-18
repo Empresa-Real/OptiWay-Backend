@@ -49,6 +49,12 @@ public class UsuarioRepositoryAdapter implements UsuarioRepositoryPort {
     }
 
     @Override
+    public Optional<Usuario> obtenerPorEmail(String email) {
+        return usuarioJpaRepository.findByEmailIgnoreCase(email)
+                .map(this::toDomain);
+    }
+
+    @Override
     public Void eliminar(Long id) {
 
         usuarioJpaRepository.deleteById(id);
@@ -61,7 +67,8 @@ public class UsuarioRepositoryAdapter implements UsuarioRepositoryPort {
                 usuario.getId(),
                 usuario.getNombre(),
             usuario.getEmail(),
-            usuario.getRol()
+                usuario.getRol(),
+                usuario.getCreadoPor()
         );
     }
 
@@ -71,7 +78,8 @@ public class UsuarioRepositoryAdapter implements UsuarioRepositoryPort {
                 entity.getId(),
                 entity.getNombre(),
             entity.getEmail(),
-            entity.getRol()
+                entity.getRol(),
+                entity.getCreadoPor()
         );
     }
 }

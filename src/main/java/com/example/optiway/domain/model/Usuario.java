@@ -1,21 +1,23 @@
 package com.example.optiway.domain.model;
 
+import java.util.UUID;
+
 public class Usuario {
     private Long id;
     private String nombre;
     private String email;
     private Rol rol;
-    private String creadoPor;
+    private UUID creadoPor;
 
     public Usuario() {
     }
 
-    public Usuario(Long id, String nombre, String email, Rol rol, String creadoPor) {
+    public Usuario(Long id, String nombre, String email, Rol rol, UUID creadoPor) {
         this.id = id;
         this.nombre = nombre;
         this.email = email;
         this.rol = rol;
-        this.creadoPor = creadoPor; // UUID del Admin que creo el usuario
+        this.creadoPor = creadoPor; // UUID del Admin que creo el usuario de la tabal Users
     }
 
     public Long getId() {
@@ -50,11 +52,11 @@ public class Usuario {
         this.rol = rol;
     }
 
-    public String getCreadoPor() {
+    public UUID getCreadoPor() {
         return creadoPor;
     }
 
-    public void setCreadoPor(String creadoPor) {
+    public void setCreadoPor(UUID creadoPor) {
         this.creadoPor = creadoPor;
     }
 }
