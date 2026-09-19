@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Acceso administrador</title>
+</head>
+
+<body>
+    <section id="login-section">
+        <h1>Acceso</h1>
+
+        <form id="login-form">
+            <label>
+                Correo
+                <input id="login-email" type="email" required>
+            </label>
+            <br>
+            <label>
+                Contraseña
+                <input id="login-password" type="password" required>
+            </label>
+            <br>
+            <button type="submit">Iniciar sesión</button>
+        </form>
+    </section>
+
+    <p id="resultado"></p>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/config.js"></script>
+    <script>
+        const SUPABASE_URL = window.APP_CONFIG.supabaseUrl;
+        const SUPABASE_ANON_KEY = window.APP_CONFIG.supabaseAnonKey;
+    </script>
+    <script>
+        const supabaseClient = window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_ANON_KEY
+        );
+
+        const loginForm = document.getElementById('login-form');
+        const resultado = document.getElementById('resultado');
+
+        loginForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const { error } = await supabaseClient.auth.signInWithPassword({
+                email: document.getElementById('login-email').value,
+                password: document.getElementById('login-password').value
+            });
+
+            if (error) {
+                resultado.textContent = 'Error de login: ' + error.message;
+                return;
+            }
+
+            window.location.href = '/main.html';
+        });
+    </script>
+</body>
+
+</html>
