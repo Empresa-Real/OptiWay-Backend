@@ -58,7 +58,10 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
 
     private boolean esAdministrador(UUID authUserId) {
         return usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)
+
                 .map(usuario -> usuario.getRol())
+
+
                 .filter(Rol.ADMINISTRADOR::equals)
                 .isPresent();
     }
