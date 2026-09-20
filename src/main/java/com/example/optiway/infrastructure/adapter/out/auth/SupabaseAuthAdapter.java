@@ -1,4 +1,4 @@
-package com.example.optiway.infraestructure.adapter.out.auth;
+package com.example.optiway.infrastructure.adapter.out.auth;
 
 import java.util.UUID;
 

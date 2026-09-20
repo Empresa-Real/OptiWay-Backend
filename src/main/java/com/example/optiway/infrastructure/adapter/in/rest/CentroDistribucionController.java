@@ -1,4 +1,4 @@
-package com.example.optiway.infrastructure.adapter.in.web;
+package com.example.optiway.infrastructure.adapter.in.rest;
 
 import java.util.List;
 
@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.optiway.application.port.in.CrearCentroDistribucionUseCase;
 import com.example.optiway.domain.model.CentroDistribucion;
-import com.example.optiway.infrastructure.adapter.in.web.dto.CrearCentroDistribucionRequest;
+import com.example.optiway.infrastructure.adapter.in.rest.dto.CrearCentroDistribucionRequest;
 
 @RestController
 @RequestMapping("/api/centros-distribucion")

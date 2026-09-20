@@ -1,5 +1,5 @@
 
-package com.example.optiway.infraestructure.config;
+package com.example.optiway.infrastructure.config;
 
 
 import org.springframework.context.annotation.Bean;

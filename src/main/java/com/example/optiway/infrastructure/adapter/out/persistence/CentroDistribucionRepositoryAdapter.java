@@ -1,4 +1,4 @@
-package com.example.optiway.infrastructure.adapter.persistence;
+package com.example.optiway.infrastructure.adapter.out.persistence;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -7,15 +7,13 @@ import org.springframework.stereotype.Component;
 
 import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
 import com.example.optiway.domain.model.CentroDistribucion;
-import com.example.optiway.infrastructure.adapter.out.persistence.CentroDistribucionJpaEntity;
-import com.example.optiway.infrastructure.adapter.persistence.repository.SpringDataCentroDistribucionRepository;
 
 @Component
 public class CentroDistribucionRepositoryAdapter implements CentroDistribucionRepositoryPort {
 
-    private final SpringDataCentroDistribucionRepository repository;
+    private final CentroDistribucionJpaRepository repository;
 
-    public CentroDistribucionRepositoryAdapter(SpringDataCentroDistribucionRepository repository) {
+    public CentroDistribucionRepositoryAdapter(CentroDistribucionJpaRepository repository) {
         this.repository = repository;
     }
 

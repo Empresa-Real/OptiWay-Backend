@@ -1,4 +1,4 @@
-package com.example.optiway.infrastructure.adapter.in.web.dto;
+package com.example.optiway.infrastructure.adapter.in.rest.dto;
 
 import java.util.List;
 

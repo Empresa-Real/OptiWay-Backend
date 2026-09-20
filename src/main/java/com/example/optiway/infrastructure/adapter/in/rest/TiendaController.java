@@ -1,4 +1,4 @@
-package com.example.optiway.infraestructure.adapter.in.rest;
+package com.example.optiway.infrastructure.adapter.in.rest;
 
 import com.example.optiway.application.port.in.CrearTiendaUseCase;
 import com.example.optiway.domain.model.Tienda;
