@@ -25,9 +25,11 @@ Actualmente la tabla representa aproximadamente:
 usuarios
 ---------
 id       BIGINT PRIMARY KEY
+auth_user_id UUID UNIQUE NOT NULL -- referencia a auth.users.id
 nombre   VARCHAR
 email    VARCHAR UNIQUE NOT NULL
-rol      VARCHAR
+rol      VARCHAR NOT NULL (`ADMINISTRADOR`, `ENCARGADO_TIENDA`, `ENCARGADO_CD`, `PLANIFICADOR`)
+creado_por UUID  -- auth.users.id del administrador autenticado que lo creo
 ```
 
 Esto sirve para desarrollo, pero no es recomendable como diseño definitivo. Para un equipo convendría agregar:
@@ -39,11 +41,91 @@ docs/database-schema.sql
 
 Y más adelante usar migraciones con Flyway o Liquibase. También deberías documentar decisiones como:
 
-- Roles permitidos.
+- Roles permitidos y su persistencia como texto mediante un enum Java.
 - Si el correo pertenece a Supabase Auth.
 - Relaciones futuras con tiendas, centros o productos.
 - Qué ocurre al eliminar un usuario.
 - Índices y restricciones.
 - Quién administra los roles.
+
+El administrador inicial se crea primero en Supabase Auth y debe tener también una fila en `usuarios` con el mismo `auth_user_id` y rol `ADMINISTRADOR`. La aplicación no crea automáticamente ese registro.
+
+## Como se enlazan las tablas
+
+Supabase mantiene la tabla de autenticacion:
+
+```text
+auth.users
+---------
+id UUID PRIMARY KEY
+email
+```
+
+La aplicacion mantiene la tabla de negocio:
+
+```text
+public.usuarios
+--------------
+id BIGINT PRIMARY KEY
+auth_user_id UUID UNIQUE NOT NULL
+email
+rol
+```
+
+El enlace es:
+
+```text
+public.usuarios.auth_user_id -> auth.users.id
+```
+
+El administrador debe tener el mismo UUID en ambos lados. `usuarios.id` sigue siendo la PK interna de la aplicacion; `auth.users.id` es la PK UUID de Supabase.
+
+PostgreSQL permite declarar esta relacion como una clave foranea entre esquemas:
+
+```sql
+ALTER TABLE public.usuarios
+	ADD CONSTRAINT fk_usuarios_auth_user
+	FOREIGN KEY (auth_user_id)
+	REFERENCES auth.users(id);
+```
+
+`auth_user_id` es `UNIQUE` para que cada cuenta de Supabase tenga como maximo un perfil local. No es necesario convertirlo en la PK local.
+
+`creado_por` no se acepta desde el JSON del cliente. El backend obtiene el `sub` del JWT validado de Supabase, busca ese UUID en `usuarios.auth_user_id` y comprueba que su rol sea `ADMINISTRADOR`. El email queda únicamente como dato de contacto.
+
+Al invitar usuarios, el backend crea el registro en `auth.users` mediante la Admin API de Supabase, guarda su UUID en `auth_user_id` y usa `set-password.html` como URL de configuración inicial de contraseña.
+
+## Relacion con JWT
+
+El UUID de `auth_user_id` se obtiene del claim `sub` del JWT que Supabase entrega al usuario autenticado. No se debe recibir ese valor desde el body ni confiar en un email enviado por el cliente.
+
+### Que significa `sub`
+
+`sub` significa *subject* y es un claim estandar de un JWT. En Supabase contiene el UUID de la cuenta autenticada, es decir, el valor de `auth.users.id`.
+
+```json
+{
+	"sub": "60b20ea5-092d-4d8c-bdd7-ef9682ee1396",
+	"email": "admin@empresa.com"
+}
+```
+
+El backend usa `sub` para buscar:
+
+```text
+usuarios.auth_user_id = 60b20ea5-092d-4d8c-bdd7-ef9682ee1396
+```
+
+El email queda como dato de contacto porque puede cambiar; el UUID `sub` identifica de forma estable la cuenta.
+
+```text
+JWT.sub
+	↓
+usuarios.auth_user_id
+	↓
+usuarios.rol
+```
+
+El access token es temporal y contiene `exp`. Spring Security rechaza automáticamente los tokens vencidos. Supabase JS puede renovarlo usando su refresh token; el frontend debe obtener la sesión actual antes de llamar a la API. Si no hay sesión válida, se debe redirigir al login.
 
 En resumen: ahora existe un **modelo implícito generado por JPA**, pero todavía no un diseño de base de datos formal y versionado.

@@ -4,6 +4,20 @@
 
 ### Added
 
+- Guia de HU-29 para login por rol, redireccion y restricciones futuras por ubicacion.
+- Enum `Rol` con `ADMINISTRADOR`, `ENCARGADO_TIENDA`, `ENCARGADO_CD` y `PLANIFICADOR`.
+- Autenticacion JWT con Supabase para la API.
+- Restriccion de creacion de usuarios al administrador autenticado.
+- Registro del administrador que crea cada usuario.
+
+### Changed
+
+- La vista estatica envia el token Bearer y usa un selector de roles validos.
+
+## 2026-09-18
+
+### Added
+
 - CRUD HTTP para usuarios en `/api/usuarios`.
 - Persistencia de usuarios con PostgreSQL mediante Spring Data JPA.
 - Campo `rol` en el usuario y en la entidad de persistencia.

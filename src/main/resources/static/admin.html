@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Administración</title>
+</head>
+
+<body>
+    <h1>Administración de usuarios</h1>
+
+    <form id="usuario-form">
+        <label>
+            Nombre
+            <input id="nombre" required>
+        </label>
+        <br>
+        <label>
+            Correo
+            <input id="email" type="email" required>
+        </label>
+        <br>
+        <label>
+            Rol
+            <select id="rol" required>
+                <option value="ENCARGADO_TIENDA">Encargado de tienda</option>
+                <option value="ENCARGADO_CD">Encargado de CD</option>
+                <option value="PLANIFICADOR">Planificador</option>
+            </select>
+        </label>
+        <br>
+        <button type="submit">Invitar usuario</button>
+    </form>
+
+    <p id="resultado"></p>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/config.js"></script>
+    <script>
+        const supabaseClient = window.supabase.createClient(
+            window.APP_CONFIG.supabaseUrl,
+            window.APP_CONFIG.supabaseAnonKey
+        );
+        const resultado = document.getElementById('resultado');
+
+        document.getElementById('usuario-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const { data } = await supabaseClient.auth.getSession();
+            const token = data.session?.access_token;
+
+            if (!token) {
+                window.location.href = '/';
+                return;
+            }
+
+            const response = await fetch('/api/usuarios', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: 'Bearer ' + token
+                },
+                body: JSON.stringify({
+                    nombre: document.getElementById('nombre').value,
+                    email: document.getElementById('email').value,
+                    rol: document.getElementById('rol').value
+                })
+            });
+
+            resultado.textContent = await response.text();
+        });
+    </script>
+</body>
+
+</html>
