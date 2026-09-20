@@ -39,4 +39,5 @@ build/
 .env.*
 !.env.example
 *.log
+*.zip
 payload.json
