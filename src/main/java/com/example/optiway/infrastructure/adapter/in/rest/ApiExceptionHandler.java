@@ -1,4 +1,4 @@
-package com.example.optiway.infraestructure.adapter.in.rest;
+package com.example.optiway.infrastructure.adapter.in.rest;
 
 import java.util.Map;
 

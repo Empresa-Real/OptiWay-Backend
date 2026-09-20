@@ -1,4 +1,4 @@
-package com.example.optiway.infraestructure.adapter.out.persistence;
+package com.example.optiway.infrastructure.adapter.out.persistence;
 
 import java.util.UUID;
 
