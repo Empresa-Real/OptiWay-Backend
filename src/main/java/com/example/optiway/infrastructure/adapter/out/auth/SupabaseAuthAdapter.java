@@ -7,11 +7,11 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
-import com.example.optiway.application.port.out.InvitarUsuarioPort;
+import com.example.optiway.application.port.out.AuthPort;
 import com.example.optiway.application.service.InvitacionAuthException;
 
 @Component
-public class SupabaseAuthAdapter implements InvitarUsuarioPort {
+public class SupabaseAuthAdapter implements AuthPort {
 
     private final RestClient restClient;
     private final String serviceRoleKey;
@@ -52,6 +52,29 @@ public class SupabaseAuthAdapter implements InvitarUsuarioPort {
             throw exception;
         } catch (RuntimeException exception) {
             throw new InvitacionAuthException("No se pudo invitar al usuario por correo");
+        }
+    }
+
+    @Override
+    public void eliminarUsuarioAuth(UUID authUserId) {
+        if (authUserId == null) {
+            return;
+        }
+        if (serviceRoleKey == null || serviceRoleKey.isBlank()) {
+            throw new InvitacionAuthException("Falta configurar SUPABASE_SERVICE_ROLE_KEY");
+        }
+
+        try {
+            restClient.delete()
+                    .uri("/auth/v1/admin/users/{userId}", authUserId.toString())
+                    .header("apikey", serviceRoleKey)
+                    .header("Authorization", "Bearer " + serviceRoleKey)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (org.springframework.web.client.HttpClientErrorException.NotFound ignored) {
+            // Si el usuario ya no existe en Supabase Auth, se continúa para limpiar la BD local
+        } catch (RuntimeException exception) {
+            throw new InvitacionAuthException("No se pudo eliminar el usuario de Supabase Auth: " + exception.getMessage());
         }
     }
 

@@ -10,7 +10,7 @@ import com.example.optiway.application.port.in.CrearUsuarioUseCase;
 import com.example.optiway.application.port.in.EliminarUsuarioUseCase;
 import com.example.optiway.application.port.in.ObtenerUsuarioUseCase;
 import com.example.optiway.application.port.in.ObtenerUsuariosUseCase;
-import com.example.optiway.application.port.out.InvitarUsuarioPort;
+import com.example.optiway.application.port.out.AuthPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.domain.model.Rol;
 import com.example.optiway.domain.model.Usuario;
@@ -19,13 +19,13 @@ import com.example.optiway.domain.model.Usuario;
 public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCase,
     ObtenerUsuarioUseCase, EliminarUsuarioUseCase {
     private final UsuarioRepositoryPort usuarioRepositoryPort;
-    private final InvitarUsuarioPort invitarUsuarioPort;
+    private final AuthPort authPort;
 
     public UsuarioService(
             UsuarioRepositoryPort usuarioRepositoryPort,
-            InvitarUsuarioPort invitarUsuarioPort) {
+            AuthPort authPort) {
         this.usuarioRepositoryPort = usuarioRepositoryPort;
-        this.invitarUsuarioPort = invitarUsuarioPort;
+        this.authPort = authPort;
     }
 
     @Override
@@ -52,7 +52,7 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
 
         usuario.setEmail(email);
         usuario.setCreadoPor(authUserId);
-        usuario.setAuthUserId(invitarUsuarioPort.invitar(email));
+        usuario.setAuthUserId(authPort.invitar(email));
         return usuarioRepositoryPort.guardar(usuario);
     }
 
@@ -82,7 +82,30 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
     }
 
     @Override
-    public void eliminarUsuario(Long id) {
+    public void eliminarUsuario(Long id, UUID adminAuthUserId) {
+        if (adminAuthUserId == null || !esAdministrador(adminAuthUserId)) {
+            throw new AccesoDenegadoException("Solo un administrador puede eliminar usuarios");
+        }
+
+        Usuario usuarioAEliminar = usuarioRepositoryPort.obtenerPorID(id)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con ID: " + id));
+
+        // Regla 1: Un administrador no puede eliminarse a sí mismo
+        if (adminAuthUserId.equals(usuarioAEliminar.getAuthUserId())) {
+            throw new IllegalArgumentException("Un administrador no puede eliminarse a sí mismo");
+        }
+
+        // Regla 2: Un administrador no puede eliminar a otro administrador
+        if (usuarioAEliminar.getRol() == Rol.ADMINISTRADOR) {
+            throw new AccesoDenegadoException("No está permitido eliminar a otro usuario con rol ADMINISTRADOR");
+        }
+
+        // Paso 1: Eliminar la cuenta en Supabase Auth si posee auth_user_id
+        if (usuarioAEliminar.getAuthUserId() != null) {
+            authPort.eliminarUsuarioAuth(usuarioAEliminar.getAuthUserId());
+        }
+
+        // Paso 2: Eliminar el registro en la base de datos local
         usuarioRepositoryPort.eliminar(id);
     }
 }

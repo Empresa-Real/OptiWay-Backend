@@ -76,8 +76,10 @@ public class UsuarioController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void eliminarUsuario(@PathVariable Long id) {
+    public void eliminarUsuario(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Jwt jwt) {
 
-        eliminarUsuarioUseCase.eliminarUsuario(id);
+        eliminarUsuarioUseCase.eliminarUsuario(id, UUID.fromString(jwt.getSubject()));
     }
 }

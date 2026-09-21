@@ -34,6 +34,12 @@
 - **Persistencia & Datos:**
   - Corrección en `TiendaRepositoryAdapter.save()` para mapear y retornar el `id` numérico autogenerado (`int8` de Supabase/PostgreSQL).
   - Conversión del almacenamiento de tiendas abastecidas de `@ElementCollection` a `@ManyToMany` con Foreign Keys reales.
+- **Seguridad & Reglas de Negocio en Usuarios (HU-01):**
+  - Protección contra autoeliminación: un administrador autenticado no puede eliminarse a sí mismo (`adminAuthUserId.equals(usuarioAEliminar.getAuthUserId())`).
+  - Protección jerárquica: se prohíbe eliminar a cualquier usuario con rol `ADMINISTRADOR`.
+  - Sincronización con Supabase Auth: al eliminar un usuario se elimina también su cuenta en `auth.users` mediante la Admin API (`DELETE /auth/v1/admin/users/{userId}`) antes de removerlo de la base de datos local.
+  - Refactorización a `AuthPort`: reemplazo de `InvitarUsuarioPort` por [AuthPort](file:///c:/Users/Fixer/Desktop/Git%20Kraken/OptiWay-Backend/src/main/java/com/example/optiway/application/port/out/AuthPort.java) para desacoplar y tipar formalmente las operaciones administrativas en Supabase Auth (invitación y borrado), diferenciándolo del login de clientes.
+  - En `admin.html`, los usuarios con rol `ADMINISTRADOR` muestran el botón eliminar deshabilitado y se capturan los mensajes de error retornados por el backend.
 - **Git & Configuración:**
   - Resolución de marcadores de conflicto Git residuales en `src/main/resources/application.properties`.
   - Centralización y protección de credenciales sensibles mediante variables de entorno (`${DB_PASSWORD}`, `${SUPABASE_SERVICE_ROLE_KEY}`).

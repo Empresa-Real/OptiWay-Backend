@@ -97,19 +97,24 @@
                 return;
             }
 
-            tbody.innerHTML = usuarios.map(u =>
-                `<tr>
+            tbody.innerHTML = usuarios.map(u => {
+                const esAdmin = u.rol === 'ADMINISTRADOR';
+                const botonEliminar = esAdmin
+                    ? `<button type="button" disabled title="Un administrador no puede ser eliminado">Eliminar</button>`
+                    : `<button type="button" onclick="eliminarUsuario(${u.id})">Eliminar</button>`;
+
+                return `<tr>
                     <td>${u.id}</td>
                     <td>${u.nombre}</td>
                     <td>${u.email}</td>
                     <td>${u.rol}</td>
-                    <td><button type="button" onclick="eliminarUsuario(${u.id})">Eliminar</button></td>
-                </tr>`
-            ).join('');
+                    <td>${botonEliminar}</td>
+                </tr>`;
+            }).join('');
         }
 
         async function eliminarUsuario(id) {
-            if (!confirm('¿Seguro que deseas eliminar este usuario?')) return;
+            if (!confirm('¿Seguro que deseas eliminar este usuario? Se eliminará tanto de la base de datos como de Supabase Auth.')) return;
             const token = await getToken();
             if (!token) return;
 
@@ -119,10 +124,11 @@
             });
 
             if (response.ok || response.status === 204) {
-                resultado.textContent = 'Usuario eliminado con éxito.';
+                resultado.textContent = 'Usuario eliminado con éxito de la base de datos y Supabase Auth.';
                 cargarUsuarios();
             } else {
-                resultado.textContent = 'Error al eliminar usuario.';
+                const err = await response.json().catch(() => ({}));
+                resultado.textContent = 'Error: ' + (err.error || 'No se pudo eliminar el usuario.');
             }
         }
 
