@@ -1,18 +1,48 @@
 # Changelog
 
-## 2026-09-18
+## 2026-09-20
 
 ### Added
 
-- Guia de HU-29 para login por rol, redireccion y restricciones futuras por ubicacion.
-- Enum `Rol` con `ADMINISTRADOR`, `ENCARGADO_TIENDA`, `ENCARGADO_CD` y `PLANIFICADOR`.
-- Autenticacion JWT con Supabase para la API.
-- Restriccion de creacion de usuarios al administrador autenticado.
-- Registro del administrador que crea cada usuario.
+- **HU-07 (Crear y Listar Tiendas):**
+  - Implementación del puerto de entrada `ObtenerTiendasUseCase` y endpoint `GET /api/tiendas` para listar tiendas existentes.
+  - Generación automática de código de negocio único `TND-XXXXXXXX` en `TiendaService`.
+  - Pantalla web estática `tiendas.html` para registro de tiendas y visualización en tiempo real mediante tabla HTML.
+- **HU-09 (Gestión de Centros de Distribución):**
+  - Mapeo relacional `@ManyToMany` real entre `CentroDistribucionJpaEntity` y `TiendaJpaEntity` mediante la tabla intermedia `centro_distribucion_tiendas`.
+  - Claves foráneas reales (`FOREIGN KEY`) en PostgreSQL (Supabase) garantizando integridad referencial entre centros y tiendas abastecidas.
+  - Pantalla web estática `centros-distribucion.html` con carga dinámica de tiendas disponibles (`GET /api/tiendas`) para selección múltiple (zona de cobertura) y tabla de CDs registrados.
+- **HU-01 & HU-29 (Usuarios y Autenticación):**
+  - Tabla interactiva de usuarios en `admin.html` con consumo de `GET /api/usuarios` y funcionalidad de eliminación (`DELETE /api/usuarios/{id}`).
+  - Guía de HU-29 para login por rol, redirección y restricciones futuras por ubicación.
+  - Enum `Rol` (`ADMINISTRADOR`, `ENCARGADO_TIENDA`, `ENCARGADO_CD`, `PLANIFICADOR`).
+  - Autenticación JWT con Supabase Auth para la API con validación de emisor, firma y expiración.
+  - Restricción de creación de usuarios exclusivamente a administradores autenticados (`sub` claim).
+  - Registro de auditoría del administrador que crea cada usuario (`creado_por`).
+- **Documentación & Contratos:**
+  - Informes técnicos y auditorías de código: `docs/Fix´s/fix1-hu-07-09.md` y `docs/Fix´s/fix2-hu-07-09.md`.
+  - Contratos de API estructurados en `docs/dto/` con especificaciones JSON (request/response) e interfaces en TypeScript para integración frontend y Mock APIs.
+  - Reorganización de historias de usuario en `docs/Historias de Usuario/`.
+
+### Fixed
+
+- **Arquitectura Hexagonal:**
+  - Unificación de paquetes eliminando `com.example.optiway.infraestructure` (error tipográfico con `ae`) en favor del estándar `com.example.optiway.infrastructure`.
+  - Reubicación y estandarización de `CentroDistribucionController` en `infrastructure/adapter/in/rest/`.
+  - Reubicación de `CentroDistribucionJpaRepository` y `CentroDistribucionRepositoryAdapter` en `infrastructure/adapter/out/persistence/`.
+  - Corrección de declaraciones de paquetes e imports en `TiendaJpaEntity`, `TiendaJpaRepository` y `TiendaRepositoryAdapter`.
+- **Persistencia & Datos:**
+  - Corrección en `TiendaRepositoryAdapter.save()` para mapear y retornar el `id` numérico autogenerado (`int8` de Supabase/PostgreSQL).
+  - Conversión del almacenamiento de tiendas abastecidas de `@ElementCollection` a `@ManyToMany` con Foreign Keys reales.
+- **Git & Configuración:**
+  - Resolución de marcadores de conflicto Git residuales en `src/main/resources/application.properties`.
+  - Centralización y protección de credenciales sensibles mediante variables de entorno (`${DB_PASSWORD}`, `${SUPABASE_SERVICE_ROLE_KEY}`).
+  - Eliminación de archivos comprimidos binarios del repositorio e inclusión de regla `*.zip` en `.gitignore`.
 
 ### Changed
 
-- La vista estatica envia el token Bearer y usa un selector de roles validos.
+- `SecurityConfig.java` actualizado para permitir el acceso público a las páginas HTML de prueba estáticas (`/tiendas.html`, `/centros-distribucion.html`, `/admin.html`).
+- Las vistas estáticas envían el token Bearer y usan selectores dinámicos en lugar de campos de IDs manuales.
 
 ## 2026-09-18
 

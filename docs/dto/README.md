@@ -17,6 +17,7 @@ docs/dto/
     ├── crear-usuario-201.json
     ├── listar-usuarios-200.json
     ├── crear-tienda-201.json
+    ├── listar-tiendas-200.json
     ├── crear-tienda-400.json
     └── crear-centro-distribucion-201.json
 ```
@@ -93,7 +94,7 @@ export interface UsuarioResponse {
 }
 ```
 
-### Response 201 Created
+### Response 201 Created (`POST /api/tiendas`)
 * **Archivo:** [`docs/dto/response/crear-tienda-201.json`](./response/crear-tienda-201.json)
 
 ```json
@@ -105,6 +106,22 @@ export interface UsuarioResponse {
   "ciudad": "Medellín",
   "estado": "Activa"
 }
+```
+
+### Response Listar Tiendas (`GET /api/tiendas`)
+* **Archivo:** [`docs/dto/response/listar-tiendas-200.json`](./response/listar-tiendas-200.json)
+
+```json
+[
+  {
+    "id": 1,
+    "codigo": "TND-A1B2C3D4",
+    "nombre": "Tienda Central Medellín",
+    "direccion": "Calle 50 # 45-10",
+    "ciudad": "Medellín",
+    "estado": "Activa"
+  }
+]
 ```
 
 ### TypeScript Interfaces:

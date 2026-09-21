@@ -1,4 +1,4 @@
-# En este proyecto los “módulos” están separados por responsabilidad, siguiendo arquitectura hexagonal:
+En este proyecto los módulos están separados por responsabilidad, siguiendo los principios de la **Arquitectura Hexagonal (Puertos y Adaptadores)**:
 
 ```text
 infraestructura → aplicación → dominio
@@ -9,27 +9,45 @@ infraestructura → aplicación → dominio
 Ruta:
 
 ```text
-domain/model/Usuario.java
+domain/model/
+├── Usuario.java
+├── Tienda.java
+├── CentroDistribucion.java
+└── Rol.java (Enum)
 ```
 
-Contiene las reglas y modelos principales del negocio. `Usuario` no debería depender de Spring, JPA ni HTTP.
+Contiene las reglas y modelos principales del negocio. Ningún modelo de dominio depende de Spring, JPA ni HTTP.
 
 ## **2. Aplicación**
 
 Rutas:
 
 ```text
-application/port/in/
-application/port/out/
-application/service/
+application/port/in/              # Casos de uso (Interfaces de entrada)
+├── CrearUsuarioUseCase.java
+├── ObtenerUsuariosUseCase.java
+├── EliminarUsuarioUseCase.java
+├── ObtenerUsuarioUseCase.java
+├── CrearTiendaUseCase.java
+├── ObtenerTiendasUseCase.java
+├── CrearCentroDistribucionUseCase.java
+└── ObtenerCentrosDistribucionUseCase.java
+
+application/port/out/             # Contratos de salida (Persistencia y auth)
+├── UsuarioRepositoryPort.java
+├── TiendaRepositoryPort.java
+├── CentroDistribucionRepositoryPort.java
+└── AuthPort.java
+
+application/service/              # Lógica de negocio y orquestación
+├── UsuarioService.java
+├── TiendaService.java
+└── CentroDistribucionService.java
 ```
 
-- `port/in`: casos de uso que puede ejecutar la aplicación:
-  - crear usuario
-  - obtener usuarios
-  - eliminar usuario
-- `port/out`: contratos que la aplicación necesita para hablar con sistemas externos, por ejemplo la base de datos.
-- `service`: implementa la lógica de negocio. `UsuarioService` valida nombre, correo y rol, y utiliza el puerto de salida.
+- `port/in`: Casos de uso que expone la aplicación para ser llamados desde adaptadores primarios (ej: controladores REST).
+- `port/out`: Contratos que la aplicación necesita para interactuar con sistemas externos (base de datos relacional, servicio de autenticación Supabase).
+- `service`: Implementa la lógica de negocio, validaciones y reglas de dominio, consumiendo los puertos de salida sin acoplarse a JPA.
 
 ## **3. Infraestructura**
 
@@ -37,30 +55,44 @@ Rutas:
 
 ```text
 infrastructure/adapter/in/rest/
-infrastructure/adapter/out/persistence/
+├── ApiExceptionHandler.java
+├── UsuarioController.java
+├── TiendaController.java
+├── CentroDistribucionController.java
+└── dto/
+    └── CrearCentroDistribucionRequest.java
+
+infrastructure/adapter/out/
+├── auth/
+│   └── SupabaseAuthAdapter.java
+└── persistence/
+    ├── UsuarioJpaEntity.java, UsuarioJpaRepository, UsuarioRepositoryAdapter
+    ├── TiendaJpaEntity.java, TiendaJpaRepository, TiendaRepositoryAdapter
+    └── CentroDistribucionJpaEntity.java, CentroDistribucionJpaRepository, CentroDistribucionRepositoryAdapter
 ```
 
-- `adapter/in/rest`: entrada HTTP. `UsuarioController` recibe peticiones REST y llama a los casos de uso.
-- `adapter/out/persistence`: salida hacia PostgreSQL. `UsuarioRepositoryAdapter` convierte el modelo de dominio en una entidad JPA y usa `UsuarioJpaRepository`.
+- `adapter/in/rest`: Entrada HTTP. Controladores que reciben peticiones REST, validan el formato y delegan a los casos de uso correspondientes (`CrearUsuarioUseCase`, `CrearTiendaUseCase`, `ObtenerTiendasUseCase`, `CrearCentroDistribucionUseCase`, etc.).
+- `adapter/out/auth`: Adaptadores a servicios externos de identidad (Supabase Admin API).
+- `adapter/out/persistence`: Salida hacia PostgreSQL. Los adaptadores implementan los puertos de salida (`*RepositoryPort`), mapeando entidades de dominio a entidades JPA y encapsulando `JpaRepository`.
 
 El flujo de crear usuario es:
 
 ```text
 POST /api/usuarios
         ↓
-UsuarioController
+UsuarioController            (infrastructure/adapter/in/rest/)
         ↓
-CrearUsuarioUseCase
+CrearUsuarioUseCase          (application/port/in/)
         ↓
-UsuarioService
+UsuarioService               (application/service/)
         ↓
-UsuarioRepositoryPort
+UsuarioRepositoryPort        (application/port/out/)
         ↓
-UsuarioRepositoryAdapter
+UsuarioRepositoryAdapter     (infrastructure/adapter/out/persistence/)
         ↓
-UsuarioJpaRepository
+UsuarioJpaRepository         (infrastructure/adapter/out/persistence/)
         ↓
-PostgreSQL
+PostgreSQL                   (Base de datos externa)
 ```
 
 La idea central es que el dominio y la aplicación no dependan directamente de PostgreSQL ni de HTTP. Por eso existen interfaces como `CrearUsuarioUseCase` y `UsuarioRepositoryPort`: funcionan como contratos entre módulos.
@@ -72,19 +104,19 @@ La idea central es que el dominio y la aplicación no dependan directamente de P
 Supongamos que se necesita agregar un endpoint para crear productos. El cambio debe avanzar desde el centro hacia afuera:
 
 ```text
-Producto
+Producto                     (domain/model/)
         ↓
-CrearProductoUseCase
+CrearProductoUseCase         (application/port/in/)
         ↓
-ProductoService
+ProductoService              (application/service/)
         ↓
-ProductoRepositoryPort
+ProductoRepositoryPort       (application/port/out/)
         ↓
-ProductoRepositoryAdapter
+ProductoRepositoryAdapter    (infrastructure/adapter/out/persistence/)
         ↓
-ProductoJpaRepository
+ProductoJpaRepository        (infrastructure/adapter/out/persistence/)
         ↓
-ProductoController
+ProductoController           (infrastructure/adapter/in/rest/)
 ```
 
 ### 1. Crear el modelo de dominio
@@ -187,17 +219,19 @@ La regla práctica es: el controlador recibe la petición, el servicio decide, e
 La autenticacion pertenece a infraestructura, pero la decision de negocio se mantiene en aplicación:
 
 ```text
-Supabase Auth
-        ↓ JWT validado por Spring Security
-UsuarioController
+Supabase Auth                (Servicio de Auth externo / adapter out)
+        ↓ JWT validado por Spring Security (infrastructure/config/SecurityConfig.java)
+UsuarioController            (infrastructure/adapter/in/rest/)
         ↓ jwt.getSubject()
-ObtenerUsuarioUseCase.obtenerUsuarioPorAuthId(UUID)
+ObtenerUsuarioUseCase        (application/port/in/)
         ↓
-UsuarioService
+UsuarioService               (application/service/)
         ↓
-UsuarioRepositoryPort
+UsuarioRepositoryPort        (application/port/out/)
         ↓
-usuarios.auth_user_id y usuarios.rol
+UsuarioRepositoryAdapter     (infrastructure/adapter/out/persistence/)
+        ↓
+usuarios.auth_user_id y rol  (PostgreSQL - tabla public.usuarios)
 ```
 
 El controlador no autoriza usando el email del body. El claim `sub` del JWT identifica al usuario de `auth.users`; el servicio busca ese UUID en la tabla local y aplica la regla `rol == ADMINISTRADOR` cuando corresponde.
