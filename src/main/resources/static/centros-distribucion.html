@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Centros de Distribución</title>
+</head>
+
+<body>
+    <p>
+        <a href="/main.html">Inicio</a> |
+        <a href="/admin.html">Usuarios</a> |
+        <a href="/tiendas.html">Tiendas</a> |
+        <a href="/centros-distribucion.html">Centros de Distribución</a>
+    </p>
+
+    <h1>Crear Centro de Distribución</h1>
+
+    <form id="cd-form">
+        <label>
+            Nombre
+            <input id="nombre" required>
+        </label>
+        <br><br>
+        <label>
+            Dirección
+            <input id="direccion" required>
+        </label>
+        <br><br>
+        <label>
+            Capacidad
+            <input id="capacidad" type="number" required>
+        </label>
+        <br><br>
+        <fieldset style="max-width: 500px;">
+            <legend>Tiendas que abastece (Zona de cobertura)</legend>
+            <div id="contenedor-tiendas">Cargando tiendas registradas...</div>
+        </fieldset>
+        <br>
+        <button type="submit">Guardar centro</button>
+    </form>
+
+    <p id="resultado"></p>
+
+    <h2>Centros de Distribución Registrados</h2>
+    <button id="btn-cargar" type="button">Actualizar centros</button>
+    <br><br>
+
+    <table border="1" cellpadding="6" cellspacing="0">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Dirección</th>
+                <th>Capacidad</th>
+                <th>Tiendas Abastecidas (IDs)</th>
+            </tr>
+        </thead>
+        <tbody id="tabla-centros-body"></tbody>
+    </table>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/config.js"></script>
+    <script>
+        const supabaseClient = window.supabase.createClient(
+            window.APP_CONFIG.supabaseUrl,
+            window.APP_CONFIG.supabaseAnonKey
+        );
+
+        const form = document.getElementById('cd-form');
+        const resultado = document.getElementById('resultado');
+        const tbody = document.getElementById('tabla-centros-body');
+        const contenedorTiendas = document.getElementById('contenedor-tiendas');
+
+        async function getToken() {
+            const { data } = await supabaseClient.auth.getSession();
+            const token = data.session?.access_token;
+            if (!token) {
+                window.location.href = '/';
+                return null;
+            }
+            return token;
+        }
+
+        async function cargarTiendasParaSeleccionar() {
+            const token = await getToken();
+            if (!token) return;
+
+            try {
+                const response = await fetch('/api/tiendas', {
+                    headers: { Authorization: 'Bearer ' + token }
+                });
+
+                if (!response.ok) {
+                    contenedorTiendas.innerHTML = '<p>No se pudieron cargar las tiendas.</p>';
+                    return;
+                }
+
+                const tiendas = await response.json();
+                if (tiendas.length === 0) {
+                    contenedorTiendas.innerHTML = '<p>No hay tiendas creadas aún. Crea una primero en la sección <a href="/tiendas.html">Tiendas</a>.</p>';
+                    return;
+                }
+
+                contenedorTiendas.innerHTML = tiendas.map(t =>
+                    `<div>
+                        <label>
+                            <input type="checkbox" name="tiendaSeleccionada" value="${t.id}">
+                            [${t.codigo}] <strong>${t.nombre}</strong> (${t.ciudad} - ${t.direccion})
+                        </label>
+                    </div>`
+                ).join('');
+            } catch (err) {
+                contenedorTiendas.innerHTML = '<p>Error al consultar tiendas.</p>';
+            }
+        }
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const token = await getToken();
+            if (!token) return;
+
+            const checks = document.querySelectorAll('input[name="tiendaSeleccionada"]:checked');
+            const tiendasIds = Array.from(checks).map(cb => parseInt(cb.value, 10));
+
+            const response = await fetch('/api/centros-distribucion', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: 'Bearer ' + token
+                },
+                body: JSON.stringify({
+                    nombre: document.getElementById('nombre').value,
+                    direccion: document.getElementById('direccion').value,
+                    capacidad: parseInt(document.getElementById('capacidad').value, 10),
+                    tiendasAbastecidasIds: tiendasIds
+                })
+            });
+
+            resultado.textContent = await response.text();
+            form.reset();
+            cargarTiendasParaSeleccionar();
+            cargarCentros();
+        });
+
+        async function cargarCentros() {
+            const token = await getToken();
+            if (!token) return;
+
+            const response = await fetch('/api/centros-distribucion', {
+                headers: { Authorization: 'Bearer ' + token }
+            });
+
+            if (!response.ok) {
+                tbody.innerHTML = '<tr><td colspan="6">Error al cargar centros</td></tr>';
+                return;
+            }
+
+            const centros = await response.json();
+            if (centros.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6">No hay centros registrados.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = centros.map(cd =>
+                `<tr>
+                    <td>${cd.id}</td>
+                    <td>${cd.codigo || '-'}</td>
+                    <td>${cd.nombre}</td>
+                    <td>${cd.direccion}</td>
+                    <td>${cd.capacidad}</td>
+                    <td>${cd.tiendasAbastecidasIds?.length ? cd.tiendasAbastecidasIds.join(', ') : 'Ninguna'}</td>
+                </tr>`
+            ).join('');
+        }
+
+        document.getElementById('btn-cargar').addEventListener('click', cargarCentros);
+
+        cargarTiendasParaSeleccionar();
+        cargarCentros();
+    </script>
+</body>
+
+</html>

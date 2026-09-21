@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Crear Tienda</title>
+</head>
+
+<body>
+    <p>
+        <a href="/main.html">Inicio</a> |
+        <a href="/admin.html">Usuarios</a> |
+        <a href="/tiendas.html">Tiendas</a> |
+        <a href="/centros-distribucion.html">Centros de Distribución</a>
+    </p>
+
+    <h1>Crear Tienda</h1>
+
+    <form id="tienda-form">
+        <label>
+            Nombre
+            <input id="nombre" required>
+        </label>
+        <br>
+        <label>
+            Dirección
+            <input id="direccion" required>
+        </label>
+        <br>
+        <label>
+            Ciudad
+            <input id="ciudad" required>
+        </label>
+        <br>
+        <button type="submit">Guardar tienda</button>
+    </form>
+
+    <p id="resultado"></p>
+
+    <h2>Tiendas registradas</h2>
+    <button id="btn-cargar" type="button">Actualizar tiendas</button>
+    <br><br>
+
+    <table border="1" cellpadding="6" cellspacing="0">
+        <thead>
+            <tr>
+                <th>ID (int8)</th>
+                <th>Código Único</th>
+                <th>Nombre</th>
+                <th>Dirección</th>
+                <th>Ciudad</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody id="tabla-tiendas-body"></tbody>
+    </table>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/config.js"></script>
+    <script>
+        const supabaseClient = window.supabase.createClient(
+            window.APP_CONFIG.supabaseUrl,
+            window.APP_CONFIG.supabaseAnonKey
+        );
+
+        const form = document.getElementById('tienda-form');
+        const resultado = document.getElementById('resultado');
+        const tbody = document.getElementById('tabla-tiendas-body');
+
+        async function getToken() {
+            const { data } = await supabaseClient.auth.getSession();
+            const token = data.session?.access_token;
+            if (!token) {
+                window.location.href = '/';
+                return null;
+            }
+            return token;
+        }
+
+        async function cargarTiendas() {
+            const token = await getToken();
+            if (!token) return;
+
+            const response = await fetch('/api/tiendas', {
+                headers: { Authorization: 'Bearer ' + token }
+            });
+
+            if (!response.ok) {
+                tbody.innerHTML = '<tr><td colspan="6">Error al cargar tiendas.</td></tr>';
+                return;
+            }
+
+            const tiendas = await response.json();
+            if (tiendas.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6">No hay tiendas registradas aún.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = tiendas.map(t =>
+                `<tr>
+                    <td>${t.id}</td>
+                    <td><code>${t.codigo}</code></td>
+                    <td>${t.nombre}</td>
+                    <td>${t.direccion}</td>
+                    <td>${t.ciudad}</td>
+                    <td>${t.estado}</td>
+                </tr>`
+            ).join('');
+        }
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const token = await getToken();
+            if (!token) return;
+
+            const response = await fetch('/api/tiendas', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: 'Bearer ' + token
+                },
+                body: JSON.stringify({
+                    nombre: document.getElementById('nombre').value,
+                    direccion: document.getElementById('direccion').value,
+                    ciudad: document.getElementById('ciudad').value
+                })
+            });
+
+            resultado.textContent = await response.text();
+            form.reset();
+            cargarTiendas();
+        });
+
+        document.getElementById('btn-cargar').addEventListener('click', cargarTiendas);
+        cargarTiendas();
+    </script>
+</body>
+
+</html>
