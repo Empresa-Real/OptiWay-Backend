@@ -80,6 +80,21 @@ Respuesta HTTP 201 Created
 * Generación automática de código de negocio (`CD-XXXXXXXX`).
 * Vinculación relacional `@ManyToMany` mediante la tabla intermedia `centro_distribucion_tiendas` con Foreign Keys hacia `centros_distribucion` y `tiendas` para gestionar la zona de cobertura.
 
+### Configuración en `CentroDistribucionJpaEntity`:
+```java
+    @Id // Aqui se declara como primary Key
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToMany
+    @JoinTable( // Una tabla intermedia para la relacion @ManyToMany entre centros_distribucion y tiendas
+        name = "centro_distribucion_tiendas",
+        joinColumns = @JoinColumn(name = "centro_id"), // Foreign Key de centros_distribucion
+        inverseJoinColumns = @JoinColumn(name = "tienda_id") // Foreign Key de tiendas
+    )
+    private List<TiendaJpaEntity> tiendasAbastecidas;
+```
+
 ---
 
 ## Trabajo pendiente

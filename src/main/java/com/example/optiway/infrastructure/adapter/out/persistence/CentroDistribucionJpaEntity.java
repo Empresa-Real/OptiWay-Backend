@@ -8,7 +8,7 @@ import jakarta.persistence.*;
 @Table(name = "centros_distribucion")
 public class CentroDistribucionJpaEntity {
 
-    @Id
+    @Id // Aqui se declara como primary Key
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
@@ -25,10 +25,10 @@ public class CentroDistribucionJpaEntity {
     private Integer capacidad;
 
     @ManyToMany
-    @JoinTable(
+    @JoinTable( // Una tabla intermedia para la relacion @ManyToMany entre centros_distribucion y tiendas
         name = "centro_distribucion_tiendas",
-        joinColumns = @JoinColumn(name = "centro_id"),
-        inverseJoinColumns = @JoinColumn(name = "tienda_id")
+        joinColumns = @JoinColumn(name = "centro_id"), // Foreing Key de centros_distribucion
+        inverseJoinColumns = @JoinColumn(name = "tienda_id") // Foreing Key de tiendas
     )
     private List<TiendaJpaEntity> tiendasAbastecidas;
 
