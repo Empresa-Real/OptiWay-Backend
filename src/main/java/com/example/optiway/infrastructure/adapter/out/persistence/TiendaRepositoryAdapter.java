@@ -1,8 +1,12 @@
-package com.example.optiway.infraestructure.adapter.out.persistence;
+package com.example.optiway.infrastructure.adapter.out.persistence;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Component;
 
 import com.example.optiway.application.port.out.TiendaRepositoryPort;
 import com.example.optiway.domain.model.Tienda;
-import org.springframework.stereotype.Component;
 
 @Component
 public class TiendaRepositoryAdapter implements TiendaRepositoryPort {
@@ -15,30 +19,42 @@ public class TiendaRepositoryAdapter implements TiendaRepositoryPort {
 
     @Override
     public Tienda save(Tienda tienda) {
-        // Convertir el modelo de dominio a la entidad JPA
         TiendaJpaEntity entity = new TiendaJpaEntity();
+        entity.setId(tienda.getId());
         entity.setCodigo(tienda.getCodigo());
         entity.setNombre(tienda.getNombre());
         entity.setDireccion(tienda.getDireccion());
         entity.setCiudad(tienda.getCiudad());
         entity.setEstado(tienda.getEstado());
 
-        // Guardar la entidad en la base de datos
         TiendaJpaEntity savedEntity = tiendaJpaRepository.save(entity);
 
-        // Convertir la entidad guardada de nuevo al modelo de dominio
-        Tienda savedTienda = new Tienda();
-        savedTienda.setCodigo(savedEntity.getCodigo());
-        savedTienda.setNombre(savedEntity.getNombre());
-        savedTienda.setDireccion(savedEntity.getDireccion());
-        savedTienda.setCiudad(savedEntity.getCiudad());
-        savedTienda.setEstado(savedEntity.getEstado());
-
-        return savedTienda;
+        return new Tienda(
+                savedEntity.getId(),
+                savedEntity.getCodigo(),
+                savedEntity.getNombre(),
+                savedEntity.getDireccion(),
+                savedEntity.getCiudad(),
+                savedEntity.getEstado()
+        );
     }
 
     @Override
     public boolean existsByCodigo(String codigo) {
         return tiendaJpaRepository.existsByCodigo(codigo);
+    }
+
+    @Override
+    public List<Tienda> findAll() {
+        return tiendaJpaRepository.findAll().stream()
+                .map(e -> new Tienda(
+                        e.getId(),
+                        e.getCodigo(),
+                        e.getNombre(),
+                        e.getDireccion(),
+                        e.getCiudad(),
+                        e.getEstado()
+                ))
+                .collect(Collectors.toList());
     }
 }

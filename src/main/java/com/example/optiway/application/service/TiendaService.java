@@ -1,14 +1,17 @@
 package com.example.optiway.application.service;
 
-import com.example.optiway.application.port.in.CrearTiendaUseCase;
-import com.example.optiway.application.port.out.TiendaRepositoryPort;
-import com.example.optiway.domain.model.Tienda;
-import org.springframework.stereotype.Service;
-
+import java.util.List;
 import java.util.UUID;
 
+import org.springframework.stereotype.Service;
+
+import com.example.optiway.application.port.in.CrearTiendaUseCase;
+import com.example.optiway.application.port.in.ObtenerTiendasUseCase;
+import com.example.optiway.application.port.out.TiendaRepositoryPort;
+import com.example.optiway.domain.model.Tienda;
+
 @Service
-public class TiendaService implements CrearTiendaUseCase {
+public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase {
 
     private final TiendaRepositoryPort tiendaRepositoryPort;
 
@@ -18,7 +21,6 @@ public class TiendaService implements CrearTiendaUseCase {
 
     @Override
     public Tienda crearTienda(Tienda tienda) {
-        // Validaciones de Criterios de Aceptación (HU-07)
         if (tienda.getNombre() == null || tienda.getNombre().trim().isEmpty()) {
             throw new IllegalArgumentException("El nombre de la tienda es obligatorio.");
         }
@@ -29,10 +31,14 @@ public class TiendaService implements CrearTiendaUseCase {
             throw new IllegalArgumentException("La ciudad es obligatoria.");
         }
 
-        // Asignación de Código Único y Estado
         tienda.setCodigo("TND-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         tienda.setEstado("Activa");
 
         return tiendaRepositoryPort.save(tienda);
+    }
+
+    @Override
+    public List<Tienda> obtenerTiendas() {
+        return tiendaRepositoryPort.findAll();
     }
 }

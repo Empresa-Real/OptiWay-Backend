@@ -12,9 +12,13 @@ import com.example.optiway.domain.model.CentroDistribucion;
 public class CentroDistribucionRepositoryAdapter implements CentroDistribucionRepositoryPort {
 
     private final CentroDistribucionJpaRepository repository;
+    private final TiendaJpaRepository tiendaJpaRepository;
 
-    public CentroDistribucionRepositoryAdapter(CentroDistribucionJpaRepository repository) {
+    public CentroDistribucionRepositoryAdapter(
+            CentroDistribucionJpaRepository repository,
+            TiendaJpaRepository tiendaJpaRepository) {
         this.repository = repository;
+        this.tiendaJpaRepository = tiendaJpaRepository;
     }
 
     @Override
@@ -38,18 +42,24 @@ public class CentroDistribucionRepositoryAdapter implements CentroDistribucionRe
         entity.setNombre(domain.getNombre());
         entity.setDireccion(domain.getDireccion());
         entity.setCapacidad(domain.getCapacidad());
-        entity.setTiendasAbastecidasIds(domain.getTiendasAbastecidasIds());
+        if (domain.getTiendasAbastecidasIds() != null && !domain.getTiendasAbastecidasIds().isEmpty()) {
+            entity.setTiendasAbastecidas(tiendaJpaRepository.findAllById(domain.getTiendasAbastecidasIds()));
+        }
         return entity;
     }
 
     private CentroDistribucion toDomain(CentroDistribucionJpaEntity entity) {
+        List<Long> tiendaIds = entity.getTiendasAbastecidas() != null
+                ? entity.getTiendasAbastecidas().stream().map(TiendaJpaEntity::getId).collect(Collectors.toList())
+                : List.of();
+
         return new CentroDistribucion(
                 entity.getId(),
                 entity.getCodigo(),
                 entity.getNombre(),
                 entity.getDireccion(),
                 entity.getCapacidad(),
-                entity.getTiendasAbastecidasIds()
+                tiendaIds
         );
     }
 }
