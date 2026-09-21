@@ -118,7 +118,7 @@ Para facilitar pruebas manuales de extremo a extremo sin depender del frontend c
 Toda la documentación técnica del proyecto se encuentra centralizada en la carpeta [`docs/`](docs/):
 
 * [`docs/CHANGELOG.md`](docs/CHANGELOG.md): Registro cronológico de cambios, adiciones y correcciones.
-* [`docs/dto/`](docs/dto/): Contratos de API (JSON Schemas e interfaces TypeScript) para integración frontend y Mock APIs.
+* [`docs/dto/`](docs/dto/): Contratos de API (JSON Schemas e interfaces TypeScript) para integración frontend.
 * [`docs/Historias de Usuario/`](docs/Historias%20de%20Usuario/): Guías funcionales y técnicas de cada Historia de Usuario (`HU-01`, `HU-07`, `HU-09`, `HU-29`).
 * [`docs/Fix´s/`](docs/Fix´s/): Informes formales de auditoría y refactorización técnica (`fix1-hu-07-09.md`, `fix2-hu-07-09.md`).
 * [`docs/How-Work-DB.md`](docs/How-Work-DB.md): Esquema de tablas relacionales, integridad referencial y enlaces con Supabase Auth.
