@@ -36,8 +36,8 @@ application/service/
 Rutas:
 
 ```text
-infraestructure/adapter/in/rest/
-infraestructure/adapter/out/persistence/
+infrastructure/adapter/in/rest/
+infrastructure/adapter/out/persistence/
 ```
 
 - `adapter/in/rest`: entrada HTTP. `UsuarioController` recibe peticiones REST y llama a los casos de uso.
@@ -141,7 +141,7 @@ El servicio depende de esta interfaz, no de `JpaRepository`.
 
 ### 5. Crear el adaptador de persistencia
 
-En `infraestructure/adapter/out/persistence/` se agregan:
+En `infrastructure/adapter/out/persistence/` se agregan:
 
 - `ProductoJpaEntity`, con las anotaciones JPA.
 - `ProductoJpaRepository`, que extiende `JpaRepository`.
@@ -151,7 +151,7 @@ El adaptador implementa `ProductoRepositoryPort` y oculta los detalles de Postgr
 
 ### 6. Crear el endpoint
 
-En `infraestructure/adapter/in/rest/ProductoController.java` se expone el caso de uso:
+En `infrastructure/adapter/in/rest/ProductoController.java` se expone el caso de uso:
 
 ```java
 @RestController
