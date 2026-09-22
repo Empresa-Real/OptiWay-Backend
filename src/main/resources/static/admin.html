@@ -7,6 +7,13 @@
 </head>
 
 <body>
+    <p>
+        <a href="/main.html">Inicio</a> |
+        <a href="/admin.html">Usuarios</a> |
+        <a href="/tiendas.html">Tiendas</a> |
+        <a href="/centros-distribucion.html">Centros de Distribución</a>
+    </p>
+
     <h1>Administración de usuarios</h1>
 
     <form id="usuario-form">
@@ -34,6 +41,23 @@
 
     <p id="resultado"></p>
 
+    <h2>Usuarios registrados</h2>
+    <button id="btn-cargar" type="button">Actualizar lista</button>
+    <br><br>
+
+    <table border="1" cellpadding="6" cellspacing="0">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Correo</th>
+                <th>Rol</th>
+                <th>Acción</th>
+            </tr>
+        </thead>
+        <tbody id="tabla-usuarios-body"></tbody>
+    </table>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="/config.js"></script>
     <script>
@@ -42,16 +66,78 @@
             window.APP_CONFIG.supabaseAnonKey
         );
         const resultado = document.getElementById('resultado');
+        const tbody = document.getElementById('tabla-usuarios-body');
+
+        async function getToken() {
+            const { data } = await supabaseClient.auth.getSession();
+            const token = data.session?.access_token;
+            if (!token) {
+                window.location.href = '/';
+                return null;
+            }
+            return token;
+        }
+
+        async function cargarUsuarios() {
+            const token = await getToken();
+            if (!token) return;
+
+            const response = await fetch('/api/usuarios', {
+                headers: { Authorization: 'Bearer ' + token }
+            });
+
+            if (!response.ok) {
+                tbody.innerHTML = '<tr><td colspan="5">Error al cargar usuarios.</td></tr>';
+                return;
+            }
+
+            const usuarios = await response.json();
+            if (usuarios.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5">No hay usuarios registrados.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = usuarios.map(u => {
+                const esAdmin = u.rol === 'ADMINISTRADOR';
+                const botonEliminar = esAdmin
+                    ? `<button type="button" disabled title="Un administrador no puede ser eliminado">Eliminar</button>`
+                    : `<button type="button" onclick="eliminarUsuario(${u.id})">Eliminar</button>`;
+
+                return `<tr>
+                    <td>${u.id}</td>
+                    <td>${u.nombre}</td>
+                    <td>${u.email}</td>
+                    <td>${u.rol}</td>
+                    <td>${botonEliminar}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        async function eliminarUsuario(id) {
+            if (!confirm('¿Seguro que deseas eliminar este usuario? Se eliminará tanto de la base de datos como de Supabase Auth.')) return;
+            const token = await getToken();
+            if (!token) return;
+
+            const response = await fetch('/api/usuarios/' + id, {
+                method: 'DELETE',
+                headers: { Authorization: 'Bearer ' + token }
+            });
+
+            if (response.ok || response.status === 204) {
+                resultado.textContent = 'Usuario eliminado con éxito de la base de datos y Supabase Auth.';
+                cargarUsuarios();
+            } else {
+                const err = await response.json().catch(() => ({}));
+                resultado.textContent = 'Error: ' + (err.error || 'No se pudo eliminar el usuario.');
+            }
+        }
+
+        document.getElementById('btn-cargar').addEventListener('click', cargarUsuarios);
 
         document.getElementById('usuario-form').addEventListener('submit', async (event) => {
             event.preventDefault();
-            const { data } = await supabaseClient.auth.getSession();
-            const token = data.session?.access_token;
-
-            if (!token) {
-                window.location.href = '/';
-                return;
-            }
+            const token = await getToken();
+            if (!token) return;
 
             const response = await fetch('/api/usuarios', {
                 method: 'POST',
@@ -67,7 +153,11 @@
             });
 
             resultado.textContent = await response.text();
+            document.getElementById('usuario-form').reset();
+            cargarUsuarios();
         });
+
+        cargarUsuarios();
     </script>
 </body>
 

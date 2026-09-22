@@ -1,11 +1,13 @@
 package com.example.optiway.infrastructure.adapter.out.persistence;
 
-import com.example.optiway.application.port.out.TiendaRepositoryPort;
-import com.example.optiway.domain.model.Tienda;
-import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Component;
+
+import com.example.optiway.application.port.out.TiendaRepositoryPort;
+import com.example.optiway.domain.model.Tienda;
 
 @Component
 public class TiendaRepositoryAdapter implements TiendaRepositoryPort {
@@ -18,9 +20,8 @@ public class TiendaRepositoryAdapter implements TiendaRepositoryPort {
 
     @Override
     public Tienda save(Tienda tienda) {
-
         TiendaJpaEntity entity = new TiendaJpaEntity();
-
+        entity.setId(tienda.getId());
         entity.setCodigo(tienda.getCodigo());
         entity.setNombre(tienda.getNombre());
         entity.setDireccion(tienda.getDireccion());
@@ -30,17 +31,15 @@ public class TiendaRepositoryAdapter implements TiendaRepositoryPort {
 
         TiendaJpaEntity savedEntity = tiendaJpaRepository.save(entity);
 
-        Tienda savedTienda = new Tienda();
-
-        savedTienda.setId(savedEntity.getId());
-        savedTienda.setCodigo(savedEntity.getCodigo());
-        savedTienda.setNombre(savedEntity.getNombre());
-        savedTienda.setDireccion(savedEntity.getDireccion());
-        savedTienda.setCiudad(savedEntity.getCiudad());
-        savedTienda.setEstado(savedEntity.getEstado());
-        savedTienda.setEncargadoId(savedEntity.getEncargadoId());
-
-        return savedTienda;
+        return new Tienda(
+                savedEntity.getId(),
+                savedEntity.getCodigo(),
+                savedEntity.getNombre(),
+                savedEntity.getDireccion(),
+                savedEntity.getCiudad(),
+                savedEntity.getEstado(),
+                savedEntity.getEncargadoId()
+        );
     }
 
     @Override
@@ -49,44 +48,46 @@ public class TiendaRepositoryAdapter implements TiendaRepositoryPort {
     }
 
     @Override
+    public List<Tienda> findAll() {
+        return tiendaJpaRepository.findAll().stream()
+                .map(e -> new Tienda(
+                        e.getId(),
+                        e.getCodigo(),
+                        e.getNombre(),
+                        e.getDireccion(),
+                        e.getCiudad(),
+                        e.getEstado(),
+                        e.getEncargadoId()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public List<Tienda> obtenerPorEncargadoId(Long encargadoId) {
-
-        return tiendaJpaRepository.findByEncargadoId(encargadoId)
-                .stream()
-                .map(entity -> {
-
-                    Tienda tienda = new Tienda();
-
-                    tienda.setId(entity.getId());
-                    tienda.setCodigo(entity.getCodigo());
-                    tienda.setNombre(entity.getNombre());
-                    tienda.setDireccion(entity.getDireccion());
-                    tienda.setCiudad(entity.getCiudad());
-                    tienda.setEstado(entity.getEstado());
-                    tienda.setEncargadoId(entity.getEncargadoId());
-
-                    return tienda;
-                })
+        return tiendaJpaRepository.findByEncargadoId(encargadoId).stream()
+                .map(entity -> new Tienda(
+                        entity.getId(),
+                        entity.getCodigo(),
+                        entity.getNombre(),
+                        entity.getDireccion(),
+                        entity.getCiudad(),
+                        entity.getEstado(),
+                        entity.getEncargadoId()
+                ))
                 .toList();
     }
 
     @Override
     public Optional<Tienda> obtenerPorId(Long id) {
-
         return tiendaJpaRepository.findById(id)
-                .map(entity -> {
-
-                    Tienda tienda = new Tienda();
-
-                    tienda.setId(entity.getId());
-                    tienda.setCodigo(entity.getCodigo());
-                    tienda.setNombre(entity.getNombre());
-                    tienda.setDireccion(entity.getDireccion());
-                    tienda.setCiudad(entity.getCiudad());
-                    tienda.setEstado(entity.getEstado());
-                    tienda.setEncargadoId(entity.getEncargadoId());
-
-                    return tienda;
-                });
+                .map(entity -> new Tienda(
+                        entity.getId(),
+                        entity.getCodigo(),
+                        entity.getNombre(),
+                        entity.getDireccion(),
+                        entity.getCiudad(),
+                        entity.getEstado(),
+                        entity.getEncargadoId()
+                ));
     }
 }

@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1,
+    "codigo": "TND-A1B2C3D4",
+    "nombre": "Tienda Central Medellín",
+    "direccion": "Calle 50 # 45-10",
+    "ciudad": "Medellín",
+    "estado": "Activa"
+  },
+  {
+    "id": 2,
+    "codigo": "TND-E5F6G7H8",
+    "nombre": "Tienda Poblado",
+    "direccion": "Carrera 43A # 1-50",
+    "ciudad": "Medellín",
+    "estado": "Activa"
+  }
+]

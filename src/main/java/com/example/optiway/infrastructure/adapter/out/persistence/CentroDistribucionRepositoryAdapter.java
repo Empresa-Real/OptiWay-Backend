@@ -1,76 +1,72 @@
 package com.example.optiway.infrastructure.adapter.out.persistence;
 
-import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
-import com.example.optiway.domain.model.CentroDistribucion;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.Optional;
+import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
+import com.example.optiway.domain.model.CentroDistribucion;
 
 @Component
-public class CentroDistribucionRepositoryAdapter
-        implements CentroDistribucionRepositoryPort {
+public class CentroDistribucionRepositoryAdapter implements CentroDistribucionRepositoryPort {
 
     private final CentroDistribucionJpaRepository repository;
+    private final TiendaJpaRepository tiendaJpaRepository;
 
     public CentroDistribucionRepositoryAdapter(
-            CentroDistribucionJpaRepository repository) {
-
+            CentroDistribucionJpaRepository repository,
+            TiendaJpaRepository tiendaJpaRepository) {
         this.repository = repository;
+        this.tiendaJpaRepository = tiendaJpaRepository;
     }
 
     @Override
-    public CentroDistribucion guardar(
-            CentroDistribucion centroDistribucion) {
-
-        CentroDistribucionJpaEntity entity =
-                new CentroDistribucionJpaEntity();
-
-        entity.setId(centroDistribucion.getId());
-        entity.setCodigo(centroDistribucion.getCodigo());
-        entity.setNombre(centroDistribucion.getNombre());
-        entity.setDireccion(centroDistribucion.getDireccion());
-        entity.setCapacidad(centroDistribucion.getCapacidad());
-        entity.setTiendasAbastecidasIds(
-                centroDistribucion.getTiendasAbastecidasIds());
-
-        CentroDistribucionJpaEntity saved =
-                repository.save(entity);
-
-        return toDomain(saved);
+    public CentroDistribucion guardar(CentroDistribucion centroDistribucion) {
+        CentroDistribucionJpaEntity entity = toEntity(centroDistribucion);
+        CentroDistribucionJpaEntity savedEntity = repository.save(entity);
+        return toDomain(savedEntity);
     }
 
     @Override
     public List<CentroDistribucion> obtenerTodos() {
-
-        return repository.findAll()
-                .stream()
+        return repository.findAll().stream()
                 .map(this::toDomain)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Override
     public Optional<CentroDistribucion> obtenerPorId(Long id) {
-
         return repository.findById(id)
                 .map(this::toDomain);
     }
 
-    private CentroDistribucion toDomain(
-            CentroDistribucionJpaEntity entity) {
+    private CentroDistribucionJpaEntity toEntity(CentroDistribucion domain) {
+        CentroDistribucionJpaEntity entity = new CentroDistribucionJpaEntity();
+        entity.setId(domain.getId());
+        entity.setCodigo(domain.getCodigo());
+        entity.setNombre(domain.getNombre());
+        entity.setDireccion(domain.getDireccion());
+        entity.setCapacidad(domain.getCapacidad());
+        if (domain.getTiendasAbastecidasIds() != null && !domain.getTiendasAbastecidasIds().isEmpty()) {
+            entity.setTiendasAbastecidas(tiendaJpaRepository.findAllById(domain.getTiendasAbastecidasIds()));
+        }
+        return entity;
+    }
 
-        CentroDistribucion centro =
-                new CentroDistribucion();
+    private CentroDistribucion toDomain(CentroDistribucionJpaEntity entity) {
+        List<Long> tiendaIds = entity.getTiendasAbastecidas() != null
+                ? entity.getTiendasAbastecidas().stream().map(TiendaJpaEntity::getId).collect(Collectors.toList())
+                : List.of();
 
-        centro.setId(entity.getId());
-        centro.setCodigo(entity.getCodigo());
-        centro.setNombre(entity.getNombre());
-        centro.setDireccion(entity.getDireccion());
-        centro.setCapacidad(entity.getCapacidad());
-        centro.setTiendasAbastecidasIds(
-                entity.getTiendasAbastecidasIds());
-
-        return centro;
+        return new CentroDistribucion(
+                entity.getId(),
+                entity.getCodigo(),
+                entity.getNombre(),
+                entity.getDireccion(),
+                entity.getCapacidad(),
+                tiendaIds
+        );
     }
 }

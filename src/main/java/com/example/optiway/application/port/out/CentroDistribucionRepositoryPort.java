@@ -7,10 +7,7 @@ import com.example.optiway.domain.model.CentroDistribucion;
 
 public interface CentroDistribucionRepositoryPort {
 
-    CentroDistribucion guardar(
-            CentroDistribucion centroDistribucion);
-
+    CentroDistribucion guardar(CentroDistribucion centroDistribucion);
     List<CentroDistribucion> obtenerTodos();
-
     Optional<CentroDistribucion> obtenerPorId(Long id);
 }

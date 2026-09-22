@@ -8,10 +8,19 @@ public class Tienda {
     private String ciudad;
     private String estado;
     private Long encargadoId;
+
     public Tienda() {}
 
-    public Tienda(Long id, String codigo, String nombre, String direccion,
-                  String ciudad, String estado, Long encargadoId) {
+    public Tienda(Long id, String codigo, String nombre, String direccion, String ciudad, String estado) {
+        this.id = id;
+        this.codigo = codigo;
+        this.nombre = nombre;
+        this.direccion = direccion;
+        this.ciudad = ciudad;
+        this.estado = estado;
+    }
+
+    public Tienda(Long id, String codigo, String nombre, String direccion, String ciudad, String estado, Long encargadoId) {
         this.id = id;
         this.codigo = codigo;
         this.nombre = nombre;
@@ -38,8 +47,7 @@ public class Tienda {
 
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
+
     public Long getEncargadoId() { return encargadoId; }
-    public void setEncargadoId(Long encargadoId) {
-        this.encargadoId = encargadoId;
-    }
+    public void setEncargadoId(Long encargadoId) { this.encargadoId = encargadoId; }
 }
