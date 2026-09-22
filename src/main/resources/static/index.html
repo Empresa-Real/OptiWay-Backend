@@ -29,23 +29,22 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="/config.js"></script>
+    <script src="/nav.js"></script>
     <script>
-        const SUPABASE_URL = window.APP_CONFIG.supabaseUrl;
-        const SUPABASE_ANON_KEY = window.APP_CONFIG.supabaseAnonKey;
-    </script>
-    <script>
-        const supabaseClient = window.supabase.createClient(
-            SUPABASE_URL,
-            SUPABASE_ANON_KEY
-        );
+        // Redirigir a configurar contraseña si se recibe un token de invitación o recuperación
+        if (window.location.hash && (window.location.hash.includes('type=invite') || window.location.hash.includes('type=recovery'))) {
+            window.location.replace('/set-password.html' + window.location.hash);
+        }
 
+        const supabaseClient = window.OptiWay.supabase;
         const loginForm = document.getElementById('login-form');
         const resultado = document.getElementById('resultado');
 
         loginForm.addEventListener('submit', async (event) => {
             event.preventDefault();
+            resultado.textContent = 'Iniciando sesión...';
 
-            const { error } = await supabaseClient.auth.signInWithPassword({
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
                 email: document.getElementById('login-email').value,
                 password: document.getElementById('login-password').value
             });
@@ -53,6 +52,27 @@
             if (error) {
                 resultado.textContent = 'Error de login: ' + error.message;
                 return;
+            }
+
+            // Consultar perfil de usuario para redirección según rol
+            const token = data.session?.access_token;
+            if (!token) {
+                window.location.href = '/main.html';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/usuarios/me', {
+                    headers: { Authorization: 'Bearer ' + token }
+                });
+
+                if (response.ok) {
+                    const usuario = await response.json();
+                    window.location.href = window.OptiWay.getRutaInicioPorRol(usuario.rol);
+                    return;
+                }
+            } catch (e) {
+                console.error('Error al obtener rol:', e);
             }
 
             window.location.href = '/main.html';

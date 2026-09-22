@@ -10,9 +10,9 @@
     <h1 id="welcome">Cargando...</h1>
     <p id="role-message">Cargando permisos...</p>
 
-    <p>
+    <p id="nav-bar">
         <a href="/main.html">Inicio</a> |
-        <a href="/admin.html">Usuarios</a> |
+        <span id="nav-usuarios"><a href="/admin.html">Usuarios</a> | </span>
         <a href="/tiendas.html">Tiendas</a> |
         <a href="/centros-distribucion.html">Centros de Distribución</a> |
         <a href="/inventario.html">Inventario Tienda</a> |
@@ -23,48 +23,34 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="/config.js"></script>
+    <script src="/nav.js"></script>
     <script>
-        const supabaseClient = window.supabase.createClient(
-            window.APP_CONFIG.supabaseUrl,
-            window.APP_CONFIG.supabaseAnonKey
-        );
-
         async function loadMainPage() {
-            const { data, error } = await supabaseClient.auth.getSession();
+            const authData = await window.OptiWay.initNav();
+            if (!authData) return;
 
-            if (error || !data.session) {
-                window.location.href = '/';
-                return;
-            }
-
-            const user = data.session.user;
-            const name = user.user_metadata?.full_name || user.email;
-            document.getElementById('welcome').textContent = 'Bienvenido, ' + name;
-
-            const response = await fetch('/api/usuarios/me', {
-                headers: { Authorization: 'Bearer ' + data.session.access_token }
-            });
-
-            if (!response.ok) {
+            const { usuario } = authData;
+            if (!usuario) {
                 document.getElementById('role-message').textContent =
                     'Tu cuenta todavía no tiene un usuario configurado en la aplicación.';
                 return;
             }
 
-            const usuario = await response.json();
             if (usuario.rol === 'ADMINISTRADOR') {
                 window.location.href = '/admin.html';
                 return;
+            } else if (usuario.rol === 'ENCARGADO_TIENDA') {
+                window.location.href = '/inventario.html';
+                return;
+            } else if (usuario.rol === 'ENCARGADO_CD') {
+                window.location.href = '/ingreso-mercancia.html';
+                return;
             }
 
+            document.getElementById('welcome').textContent = 'Bienvenido, ' + usuario.nombre;
             document.getElementById('role-message').textContent =
-                'Has iniciado sesión como ' + usuario.rol + '.';
+                'Has iniciado sesión como ' + usuario.rol + '. Tienes acceso a consulta y planificación de inventarios y logística.';
         }
-
-        document.getElementById('logout').addEventListener('click', async () => {
-            await supabaseClient.auth.signOut();
-            window.location.href = '/';
-        });
 
         loadMainPage();
     </script>

@@ -7,13 +7,13 @@
 </head>
 
 <body>
-    <p>
+    <p id="nav-bar">
         <a href="/main.html">Inicio</a> |
-        <a href="/admin.html">Usuarios</a> |
-        <a href="/tiendas.html">Tiendas</a> |
-        <a href="/centros-distribucion.html">Centros de Distribución</a> |
-        <a href="/inventario.html">Inventario Tienda</a> |
-        <a href="/ingreso-mercancia.html">Ingreso Mercancía CD</a>
+        <span id="nav-usuarios"><a href="/admin.html">Usuarios</a> | </span>
+        <span id="nav-tiendas"><a href="/tiendas.html">Tiendas</a> | </span>
+        <span id="nav-cds"><a href="/centros-distribucion.html">Centros de Distribución</a> | </span>
+        <span id="nav-inventario"><a href="/inventario.html">Inventario Tienda</a> | </span>
+        <span id="nav-ingreso"><a href="/ingreso-mercancia.html">Ingreso Mercancía CD</a></span>
         &nbsp;&nbsp;&nbsp;
         <button id="logout" type="button">Cerrar sesión</button>
     </p>
@@ -25,17 +25,24 @@
             Nombre
             <input id="nombre" required>
         </label>
-        <br>
+        <br><br>
         <label>
             Dirección
             <input id="direccion" required>
         </label>
-        <br>
+        <br><br>
         <label>
             Ciudad
             <input id="ciudad" required>
         </label>
-        <br>
+        <br><br>
+        <label>
+            Encargado Asignado:
+            <select id="encargadoId">
+                <option value="">-- Sin asignar --</option>
+            </select>
+        </label>
+        <br><br>
         <button type="submit">Guardar tienda</button>
     </form>
 
@@ -48,12 +55,13 @@
     <table border="1" cellpadding="6" cellspacing="0">
         <thead>
             <tr>
-                <th>ID (int8)</th>
+                <th>ID</th>
                 <th>Código Único</th>
                 <th>Nombre</th>
                 <th>Dirección</th>
                 <th>Ciudad</th>
                 <th>Estado</th>
+                <th>Encargado</th>
             </tr>
         </thead>
         <tbody id="tabla-tiendas-body"></tbody>
@@ -61,24 +69,36 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="/config.js"></script>
+    <script src="/nav.js"></script>
     <script>
-        const supabaseClient = window.supabase.createClient(
-            window.APP_CONFIG.supabaseUrl,
-            window.APP_CONFIG.supabaseAnonKey
-        );
-
         const form = document.getElementById('tienda-form');
         const resultado = document.getElementById('resultado');
         const tbody = document.getElementById('tabla-tiendas-body');
+        const selectEncargado = document.getElementById('encargadoId');
+        let usuariosGlobal = [];
+        let usuarioActual = null;
 
         async function getToken() {
-            const { data } = await supabaseClient.auth.getSession();
-            const token = data.session?.access_token;
-            if (!token) {
-                window.location.href = '/';
-                return null;
+            return window.OptiWay.getToken();
+        }
+
+        async function cargarEncargados() {
+            const token = await getToken();
+            if (!token) return;
+
+            try {
+                const res = await fetch('/api/usuarios', {
+                    headers: { Authorization: 'Bearer ' + token }
+                });
+                if (res.ok) {
+                    usuariosGlobal = await res.json();
+                    const encargados = usuariosGlobal.filter(u => u.rol === 'ENCARGADO_TIENDA');
+                    selectEncargado.innerHTML = '<option value="">-- Sin asignar --</option>' +
+                        encargados.map(e => `<option value="${e.id}">${e.nombre} (${e.email})</option>`).join('');
+                }
+            } catch (err) {
+                console.error('Error cargando encargados:', err);
             }
-            return token;
         }
 
         async function cargarTiendas() {
@@ -90,32 +110,48 @@
             });
 
             if (!response.ok) {
-                tbody.innerHTML = '<tr><td colspan="6">Error al cargar tiendas.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7">Error al cargar tiendas.</td></tr>';
                 return;
             }
 
             const tiendas = await response.json();
-            if (tiendas.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6">No hay tiendas registradas aún.</td></tr>';
+
+            let tiendasAMostrar = tiendas;
+            if (usuarioActual && usuarioActual.rol === 'ENCARGADO_TIENDA') {
+                tiendasAMostrar = tiendas.filter(t => t.encargadoId === usuarioActual.id);
+            }
+
+            if (tiendasAMostrar.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7">' +
+                    (usuarioActual && usuarioActual.rol === 'ENCARGADO_TIENDA'
+                        ? '[Aviso] No tienes ninguna tienda asignada actualmente. Contacta al Administrador.'
+                        : 'No hay tiendas registradas aún.') +
+                    '</td></tr>';
                 return;
             }
 
-            tbody.innerHTML = tiendas.map(t =>
-                `<tr>
+            tbody.innerHTML = tiendasAMostrar.map(t => {
+                const encargado = usuariosGlobal.find(u => u.id === t.encargadoId);
+                const encargadoTexto = encargado ? `${encargado.nombre} (${encargado.email})` : '[Sin Asignar]';
+
+                return `<tr>
                     <td>${t.id}</td>
                     <td><code>${t.codigo}</code></td>
                     <td>${t.nombre}</td>
                     <td>${t.direccion}</td>
                     <td>${t.ciudad}</td>
                     <td>${t.estado}</td>
-                </tr>`
-            ).join('');
+                    <td>${encargadoTexto}</td>
+                </tr>`;
+            }).join('');
         }
 
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
             const token = await getToken();
             if (!token) return;
+
+            const encargadoIdVal = parseInt(selectEncargado.value, 10);
 
             const response = await fetch('/api/tiendas', {
                 method: 'POST',
@@ -126,22 +162,41 @@
                 body: JSON.stringify({
                     nombre: document.getElementById('nombre').value,
                     direccion: document.getElementById('direccion').value,
-                    ciudad: document.getElementById('ciudad').value
+                    ciudad: document.getElementById('ciudad').value,
+                    encargadoId: isNaN(encargadoIdVal) ? null : encargadoIdVal
                 })
             });
 
-            resultado.textContent = await response.text();
-            form.reset();
-            cargarTiendas();
+            if (response.ok) {
+                resultado.textContent = '[OK] Tienda creada exitosamente.';
+                form.reset();
+                cargarTiendas();
+            } else {
+                resultado.textContent = '[Error] ' + await response.text();
+            }
         });
 
         document.getElementById('btn-cargar').addEventListener('click', cargarTiendas);
-        cargarTiendas();
 
-        document.getElementById('logout').addEventListener('click', async () => {
-            await supabaseClient.auth.signOut();
-            window.location.href = '/';
-        });
+        async function init() {
+            const authData = await window.OptiWay.initNav({
+                rolesPermitidos: ['ADMINISTRADOR', 'PLANIFICADOR', 'ENCARGADO_TIENDA']
+            });
+            if (authData) {
+                usuarioActual = authData.usuario;
+
+                // Solo el ADMINISTRADOR puede crear tiendas
+                if (usuarioActual.rol !== 'ADMINISTRADOR') {
+                    document.getElementById('tienda-form').style.display = 'none';
+                    document.querySelector('h1').style.display = 'none';
+                }
+
+                await cargarEncargados();
+                await cargarTiendas();
+            }
+        }
+
+        init();
     </script>
 </body>
 

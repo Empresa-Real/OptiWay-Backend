@@ -7,67 +7,69 @@
 </head>
 
 <body>
-    <p>
+    <p id="nav-bar">
         <a href="/main.html">Inicio</a> |
-        <a href="/admin.html">Usuarios</a> |
-        <a href="/tiendas.html">Tiendas</a> |
-        <a href="/centros-distribucion.html">Centros de Distribución</a> |
-        <a href="/inventario.html">Inventario Tienda</a> |
-        <a href="/ingreso-mercancia.html">Ingreso Mercancía CD</a>
+        <span id="nav-usuarios"><a href="/admin.html">Usuarios</a> | </span>
+        <span id="nav-tiendas"><a href="/tiendas.html">Tiendas</a> | </span>
+        <span id="nav-cds"><a href="/centros-distribucion.html">Centros de Distribución</a> | </span>
+        <span id="nav-inventario"><a href="/inventario.html">Inventario Tienda</a> | </span>
+        <span id="nav-ingreso"><a href="/ingreso-mercancia.html">Ingreso Mercancía CD</a></span>
         &nbsp;&nbsp;&nbsp;
         <button id="logout" type="button">Cerrar sesión</button>
     </p>
 
     <h1>Registrar Ingreso de Mercancía al CD</h1>
 
-    <form id="ingreso-form" style="max-width: 500px;">
+    <form id="ingreso-form">
         <label>
-            Centro de Distribución (*):
-            <select id="select-cd" required style="width: 100%;">
-                <option value="">Cargando centros de distribución...</option>
+            Centro de Distribución:
+            <select id="select-cd" required>
+                <option value="">Cargando centros...</option>
             </select>
         </label>
         <br><br>
         <label>
-            ID de Producto (*):
-            <input id="productoId" type="number" required placeholder="Ej: 1" style="width: 100%;">
+            ID de Producto:
+            <input id="productoId" type="number" required placeholder="Ej: 1">
         </label>
         <br><br>
         <label>
-            Cantidad a Ingresar (*):
-            <input id="cantidad" type="number" required placeholder="Mayor que 0 (ej: 100)" min="1" style="width: 100%;">
+            Cantidad a Ingresar:
+            <input id="cantidad" type="number" required placeholder="Mayor que 0" min="1">
         </label>
         <br><br>
         <label>
-            Origen / Proveedor (*):
-            <input id="origen" type="text" required placeholder="Ej: Proveedor Alimentos del Valle S.A." style="width: 100%;">
+            Origen / Proveedor:
+            <input id="origen" type="text" required placeholder="Ej: Proveedor S.A.">
         </label>
         <br><br>
         <button type="submit">Registrar Ingreso</button>
     </form>
 
-    <div id="resultado-contenedor" style="margin-top: 20px; padding: 10px; display: none;"></div>
+    <p id="resultado"></p>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="/config.js"></script>
+    <script src="/nav.js"></script>
     <script>
-        const supabaseClient = window.supabase.createClient(
-            window.APP_CONFIG.supabaseUrl,
-            window.APP_CONFIG.supabaseAnonKey
-        );
-
         const form = document.getElementById('ingreso-form');
         const selectCd = document.getElementById('select-cd');
-        const resultadoContenedor = document.getElementById('resultado-contenedor');
+        const resultado = document.getElementById('resultado');
 
         async function getToken() {
-            const { data } = await supabaseClient.auth.getSession();
-            const token = data.session?.access_token;
-            if (!token) {
-                window.location.href = '/';
-                return null;
-            }
-            return token;
+            return window.OptiWay.getToken();
+        }
+
+        let usuarioActual = null;
+
+        async function cargarPerfil() {
+            const authData = await window.OptiWay.initNav({
+                rolesPermitidos: ['ADMINISTRADOR', 'PLANIFICADOR', 'ENCARGADO_CD']
+            });
+            if (!authData) return;
+
+            usuarioActual = authData.usuario;
+            cargarCentrosDistribucion();
         }
 
         async function cargarCentrosDistribucion() {
@@ -80,7 +82,7 @@
                 });
 
                 if (!response.ok) {
-                    selectCd.innerHTML = '<option value="">Error al cargar CDs (ingrese ID manualmente)</option>';
+                    selectCd.innerHTML = '<option value="">Error al cargar CDs</option>';
                     return;
                 }
 
@@ -90,8 +92,30 @@
                     return;
                 }
 
+                // Si es ENCARGADO_CD, aislar estrictamente a su CD asignado
+                if (usuarioActual && usuarioActual.rol === 'ENCARGADO_CD') {
+                    const misCds = cds.filter(c => c.encargadoId === usuarioActual.id);
+                    if (misCds.length === 0) {
+                        selectCd.innerHTML = '<option value="">[Sin CD asignado]</option>';
+                        selectCd.disabled = true;
+                        form.querySelector('button[type="submit"]').disabled = true;
+                        resultado.textContent = '[Aviso] No tienes ningún Centro de Distribución asignado actualmente. Contacta al Administrador.';
+                        return;
+                    }
+
+                    selectCd.innerHTML = misCds.map(cd =>
+                        `<option value="${cd.id}">${cd.codigo || 'CD #' + cd.id} - ${cd.nombre}</option>`
+                    ).join('');
+                    selectCd.value = misCds[0].id;
+                    if (misCds.length === 1) {
+                        selectCd.disabled = true;
+                    }
+                    return;
+                }
+
+                // ADMINISTRADOR o PLANIFICADOR
                 selectCd.innerHTML = '<option value="">-- Seleccione un Centro de Distribución --</option>' +
-                    cds.map(cd => `<option value="${cd.id}">${cd.codigo || 'CD #' + cd.id} - ${cd.nombre} (Capacidad: ${cd.capacidad})</option>`).join('');
+                    cds.map(cd => `<option value="${cd.id}">${cd.codigo || 'CD #' + cd.id} - ${cd.nombre}</option>`).join('');
             } catch (err) {
                 selectCd.innerHTML = '<option value="">Error de conexión</option>';
             }
@@ -107,10 +131,7 @@
             const cantidad = parseInt(document.getElementById('cantidad').value);
             const origen = document.getElementById('origen').value.trim();
 
-            resultadoContenedor.style.display = 'block';
-            resultadoContenedor.style.backgroundColor = '#e8f4fd';
-            resultadoContenedor.style.border = '1px solid #b8daff';
-            resultadoContenedor.innerHTML = 'Enviando registro de mercancía...';
+            resultado.textContent = 'Enviando registro...';
 
             try {
                 const response = await fetch('/api/ingresos-mercancia', {
@@ -134,37 +155,18 @@
                 } catch {}
 
                 if (response.ok) {
-                    resultadoContenedor.style.backgroundColor = '#d4edda';
-                    resultadoContenedor.style.border = '1px solid #c3e6cb';
-                    resultadoContenedor.style.color = '#155724';
-                    resultadoContenedor.innerHTML = `<strong>[OK] Ingreso registrado exitosamente</strong><br>` +
-                        `Centro de Distribución ID: ${centroDistribucionId}<br>` +
-                        `Producto ID: ${productoId}<br>` +
-                        `Cantidad ingresada: ${cantidad} unidades<br>` +
-                        `Origen: ${origen}`;
+                    resultado.textContent = `[OK] Ingreso registrado exitosamente. CD: ${centroDistribucionId}, Producto: ${productoId}, Cantidad: ${cantidad}`;
                     form.reset();
                     cargarCentrosDistribucion();
                 } else {
-                    resultadoContenedor.style.backgroundColor = '#f8d7da';
-                    resultadoContenedor.style.border = '1px solid #f5c6cb';
-                    resultadoContenedor.style.color = '#721c24';
-                    resultadoContenedor.innerHTML = `<strong>[Error ${response.status}]:</strong> ` +
-                        (data?.error || data?.message || responseText || 'No se pudo registrar el ingreso.');
+                    resultado.textContent = `[Error ${response.status}] ` + (data?.error || data?.message || responseText || 'No se pudo registrar el ingreso.');
                 }
             } catch (err) {
-                resultadoContenedor.style.backgroundColor = '#f8d7da';
-                resultadoContenedor.style.border = '1px solid #f5c6cb';
-                resultadoContenedor.style.color = '#721c24';
-                resultadoContenedor.innerHTML = '<strong>[Error de conexion]:</strong> No se pudo comunicar con el servidor.';
+                resultado.textContent = '[Error] No se pudo comunicar con el servidor.';
             }
         });
 
-        cargarCentrosDistribucion();
-
-        document.getElementById('logout').addEventListener('click', async () => {
-            await supabaseClient.auth.signOut();
-            window.location.href = '/';
-        });
+        cargarPerfil();
     </script>
 </body>
 

@@ -4,120 +4,215 @@
 <head>
     <meta charset="UTF-8">
     <title>Inventario de Tienda</title>
-    <style>
-        .stock-alerta {
-            background-color: #ffe6e6;
-            color: #cc0000;
-            font-weight: bold;
-        }
-        .badge-alerta {
-            background-color: #dc3545;
-            color: white;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.85em;
-        }
-        .badge-normal {
-            background-color: #28a745;
-            color: white;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.85em;
-        }
-    </style>
 </head>
 
 <body>
-    <p>
+    <p id="nav-bar">
         <a href="/main.html">Inicio</a> |
-        <a href="/admin.html">Usuarios</a> |
-        <a href="/tiendas.html">Tiendas</a> |
-        <a href="/centros-distribucion.html">Centros de Distribución</a> |
-        <a href="/inventario.html">Inventario Tienda</a> |
-        <a href="/ingreso-mercancia.html">Ingreso Mercancía CD</a>
+        <span id="nav-usuarios"><a href="/admin.html">Usuarios</a> | </span>
+        <span id="nav-tiendas"><a href="/tiendas.html">Tiendas</a> | </span>
+        <span id="nav-cds"><a href="/centros-distribucion.html">Centros de Distribución</a> | </span>
+        <span id="nav-inventario"><a href="/inventario.html">Inventario Tienda</a> | </span>
+        <span id="nav-ingreso"><a href="/ingreso-mercancia.html">Ingreso Mercancía CD</a></span>
         &nbsp;&nbsp;&nbsp;
         <button id="logout" type="button">Cerrar sesión</button>
     </p>
 
-    <h1>Consulta de Inventario de Tienda</h1>
+    <h1>Inventario de Tienda</h1>
+    <p id="user-info">Identificando usuario...</p>
+
+    <div>
+        <label>
+            Tienda:
+            <select id="select-tienda">
+                <option value="">Cargando tiendas...</option>
+            </select>
+        </label>
+        <button type="button" id="btn-recargar-tiendas">Actualizar Tiendas</button>
+    </div>
+
+    <br>
+
+    <details id="panel-nuevo-producto">
+        <summary>Agregar / Crear Producto en esta Tienda</summary>
+        <form id="form-nuevo-producto">
+            <br>
+            <label>
+                Nombre del Producto:
+                <input id="nuevo-nombre" required placeholder="Ej: Arroz 1kg">
+            </label>
+            <br><br>
+            <label>
+                Categoría:
+                <select id="nuevo-categoria">
+                    <option value="Abarrotes">Abarrotes</option>
+                    <option value="Granos">Granos</option>
+                    <option value="Bebidas">Bebidas</option>
+                    <option value="Lácteos">Lácteos</option>
+                    <option value="Aseo">Aseo</option>
+                </select>
+            </label>
+            <br><br>
+            <label>
+                Cantidad Inicial:
+                <input id="nuevo-cantidad" type="number" min="0" value="10" required>
+            </label>
+            <br><br>
+            <label>
+                Stock Mínimo:
+                <input id="nuevo-stock-minimo" type="number" min="1" value="15" required>
+            </label>
+            <br><br>
+            <button type="submit">Guardar Producto</button>
+            <span id="mensaje-crear"></span>
+        </form>
+    </details>
+
+    <br>
 
     <form id="filtro-form">
         <label>
-            ID de Tienda (*):
-            <input id="tiendaId" type="number" required placeholder="Ej: 1">
+            Nombre:
+            <input id="nombre" placeholder="Buscar por nombre...">
         </label>
-        <br><br>
+        &nbsp;
         <label>
-            Filtrar por Nombre:
-            <input id="nombre" type="text" placeholder="Ej: Arroz">
+            Categoría:
+            <input id="categoria" placeholder="Ej: Granos">
         </label>
-        <br><br>
+        &nbsp;
         <label>
-            Filtrar por Categoría:
-            <input id="categoria" type="text" placeholder="Ej: Granos">
-        </label>
-        <br><br>
-        <label>
-            Filtrar por ID de Producto:
+            ID Producto:
             <input id="productoId" type="number" placeholder="Ej: 10">
         </label>
-        <br><br>
-        <button type="submit">Consultar Inventario</button>
-        <button type="button" id="btn-limpiar">Limpiar Filtros</button>
+        &nbsp;
+        <button type="submit">Buscar</button>
+        <button type="button" id="btn-limpiar">Limpiar</button>
     </form>
 
     <p id="mensaje-estado"></p>
 
-    <h2>Nivel de Inventario</h2>
+    <h2>Lista de Productos</h2>
     <table border="1" cellpadding="6" cellspacing="0">
         <thead>
             <tr>
-                <th>ID Inventario</th>
-                <th>ID Producto</th>
-                <th>Nombre del Producto</th>
+                <th>ID</th>
+                <th>ID Prod.</th>
+                <th>Nombre</th>
                 <th>Categoría</th>
-                <th>Cantidad Actual</th>
-                <th>Stock Mínimo</th>
-                <th>Estado de Stock</th>
+                <th>Cantidad</th>
+                <th>Stock Mín.</th>
+                <th>Estado</th>
+                <th>Ajustar Stock</th>
             </tr>
         </thead>
         <tbody id="tabla-inventario-body">
             <tr>
-                <td colspan="7">Ingrese el ID de una tienda y presione Consultar.</td>
+                <td colspan="8">Seleccione una tienda para consultar.</td>
             </tr>
         </tbody>
     </table>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="/config.js"></script>
+    <script src="/nav.js"></script>
     <script>
-        const supabaseClient = window.supabase.createClient(
-            window.APP_CONFIG.supabaseUrl,
-            window.APP_CONFIG.supabaseAnonKey
-        );
+        let itemsInventario = [];
+        let tiendaSeleccionadaId = null;
 
-        const form = document.getElementById('filtro-form');
+        const selectTienda = document.getElementById('select-tienda');
         const mensajeEstado = document.getElementById('mensaje-estado');
         const tbody = document.getElementById('tabla-inventario-body');
+        const userInfo = document.getElementById('user-info');
+        const mensajeCrear = document.getElementById('mensaje-crear');
 
         async function getToken() {
-            const { data } = await supabaseClient.auth.getSession();
-            const token = data.session?.access_token;
-            if (!token) {
-                window.location.href = '/';
-                return null;
+            return window.OptiWay.getToken();
+        }
+
+        let usuarioActual = null;
+
+        async function cargarPerfilUsuario() {
+            const authData = await window.OptiWay.initNav({
+                rolesPermitidos: ['ADMINISTRADOR', 'PLANIFICADOR', 'ENCARGADO_TIENDA']
+            });
+            if (!authData) return;
+
+            usuarioActual = authData.usuario;
+            userInfo.textContent = `Sesión: ${usuarioActual.nombre} (${usuarioActual.rol})`;
+            await cargarTiendas();
+        }
+
+        async function cargarTiendas() {
+            const token = await getToken();
+            if (!token) return;
+
+            selectTienda.innerHTML = '<option value="">Cargando tiendas...</option>';
+
+            try {
+                const response = await fetch('/api/tiendas', {
+                    headers: { Authorization: 'Bearer ' + token }
+                });
+
+                if (!response.ok) {
+                    selectTienda.innerHTML = '<option value="">Error al cargar tiendas</option>';
+                    return;
+                }
+
+                const tiendas = await response.json();
+                if (tiendas.length === 0) {
+                    selectTienda.innerHTML = '<option value="">No hay tiendas registradas</option>';
+                    return;
+                }
+
+                // Si es ENCARGADO_TIENDA, aislar estrictamente a su tienda asignada
+                if (usuarioActual && usuarioActual.rol === 'ENCARGADO_TIENDA') {
+                    const misTiendas = tiendas.filter(t => t.encargadoId === usuarioActual.id);
+                    if (misTiendas.length === 0) {
+                        selectTienda.innerHTML = '<option value="">[Sin tienda asignada]</option>';
+                        selectTienda.disabled = true;
+                        btnRecargarTiendas.disabled = true;
+                        const panel = document.getElementById('panel-nuevo-producto');
+                        if (panel) panel.style.display = 'none';
+                        tbody.innerHTML = '<tr><td colspan="8">[Aviso] No tienes ninguna tienda asignada actualmente. Contacta al Administrador.</td></tr>';
+                        return;
+                    }
+
+                    selectTienda.innerHTML = misTiendas.map(t =>
+                        `<option value="${t.id}">${t.codigo ? t.codigo + ' - ' : ''}${t.nombre}</option>`
+                    ).join('');
+                    selectTienda.value = misTiendas[0].id;
+                    tiendaSeleccionadaId = misTiendas[0].id;
+                    if (misTiendas.length === 1) {
+                        selectTienda.disabled = true; // No puede seleccionar otra
+                    }
+                    consultarInventario();
+                    return;
+                }
+
+                // Para ADMINISTRADOR o PLANIFICADOR (acceso global a todas las tiendas)
+                selectTienda.innerHTML = '<option value="">-- Seleccione una tienda --</option>' +
+                    tiendas.map(t => `<option value="${t.id}">${t.codigo ? t.codigo + ' - ' : ''}${t.nombre}</option>`).join('');
+
+                if (tiendas.length > 0) {
+                    selectTienda.value = tiendas[0].id;
+                    tiendaSeleccionadaId = tiendas[0].id;
+                    consultarInventario();
+                }
+            } catch (err) {
+                selectTienda.innerHTML = '<option value="">Error de conexión</option>';
             }
-            return token;
         }
 
         async function consultarInventario() {
             const token = await getToken();
             if (!token) return;
 
-            const tiendaId = document.getElementById('tiendaId').value.trim();
+            const tiendaId = selectTienda.value;
+            tiendaSeleccionadaId = tiendaId;
+
             if (!tiendaId) {
-                mensajeEstado.textContent = 'Por favor indique un ID de Tienda.';
-                mensajeEstado.style.color = 'red';
+                tbody.innerHTML = '<tr><td colspan="8">Seleccione una tienda.</td></tr>';
                 return;
             }
 
@@ -132,7 +227,6 @@
             if (productoId) params.append('productoId', productoId);
 
             mensajeEstado.textContent = 'Consultando inventario...';
-            mensajeEstado.style.color = 'blue';
 
             try {
                 const response = await fetch('/api/inventario?' + params.toString(), {
@@ -142,53 +236,124 @@
                 if (response.status === 403) {
                     const error = await response.json().catch(() => ({}));
                     mensajeEstado.textContent = '[Acceso Denegado] ' + (error.error || 'No tiene permisos para consultar esta tienda.');
-                    mensajeEstado.style.color = 'red';
-                    tbody.innerHTML = '<tr><td colspan="7" style="color:red;">Acceso bloqueado por falta de permisos.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="8">Acceso bloqueado por permisos.</td></tr>';
                     return;
                 }
 
                 if (!response.ok) {
                     const error = await response.json().catch(() => ({}));
-                    mensajeEstado.textContent = '[Error] ' + (error.error || error.message || 'Error al consultar inventario.');
-                    mensajeEstado.style.color = 'red';
-                    tbody.innerHTML = '<tr><td colspan="7">No se pudo obtener el inventario.</td></tr>';
+                    mensajeEstado.textContent = '[Error] ' + (error.error || error.message || 'Error al obtener inventario.');
+                    tbody.innerHTML = '<tr><td colspan="8">No se pudo obtener el inventario.</td></tr>';
                     return;
                 }
 
-                const inventarios = await response.json();
-                mensajeEstado.textContent = `Consulta realizada. ${inventarios.length} registro(s) encontrado(s).`;
-                mensajeEstado.style.color = 'green';
-
-                if (inventarios.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7">No hay productos en inventario para los criterios indicados.</td></tr>';
-                    return;
-                }
-
-                tbody.innerHTML = inventarios.map(item => {
-                    const esBajo = item.stockBajo || (item.cantidadActual < item.stockMinimo);
-                    const filaClase = esBajo ? 'class="stock-alerta"' : '';
-                    const badge = esBajo
-                        ? '<span class="badge-alerta">! Stock Bajo</span>'
-                        : '<span class="badge-normal">OK Normal</span>';
-
-                    return `<tr ${filaClase}>
-                        <td>${item.id ?? '-'}</td>
-                        <td>${item.productoId ?? '-'}</td>
-                        <td>${item.nombreProducto ?? 'Producto #' + item.productoId}</td>
-                        <td>${item.categoriaProducto ?? 'General'}</td>
-                        <td><strong>${item.cantidadActual}</strong></td>
-                        <td>${item.stockMinimo}</td>
-                        <td>${badge}</td>
-                    </tr>`;
-                }).join('');
+                itemsInventario = await response.json();
+                mensajeEstado.textContent = `Registros encontrados: ${itemsInventario.length}`;
+                renderTabla();
 
             } catch (err) {
-                mensajeEstado.textContent = 'Error de conexión con el servidor.';
-                mensajeEstado.style.color = 'red';
+                mensajeEstado.textContent = '[Error] Falló la conexión con el servidor.';
             }
         }
 
-        form.addEventListener('submit', (e) => {
+        function renderTabla() {
+            if (itemsInventario.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8">No hay productos en inventario para esta tienda.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = itemsInventario.map((item, index) => {
+                const esBajo = item.stockBajo || (item.cantidadActual < item.stockMinimo);
+                const estadoTexto = esBajo ? '[! Stock Bajo]' : '[OK Normal]';
+
+                return `<tr>
+                    <td>${item.id ?? (index + 1)}</td>
+                    <td>${item.productoId ?? '-'}</td>
+                    <td>${item.nombreProducto ?? 'Producto #' + item.productoId}</td>
+                    <td>${item.categoriaProducto ?? 'General'}</td>
+                    <td><strong>${item.cantidadActual}</strong></td>
+                    <td>${item.stockMinimo}</td>
+                    <td>${estadoTexto}</td>
+                    <td>
+                        <button type="button" onclick="ajustarStock(${index}, -1)">-</button>
+                        <button type="button" onclick="ajustarStock(${index}, 1)">+</button>
+                        <button type="button" onclick="modificarStockDirecto(${index})">Fijar</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function ajustarStock(index, delta) {
+            const item = itemsInventario[index];
+            const nuevaCantidad = item.cantidadActual + delta;
+
+            if (nuevaCantidad < 0) {
+                alert('El stock no puede ser negativo.');
+                return;
+            }
+
+            item.cantidadActual = nuevaCantidad;
+            item.stockBajo = item.cantidadActual < item.stockMinimo;
+            renderTabla();
+        }
+
+        function modificarStockDirecto(index) {
+            const item = itemsInventario[index];
+            const entrada = prompt(`Nueva cantidad para "${item.nombreProducto}":`, item.cantidadActual);
+            if (entrada === null) return;
+
+            const parsed = parseInt(entrada);
+            if (isNaN(parsed) || parsed < 0) {
+                alert('Ingrese un número mayor o igual a cero.');
+                return;
+            }
+
+            item.cantidadActual = parsed;
+            item.stockBajo = item.cantidadActual < item.stockMinimo;
+            renderTabla();
+        }
+
+        document.getElementById('form-nuevo-producto').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            if (!tiendaSeleccionadaId) {
+                alert('Debe seleccionar una tienda primero.');
+                return;
+            }
+
+            const nombre = document.getElementById('nuevo-nombre').value.trim();
+            const categoria = document.getElementById('nuevo-categoria').value;
+            const cantidad = parseInt(document.getElementById('nuevo-cantidad').value);
+            const stockMinimo = parseInt(document.getElementById('nuevo-stock-minimo').value);
+
+            const nuevoItem = {
+                id: itemsInventario.length + 1,
+                tiendaId: parseInt(tiendaSeleccionadaId),
+                productoId: itemsInventario.length + 101,
+                nombreProducto: nombre,
+                categoriaProducto: categoria,
+                cantidadActual: cantidad,
+                stockMinimo: stockMinimo,
+                stockBajo: cantidad < stockMinimo
+            };
+
+            itemsInventario.unshift(nuevoItem);
+            renderTabla();
+
+            mensajeCrear.textContent = ` [OK] Guardado: ${nombre}`;
+            document.getElementById('form-nuevo-producto').reset();
+            setTimeout(() => { mensajeCrear.textContent = ''; }, 3000);
+        });
+
+        selectTienda.addEventListener('change', () => {
+            consultarInventario();
+        });
+
+        document.getElementById('btn-recargar-tiendas').addEventListener('click', () => {
+            cargarTiendas();
+        });
+
+        document.getElementById('filtro-form').addEventListener('submit', (e) => {
             e.preventDefault();
             consultarInventario();
         });
@@ -200,10 +365,7 @@
             consultarInventario();
         });
 
-        document.getElementById('logout').addEventListener('click', async () => {
-            await supabaseClient.auth.signOut();
-            window.location.href = '/';
-        });
+        cargarPerfilUsuario();
     </script>
 </body>
 

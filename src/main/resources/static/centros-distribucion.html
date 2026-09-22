@@ -7,13 +7,13 @@
 </head>
 
 <body>
-    <p>
+    <p id="nav-bar">
         <a href="/main.html">Inicio</a> |
-        <a href="/admin.html">Usuarios</a> |
-        <a href="/tiendas.html">Tiendas</a> |
-        <a href="/centros-distribucion.html">Centros de Distribución</a> |
-        <a href="/inventario.html">Inventario Tienda</a> |
-        <a href="/ingreso-mercancia.html">Ingreso Mercancía CD</a>
+        <span id="nav-usuarios"><a href="/admin.html">Usuarios</a> | </span>
+        <span id="nav-tiendas"><a href="/tiendas.html">Tiendas</a> | </span>
+        <span id="nav-cds"><a href="/centros-distribucion.html">Centros de Distribución</a> | </span>
+        <span id="nav-inventario"><a href="/inventario.html">Inventario Tienda</a> | </span>
+        <span id="nav-ingreso"><a href="/ingreso-mercancia.html">Ingreso Mercancía CD</a></span>
         &nbsp;&nbsp;&nbsp;
         <button id="logout" type="button">Cerrar sesión</button>
     </p>
@@ -34,6 +34,13 @@
         <label>
             Capacidad
             <input id="capacidad" type="number" required>
+        </label>
+        <br><br>
+        <label>
+            Encargado de CD Asignado:
+            <select id="encargadoId">
+                <option value="">-- Sin asignar --</option>
+            </select>
         </label>
         <br><br>
         <fieldset style="max-width: 500px;">
@@ -58,6 +65,7 @@
                 <th>Nombre</th>
                 <th>Dirección</th>
                 <th>Capacidad</th>
+                <th>Encargado</th>
                 <th>Tiendas Abastecidas (IDs)</th>
             </tr>
         </thead>
@@ -66,25 +74,37 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="/config.js"></script>
+    <script src="/nav.js"></script>
     <script>
-        const supabaseClient = window.supabase.createClient(
-            window.APP_CONFIG.supabaseUrl,
-            window.APP_CONFIG.supabaseAnonKey
-        );
-
         const form = document.getElementById('cd-form');
         const resultado = document.getElementById('resultado');
         const tbody = document.getElementById('tabla-centros-body');
         const contenedorTiendas = document.getElementById('contenedor-tiendas');
+        const selectEncargado = document.getElementById('encargadoId');
+        let usuariosGlobal = [];
+        let usuarioActual = null;
 
         async function getToken() {
-            const { data } = await supabaseClient.auth.getSession();
-            const token = data.session?.access_token;
-            if (!token) {
-                window.location.href = '/';
-                return null;
+            return window.OptiWay.getToken();
+        }
+
+        async function cargarEncargados() {
+            const token = await getToken();
+            if (!token) return;
+
+            try {
+                const res = await fetch('/api/usuarios', {
+                    headers: { Authorization: 'Bearer ' + token }
+                });
+                if (res.ok) {
+                    usuariosGlobal = await res.json();
+                    const encargados = usuariosGlobal.filter(u => u.rol === 'ENCARGADO_CD');
+                    selectEncargado.innerHTML = '<option value="">-- Sin asignar --</option>' +
+                        encargados.map(e => `<option value="${e.id}">${e.nombre} (${e.email})</option>`).join('');
+                }
+            } catch (err) {
+                console.error('Error cargando encargados de CD:', err);
             }
-            return token;
         }
 
         async function cargarTiendasParaSeleccionar() {
@@ -127,6 +147,7 @@
 
             const checks = document.querySelectorAll('input[name="tiendaSeleccionada"]:checked');
             const tiendasIds = Array.from(checks).map(cb => parseInt(cb.value, 10));
+            const encargadoIdVal = parseInt(selectEncargado.value, 10);
 
             const response = await fetch('/api/centros-distribucion', {
                 method: 'POST',
@@ -138,14 +159,19 @@
                     nombre: document.getElementById('nombre').value,
                     direccion: document.getElementById('direccion').value,
                     capacidad: parseInt(document.getElementById('capacidad').value, 10),
+                    encargadoId: isNaN(encargadoIdVal) ? null : encargadoIdVal,
                     tiendasAbastecidasIds: tiendasIds
                 })
             });
 
-            resultado.textContent = await response.text();
-            form.reset();
-            cargarTiendasParaSeleccionar();
-            cargarCentros();
+            if (response.ok) {
+                resultado.textContent = '[OK] Centro de distribución creado exitosamente.';
+                form.reset();
+                cargarTiendasParaSeleccionar();
+                cargarCentros();
+            } else {
+                resultado.textContent = '[Error] ' + await response.text();
+            }
         });
 
         async function cargarCentros() {
@@ -157,37 +183,65 @@
             });
 
             if (!response.ok) {
-                tbody.innerHTML = '<tr><td colspan="6">Error al cargar centros</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7">Error al cargar centros</td></tr>';
                 return;
             }
 
             const centros = await response.json();
-            if (centros.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6">No hay centros registrados.</td></tr>';
+
+            let centrosAMostrar = centros;
+            if (usuarioActual && usuarioActual.rol === 'ENCARGADO_CD') {
+                centrosAMostrar = centros.filter(cd => cd.encargadoId === usuarioActual.id);
+            }
+
+            if (centrosAMostrar.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7">' +
+                    (usuarioActual && usuarioActual.rol === 'ENCARGADO_CD'
+                        ? '[Aviso] No tienes ningún Centro de Distribución asignado actualmente. Contacta al Administrador.'
+                        : 'No hay centros registrados.') +
+                    '</td></tr>';
                 return;
             }
 
-            tbody.innerHTML = centros.map(cd =>
-                `<tr>
+            tbody.innerHTML = centrosAMostrar.map(cd => {
+                const encargado = usuariosGlobal.find(u => u.id === cd.encargadoId);
+                const encargadoTexto = encargado ? `${encargado.nombre} (${encargado.email})` : '[Sin Asignar]';
+
+                return `<tr>
                     <td>${cd.id}</td>
                     <td>${cd.codigo || '-'}</td>
                     <td>${cd.nombre}</td>
                     <td>${cd.direccion}</td>
                     <td>${cd.capacidad}</td>
+                    <td>${encargadoTexto}</td>
                     <td>${cd.tiendasAbastecidasIds?.length ? cd.tiendasAbastecidasIds.join(', ') : 'Ninguna'}</td>
-                </tr>`
-            ).join('');
+                </tr>`;
+            }).join('');
         }
 
         document.getElementById('btn-cargar').addEventListener('click', cargarCentros);
 
-        cargarTiendasParaSeleccionar();
-        cargarCentros();
+        async function init() {
+            const authData = await window.OptiWay.initNav({
+                rolesPermitidos: ['ADMINISTRADOR', 'PLANIFICADOR', 'ENCARGADO_CD']
+            });
 
-        document.getElementById('logout').addEventListener('click', async () => {
-            await supabaseClient.auth.signOut();
-            window.location.href = '/';
-        });
+            if (authData) {
+                usuarioActual = authData.usuario;
+
+                // Solo el ADMINISTRADOR puede crear Centros de Distribución
+                if (usuarioActual.rol !== 'ADMINISTRADOR') {
+                    document.getElementById('cd-form').style.display = 'none';
+                    document.querySelector('h1').style.display = 'none';
+                }
+
+                await cargarEncargados();
+                await cargarTiendasParaSeleccionar();
+                await cargarCentros();
+            }
+        }
+
+        init();
     </script>
 </body>
 
