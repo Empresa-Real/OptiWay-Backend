@@ -24,84 +24,50 @@ Un usuario con rol `ENCARGADO_CD` solo debe consultar centros de distribucion as
 
 El backend debe aplicar este filtro en cada consulta. No es suficiente ocultar botones o filas en el frontend.
 
-## Implementado actualmente
+## Implementado actualmente (Fix 5)
 
+### 1. Autenticación y Redirección por Rol
 - Login con correo y contraseña mediante Supabase Auth.
-- Validacion de JWT en Spring Security.
-- Relacion entre `auth.users.id` y `usuarios.auth_user_id`.
-- Endpoint autenticado `GET /api/usuarios/me`.
-- Busqueda del rol local mediante el claim `sub` del JWT.
-- Redireccion de `ADMINISTRADOR` a `admin.html`.
-- Usuarios con otros roles permanecen en `main.html`.
-- Creacion de usuarios restringida a un usuario cuyo rol local sea `ADMINISTRADOR`.
+- Validación de JWT en Spring Security (`sub` claim).
+- Relación entre `auth.users.id` y `usuarios.auth_user_id`.
+- Endpoint autenticado `GET /api/usuarios/me` para obtener el rol y datos del usuario local.
+- **Redirección automática inmediata tras login**:
+  - `ADMINISTRADOR` $\rightarrow$ `/admin.html`
+  - `PLANIFICADOR` $\rightarrow$ `/main.html`
+  - `ENCARGADO_TIENDA` $\rightarrow$ `/inventario.html`
+  - `ENCARGADO_CD` $\rightarrow$ `/ingreso-mercancia.html`
+- Componente compartido `nav.js` (`window.OptiWay.initNav`):
+  - Verifica sesión con Supabase.
+  - Valida permisos por vista (`rolesPermitidos`). Si no está autorizado, alerta `[Acceso Denegado]` y redirige.
+  - Construye el navbar dinámico mostrando únicamente los enlaces autorizados.
+  - Gestiona el cierre de sesión (`signOut`).
 
-## Pendiente de HU-29
+### 2. Aislamiento por Ubicación (Backend y Frontend)
+- **`ENCARGADO_TIENDA`**:
+  - Backend: `GET /api/tiendas` filtra por `encargadoId == usuario.id`. Si intenta consultar inventario ajeno (`GET /api/inventario`), el backend responde `403 Forbidden`.
+  - Frontend: Selectores en `inventario.html` y tabla en `tiendas.html` limitados exclusivamente a sus tiendas asignadas.
+- **`ENCARGADO_CD`**:
+  - Backend: `GET /api/centros-distribucion` filtra por `encargadoId == usuario.id`. Si intenta registrar ingresos en un CD ajeno (`POST /api/ingresos-mercancia`), el backend responde `403 Forbidden`.
+  - Frontend: Selectores en `ingreso-mercancia.html` y tabla en `centros-distribucion.html` limitados a su CD asignado.
 
-### Paneles por rol
+### 3. Restricciones y Capacidades del Planificador
+- **Visualización Global**: Puede consultar toda la red de tiendas, centros de distribución e inventarios para tareas logísticas.
+- **Restricción Estricta**:
+  - No puede ver la lista de usuarios: `GET /api/usuarios` responde `403 Forbidden` (`AccesoDenegadoException`).
+  - No puede crear ni eliminar usuarios: `POST /api/usuarios` y `DELETE /api/usuarios/{id}` responden `403 Forbidden`.
+  - No puede crear tiendas ni CDs: `POST /api/tiendas` y `POST /api/centros-distribucion` responden `403 Forbidden`. Formularios ocultos en UI.
+  - No puede asignar encargados a sedes: `PUT /api/tiendas/{id}/encargado` y `PUT /api/centros-distribucion/{id}/encargado` responden `403 Forbidden`.
 
-Crear las vistas y endpoints propios de cada rol:
+### 4. Gestión del Administrador
+- Panel interactivo en `admin.html`:
+  - Listado de usuarios con visualización clara de sus sedes asignadas (soporta múltiples tiendas/CDs con viñetas).
+  - Asignación/reasignación interactiva de Tiendas y Centros (`PUT /{id}/encargado`).
+  - Actualización de roles de usuario (`PATCH /api/usuarios/{id}/rol`).
+  - Creación de usuarios con invitación por correo (y fallback automático si el usuario ya preexiste en Supabase Auth ante rate limits `429`).
 
-- `admin.html`: administracion de usuarios, productos, tiendas y centros.
-- Panel de `ENCARGADO_TIENDA`.
-- Panel de `ENCARGADO_CD`.
-- Panel de `PLANIFICADOR`.
+---
 
-### Ubicaciones y asignaciones
-
-Actualmente no existen en el modelo las entidades necesarias para filtrar por ubicacion. Se necesitan otras HU para definir:
-
-- Tiendas.
-- Centros de distribucion.
-- Relacion usuario-tienda.
-- Relacion usuario-centro de distribucion.
-- Creacion y edicion de asignaciones.
-
-El modelo recomendado es:
-
-```text
-usuarios
-  |
-  +-- usuario_tienda -- tiendas
-  |
-  +-- usuario_centro_distribucion -- centros_distribucion
-```
-
-Las tablas de asignacion deben tener restricciones unicas para evitar duplicados y claves foraneas hacia usuarios y ubicaciones.
-
-### Autorizacion por rol y ubicacion
-
-Cuando existan esas tablas, cada caso de uso debera recibir la identidad autenticada o un contexto de seguridad derivado del JWT. El servicio debe aplicar reglas como:
-
-```text
-ADMINISTRADOR
-  puede consultar y administrar todo
-
-ENCARGADO_TIENDA
-  solo puede consultar sus tiendas asignadas
-
-ENCARGADO_CD
-  solo puede consultar sus centros asignados
-
-PLANIFICADOR
-  puede acceder a las funciones de planificacion definidas por su HU
-```
-
-Nunca se debe aceptar `usuarioId`, `tiendaId` o `centroId` como prueba de permisos enviada por el cliente. El backend debe obtener la identidad del JWT y comprobar la asignacion en la base de datos.
-
-## Dependencias con otras HU
-
-HU-29 depende de que se definan previamente:
-
-- Modelo definitivo de tiendas.
-- Modelo definitivo de centros de distribucion.
-- Reglas de asignacion de encargados.
-- Funcionalidades de productos y planificacion.
-- Paneles frontend por rol.
-- Datos iniciales del administrador y de las ubicaciones.
-
-Por eso, la parte de login y resolucion de rol puede probarse ahora, pero la restriccion por ubicacion no debe darse por terminada hasta que existan las tablas, puertos, adaptadores, servicios y pruebas de asignacion.
-
-## Flujo de sesion
+## Flujo de Sesión y Seguridad
 
 ```text
 Usuario abre /
@@ -110,29 +76,32 @@ Supabase Auth valida correo y contraseña
   ↓
 Supabase devuelve access_token (JWT)
   ↓
-Frontend consulta /api/usuarios/me con Bearer token
+Frontend llama window.OptiWay.initNav({ rolesPermitidos })
+  ↓
+Consulta /api/usuarios/me con Bearer token
   ↓
 Spring Security valida firma, emisor y expiracion
   ↓
-Backend lee JWT.sub
+Backend lee JWT.sub y devuelve usuario local con rol
   ↓
-Busca usuarios.auth_user_id
-  ↓
-Devuelve rol local
-  ↓
-Frontend redirige o muestra el panel correspondiente
+Frontend verifica si el rol está en rolesPermitidos:
+  - Si NO: Alerta [Acceso Denegado] y redirige a su panel natural
+  - Si SÍ: Renderiza navbar dinámico y carga vista
 ```
 
-Si el token falta o vencio, la API responde `401 Unauthorized`. Si el token es valido pero el usuario no tiene permisos para la operacion, responde `403 Forbidden`.
+Si el token falta o expiró, la API responde `401 Unauthorized`. Si el usuario no tiene permisos para la operación o la ubicación, responde `403 Forbidden`.
 
-## Pruebas pendientes
+---
 
-- Login valido de un administrador.
-- Login valido de cada rol.
-- Redireccion del administrador a `admin.html`.
-- Permanencia de usuarios normales en `main.html`.
-- Usuario autenticado sin fila local.
-- Token vencido.
-- Encargado consultando una ubicacion no asignada.
-- Encargado consultando una ubicacion asignada.
-- Intento de manipular IDs de usuario o ubicacion desde el frontend.
+## Pruebas de Aceptación Verificadas
+
+- [x] Login válido de Administrador $\rightarrow$ Redirección a `admin.html`.
+- [x] Login válido de Encargado de Tienda $\rightarrow$ Redirección a `inventario.html`.
+- [x] Login válido de Encargado de CD $\rightarrow$ Redirección a `ingreso-mercancia.html`.
+- [x] Login válido de Planificador $\rightarrow$ Redirección a `main.html`.
+- [x] Encargado de Tienda solo ve su tienda asignada (tanto en backend como en frontend).
+- [x] Encargado de CD solo ve su CD asignado (tanto en backend como en frontend).
+- [x] Planificador tiene prohibido el acceso a gestión de usuarios (backend `403` y frontend oculto).
+- [x] Planificador tiene prohibida la creación de tiendas y centros (backend `403` y frontend oculto).
+- [x] Administrador asigna y reasigna tiendas y CDs a usuarios.
+- [x] Administrador actualiza roles de usuarios en caliente.

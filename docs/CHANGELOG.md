@@ -1,5 +1,33 @@
 # Changelog
 
+## 2026-09-22
+
+### Added
+
+- **HU-29 (Iniciar Sesión según Rol Asignado y Control por Ubicación - Fix 5):**
+  - **Redirección por Rol en Frontend**: Enrutamiento automático inmediato tras autenticación según el rol resuelto (`ADMINISTRADOR` $\rightarrow$ `admin.html`, `PLANIFICADOR` $\rightarrow$ `main.html`, `ENCARGADO_TIENDA` $\rightarrow$ `inventario.html`, `ENCARGADO_CD` $\rightarrow$ `ingreso-mercancia.html`).
+  - **Componente Centralizado `nav.js`**: Abstracción de sesión con Supabase (`getToken()`), validación de acceso (`rolesPermitidos`), alertas de acceso denegado y renderizado dinámico de enlaces de navegación por rol.
+  - **Aislamiento Estricto por Ubicación (Backend y Frontend)**:
+    - En `TiendaService`: `GET /api/tiendas` filtra por `encargadoId == usuario.id` para `ENCARGADO_TIENDA`.
+    - En `CentroDistribucionService`: `GET /api/centros-distribucion` filtra por `encargadoId == usuario.id` para `ENCARGADO_CD`.
+    - En `InventarioService`: `GET /api/inventario` rechaza consultas a tiendas no asignadas (`403 Forbidden`).
+    - En `IngresoMercanciaService`: `POST /api/ingresos-mercancia` rechaza ingresos a CDs no asignados (`403 Forbidden`).
+  - **Protección y Restricciones para Planificador**:
+    - Backend prohíbe `GET /api/usuarios`, `POST /api/usuarios`, `DELETE /api/usuarios/{id}`, `PATCH /api/usuarios/{id}/rol`, `POST /api/tiendas`, `PUT /api/tiendas/{id}/encargado`, `POST /api/centros-distribucion` y `PUT /api/centros-distribucion/{id}/encargado` con `403 Forbidden`.
+    - Frontend oculta los formularios de creación de tiendas y CDs para usuarios no administradores.
+  - **Gestión del Administrador**:
+    - Casos de uso `AsignarEncargadoTiendaUseCase` (`PUT /api/tiendas/{id}/encargado`) y `AsignarEncargadoCDUseCase` (`PUT /api/centros-distribucion/{id}/encargado`).
+    - Caso de uso `ActualizarRolUsuarioUseCase` (`PATCH /api/usuarios/{id}/rol`).
+    - Panel interactivo en `admin.html` con visualización de múltiples sedes asignadas con viñetas y asignación interactiva.
+  - **Resiliencia en Supabase Auth**:
+    - Corrección del parámetro query `redirect_to` en `/auth/v1/invite`.
+    - Fallback en `SupabaseAuthAdapter` para reutilizar cuentas preexistentes en Supabase Auth ante códigos `429 (over_email_send_rate_limit)` o `422`.
+
+### Fixed
+
+- **Cierre de Sesión en Admin**: Identificador `<p id="nav-bar">` restaurado y escucha incondicional del botón `#logout` en `nav.js`.
+- **Visibilidad Múltiple de Ubicaciones**: Reemplazo de `.find()` por `.filter()` en `admin.html` permitiendo listar y gestionar usuarios con 2 o más sedes asignadas.
+
 ## 2026-09-21
 
 ### Added
