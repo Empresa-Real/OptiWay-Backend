@@ -15,6 +15,7 @@ import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.domain.model.CentroDistribucion;
 import com.example.optiway.domain.model.IngresoMercancia;
 import com.example.optiway.domain.model.InventarioCentroDistribucion;
+import com.example.optiway.domain.model.Rol;
 import com.example.optiway.domain.model.Usuario;
 
 @Service
@@ -74,6 +75,16 @@ public class IngresoMercanciaService implements RegistrarIngresoMercanciaUseCase
                 .orElseThrow(() ->
                         new IllegalArgumentException(
                                 "Centro de distribución no encontrado"));
+
+        // Validar permisos sobre el centro de distribución
+        boolean esAdmin = usuario.getRol() == Rol.ADMINISTRADOR;
+        boolean esPlanificador = usuario.getRol() == Rol.PLANIFICADOR;
+        boolean esEncargado = usuario.getId() != null && usuario.getId().equals(centro.getEncargadoId());
+
+        if (!esAdmin && !esPlanificador && !esEncargado) {
+            throw new AccesoDenegadoException(
+                    "No tiene permisos para registrar ingresos en este Centro de Distribución");
+        }
 
         // 5. Verificar que exista el producto
         productoRepositoryPort

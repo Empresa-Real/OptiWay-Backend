@@ -32,6 +32,9 @@ public class CentroDistribucionJpaEntity {
     @Column(nullable = false)
     private Integer capacidad;
 
+    @Column(name = "encargado_id")
+    private Long encargadoId;
+
     @ManyToMany
     @JoinTable(
         name = "centro_distribucion_tiendas",
@@ -56,6 +59,9 @@ public class CentroDistribucionJpaEntity {
 
     public Integer getCapacidad() { return capacidad; }
     public void setCapacidad(Integer capacidad) { this.capacidad = capacidad; }
+
+    public Long getEncargadoId() { return encargadoId; }
+    public void setEncargadoId(Long encargadoId) { this.encargadoId = encargadoId; }
 
     public List<TiendaJpaEntity> getTiendasAbastecidas() { return tiendasAbastecidas; }
     public void setTiendasAbastecidas(List<TiendaJpaEntity> tiendasAbastecidas) { this.tiendasAbastecidas = tiendasAbastecidas; }

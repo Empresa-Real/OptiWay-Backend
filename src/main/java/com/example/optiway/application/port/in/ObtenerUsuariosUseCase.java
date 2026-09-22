@@ -7,4 +7,6 @@ public interface ObtenerUsuariosUseCase {
 
     List<Usuario> obtenerUsuarios();
 
+    List<Usuario> obtenerUsuarios(java.util.UUID authUserId);
+
 }

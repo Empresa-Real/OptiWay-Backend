@@ -6,6 +6,7 @@ public class CrearCentroDistribucionRequest {
     private String nombre;
     private String direccion;
     private Integer capacidad;
+    private Long encargadoId;
     private List<Long> tiendasAbastecidasIds;
 
     public String getNombre() { return nombre; }
@@ -16,6 +17,9 @@ public class CrearCentroDistribucionRequest {
 
     public Integer getCapacidad() { return capacidad; }
     public void setCapacidad(Integer capacidad) { this.capacidad = capacidad; }
+
+    public Long getEncargadoId() { return encargadoId; }
+    public void setEncargadoId(Long encargadoId) { this.encargadoId = encargadoId; }
 
     public List<Long> getTiendasAbastecidasIds() { return tiendasAbastecidasIds; }
     public void setTiendasAbastecidasIds(List<Long> tiendasAbastecidasIds) { this.tiendasAbastecidasIds = tiendasAbastecidasIds; }

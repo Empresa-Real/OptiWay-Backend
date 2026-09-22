@@ -7,6 +7,7 @@ import com.example.optiway.application.port.out.TiendaRepositoryPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.domain.model.Inventario;
 import com.example.optiway.domain.model.Producto;
+import com.example.optiway.domain.model.Rol;
 import com.example.optiway.domain.model.Tienda;
 import com.example.optiway.domain.model.Usuario;
 import org.springframework.stereotype.Service;
@@ -54,7 +55,11 @@ public class InventarioService implements ConsultarInventarioUseCase {
                         new AccesoDenegadoException(
                                 "La tienda no existe"));
 
-        if (!usuario.getId().equals(tienda.getEncargadoId())) {
+        boolean esAdmin = usuario.getRol() == Rol.ADMINISTRADOR;
+        boolean esPlanificador = usuario.getRol() == Rol.PLANIFICADOR;
+        boolean esEncargado = usuario.getId().equals(tienda.getEncargadoId());
+
+        if (!esAdmin && !esPlanificador && !esEncargado) {
             throw new AccesoDenegadoException(
                     "No tiene permisos para consultar esta tienda");
         }

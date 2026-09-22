@@ -5,5 +5,7 @@ import java.util.List;
 
 public interface CrearCentroDistribucionUseCase {
     CentroDistribucion crearCentroDistribucion(CentroDistribucion centroDistribucion);
+    CentroDistribucion crearCentroDistribucion(CentroDistribucion centroDistribucion, java.util.UUID authUserId);
     List<CentroDistribucion> listarCentrosDistribucion();
+    List<CentroDistribucion> listarCentrosDistribucion(java.util.UUID authUserId);
 }

@@ -49,6 +49,7 @@ public class CentroDistribucionRepositoryAdapter implements CentroDistribucionRe
         entity.setNombre(domain.getNombre());
         entity.setDireccion(domain.getDireccion());
         entity.setCapacidad(domain.getCapacidad());
+        entity.setEncargadoId(domain.getEncargadoId());
         if (domain.getTiendasAbastecidasIds() != null && !domain.getTiendasAbastecidasIds().isEmpty()) {
             entity.setTiendasAbastecidas(tiendaJpaRepository.findAllById(domain.getTiendasAbastecidasIds()));
         }
@@ -66,6 +67,7 @@ public class CentroDistribucionRepositoryAdapter implements CentroDistribucionRe
                 entity.getNombre(),
                 entity.getDireccion(),
                 entity.getCapacidad(),
+                entity.getEncargadoId(),
                 tiendaIds
         );
     }

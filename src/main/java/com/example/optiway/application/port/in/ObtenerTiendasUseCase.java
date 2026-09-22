@@ -5,4 +5,5 @@ import com.example.optiway.domain.model.Tienda;
 
 public interface ObtenerTiendasUseCase {
     List<Tienda> obtenerTiendas();
+    List<Tienda> obtenerTiendas(java.util.UUID authUserId);
 }

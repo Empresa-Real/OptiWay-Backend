@@ -5,22 +5,43 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import com.example.optiway.application.port.in.AsignarEncargadoTiendaUseCase;
 import com.example.optiway.application.port.in.CrearTiendaUseCase;
 import com.example.optiway.application.port.in.ObtenerTiendasUseCase;
 import com.example.optiway.application.port.out.TiendaRepositoryPort;
+import com.example.optiway.application.port.out.UsuarioRepositoryPort;
+import com.example.optiway.domain.model.Rol;
 import com.example.optiway.domain.model.Tienda;
+import com.example.optiway.domain.model.Usuario;
 
 @Service
-public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase {
+public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase, AsignarEncargadoTiendaUseCase {
 
     private final TiendaRepositoryPort tiendaRepositoryPort;
+    private final UsuarioRepositoryPort usuarioRepositoryPort;
 
-    public TiendaService(TiendaRepositoryPort tiendaRepositoryPort) {
+    public TiendaService(
+            TiendaRepositoryPort tiendaRepositoryPort,
+            UsuarioRepositoryPort usuarioRepositoryPort) {
         this.tiendaRepositoryPort = tiendaRepositoryPort;
+        this.usuarioRepositoryPort = usuarioRepositoryPort;
     }
 
     @Override
     public Tienda crearTienda(Tienda tienda) {
+        return crearTienda(tienda, null);
+    }
+
+    @Override
+    public Tienda crearTienda(Tienda tienda, UUID authUserId) {
+        if (authUserId != null) {
+            Usuario usuario = usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)
+                    .orElseThrow(() -> new AccesoDenegadoException("Usuario no encontrado"));
+            if (usuario.getRol() != Rol.ADMINISTRADOR) {
+                throw new AccesoDenegadoException("Solo un administrador puede crear tiendas");
+            }
+        }
+
         if (tienda.getNombre() == null || tienda.getNombre().trim().isEmpty()) {
             throw new IllegalArgumentException("El nombre de la tienda es obligatorio.");
         }
@@ -40,5 +61,48 @@ public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase 
     @Override
     public List<Tienda> obtenerTiendas() {
         return tiendaRepositoryPort.findAll();
+    }
+
+    @Override
+    public List<Tienda> obtenerTiendas(UUID authUserId) {
+        if (authUserId == null) {
+            return tiendaRepositoryPort.findAll();
+        }
+
+        Usuario usuario = usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)
+                .orElseThrow(() -> new AccesoDenegadoException("Usuario no encontrado"));
+
+        if (usuario.getRol() == Rol.ADMINISTRADOR || usuario.getRol() == Rol.PLANIFICADOR) {
+            return tiendaRepositoryPort.findAll();
+        }
+
+        if (usuario.getRol() == Rol.ENCARGADO_TIENDA) {
+            return tiendaRepositoryPort.findAll().stream()
+                    .filter(t -> usuario.getId().equals(t.getEncargadoId()))
+                    .toList();
+        }
+
+        return List.of();
+    }
+
+    @Override
+    public Tienda asignarEncargado(Long tiendaId, Long encargadoId) {
+        return asignarEncargado(tiendaId, encargadoId, null);
+    }
+
+    @Override
+    public Tienda asignarEncargado(Long tiendaId, Long encargadoId, UUID authUserId) {
+        if (authUserId != null) {
+            Usuario usuario = usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)
+                    .orElseThrow(() -> new AccesoDenegadoException("Usuario no encontrado"));
+            if (usuario.getRol() != Rol.ADMINISTRADOR) {
+                throw new AccesoDenegadoException("Solo un administrador puede asignar encargados a tiendas");
+            }
+        }
+
+        Tienda tienda = tiendaRepositoryPort.obtenerPorId(tiendaId)
+                .orElseThrow(() -> new IllegalArgumentException("La tienda no existe."));
+        tienda.setEncargadoId(encargadoId);
+        return tiendaRepositoryPort.save(tienda);
     }
 }

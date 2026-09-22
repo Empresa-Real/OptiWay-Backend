@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import com.example.optiway.application.port.in.ActualizarRolUsuarioUseCase;
 import com.example.optiway.application.port.in.CrearUsuarioUseCase;
 import com.example.optiway.application.port.in.EliminarUsuarioUseCase;
 import com.example.optiway.application.port.in.ObtenerUsuarioUseCase;
@@ -17,7 +18,7 @@ import com.example.optiway.domain.model.Usuario;
 
 @Service
 public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCase,
-    ObtenerUsuarioUseCase, EliminarUsuarioUseCase {
+    ObtenerUsuarioUseCase, EliminarUsuarioUseCase, ActualizarRolUsuarioUseCase {
     private final UsuarioRepositoryPort usuarioRepositoryPort;
     private final AuthPort authPort;
 
@@ -72,6 +73,14 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
     }
 
     @Override
+    public List<Usuario> obtenerUsuarios(UUID authUserId) {
+        if (authUserId == null || !esAdministrador(authUserId)) {
+            throw new AccesoDenegadoException("Solo un administrador puede consultar la lista de usuarios");
+        }
+        return usuarioRepositoryPort.obtenerTodos();
+    }
+
+    @Override
     public Optional<Usuario> obtenerUsuario(Long id) {
         return usuarioRepositoryPort.obtenerPorID(id);
     }
@@ -107,5 +116,19 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
 
         // Paso 2: Eliminar el registro en la base de datos local
         usuarioRepositoryPort.eliminar(id);
+    }
+
+    @Override
+    public Usuario actualizarRol(Long usuarioId, Rol nuevoRol, UUID adminAuthUserId) {
+        if (adminAuthUserId == null || !esAdministrador(adminAuthUserId)) {
+            throw new AccesoDenegadoException("Solo un administrador puede actualizar roles de usuario");
+        }
+        if (nuevoRol == null) {
+            throw new IllegalArgumentException("El nuevo rol es obligatorio");
+        }
+        Usuario usuario = usuarioRepositoryPort.obtenerPorID(usuarioId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con ID: " + usuarioId));
+        usuario.setRol(nuevoRol);
+        return usuarioRepositoryPort.guardar(usuario);
     }
 }
