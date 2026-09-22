@@ -11,7 +11,11 @@
         <a href="/main.html">Inicio</a> |
         <a href="/admin.html">Usuarios</a> |
         <a href="/tiendas.html">Tiendas</a> |
-        <a href="/centros-distribucion.html">Centros de Distribución</a>
+        <a href="/centros-distribucion.html">Centros de Distribución</a> |
+        <a href="/inventario.html">Inventario Tienda</a> |
+        <a href="/ingreso-mercancia.html">Ingreso Mercancía CD</a>
+        &nbsp;&nbsp;&nbsp;
+        <button id="logout" type="button">Cerrar sesión</button>
     </p>
 
     <h1>Crear Tienda</h1>
@@ -133,6 +137,11 @@
 
         document.getElementById('btn-cargar').addEventListener('click', cargarTiendas);
         cargarTiendas();
+
+        document.getElementById('logout').addEventListener('click', async () => {
+            await supabaseClient.auth.signOut();
+            window.location.href = '/';
+        });
     </script>
 </body>
 

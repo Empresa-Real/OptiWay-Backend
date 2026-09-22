@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Inventario de Tienda</title>
+    <style>
+        .stock-alerta {
+            background-color: #ffe6e6;
+            color: #cc0000;
+            font-weight: bold;
+        }
+        .badge-alerta {
+            background-color: #dc3545;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+        .badge-normal {
+            background-color: #28a745;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+
+<body>
+    <p>
+        <a href="/main.html">Inicio</a> |
+        <a href="/admin.html">Usuarios</a> |
+        <a href="/tiendas.html">Tiendas</a> |
+        <a href="/centros-distribucion.html">Centros de Distribución</a> |
+        <a href="/inventario.html">Inventario Tienda</a> |
+        <a href="/ingreso-mercancia.html">Ingreso Mercancía CD</a>
+        &nbsp;&nbsp;&nbsp;
+        <button id="logout" type="button">Cerrar sesión</button>
+    </p>
+
+    <h1>Consulta de Inventario de Tienda</h1>
+
+    <form id="filtro-form">
+        <label>
+            ID de Tienda (*):
+            <input id="tiendaId" type="number" required placeholder="Ej: 1">
+        </label>
+        <br><br>
+        <label>
+            Filtrar por Nombre:
+            <input id="nombre" type="text" placeholder="Ej: Arroz">
+        </label>
+        <br><br>
+        <label>
+            Filtrar por Categoría:
+            <input id="categoria" type="text" placeholder="Ej: Granos">
+        </label>
+        <br><br>
+        <label>
+            Filtrar por ID de Producto:
+            <input id="productoId" type="number" placeholder="Ej: 10">
+        </label>
+        <br><br>
+        <button type="submit">Consultar Inventario</button>
+        <button type="button" id="btn-limpiar">Limpiar Filtros</button>
+    </form>
+
+    <p id="mensaje-estado"></p>
+
+    <h2>Nivel de Inventario</h2>
+    <table border="1" cellpadding="6" cellspacing="0">
+        <thead>
+            <tr>
+                <th>ID Inventario</th>
+                <th>ID Producto</th>
+                <th>Nombre del Producto</th>
+                <th>Categoría</th>
+                <th>Cantidad Actual</th>
+                <th>Stock Mínimo</th>
+                <th>Estado de Stock</th>
+            </tr>
+        </thead>
+        <tbody id="tabla-inventario-body">
+            <tr>
+                <td colspan="7">Ingrese el ID de una tienda y presione Consultar.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/config.js"></script>
+    <script>
+        const supabaseClient = window.supabase.createClient(
+            window.APP_CONFIG.supabaseUrl,
+            window.APP_CONFIG.supabaseAnonKey
+        );
+
+        const form = document.getElementById('filtro-form');
+        const mensajeEstado = document.getElementById('mensaje-estado');
+        const tbody = document.getElementById('tabla-inventario-body');
+
+        async function getToken() {
+            const { data } = await supabaseClient.auth.getSession();
+            const token = data.session?.access_token;
+            if (!token) {
+                window.location.href = '/';
+                return null;
+            }
+            return token;
+        }
+
+        async function consultarInventario() {
+            const token = await getToken();
+            if (!token) return;
+
+            const tiendaId = document.getElementById('tiendaId').value.trim();
+            if (!tiendaId) {
+                mensajeEstado.textContent = 'Por favor indique un ID de Tienda.';
+                mensajeEstado.style.color = 'red';
+                return;
+            }
+
+            const nombre = document.getElementById('nombre').value.trim();
+            const categoria = document.getElementById('categoria').value.trim();
+            const productoId = document.getElementById('productoId').value.trim();
+
+            const params = new URLSearchParams();
+            params.append('tiendaId', tiendaId);
+            if (nombre) params.append('nombre', nombre);
+            if (categoria) params.append('categoria', categoria);
+            if (productoId) params.append('productoId', productoId);
+
+            mensajeEstado.textContent = 'Consultando inventario...';
+            mensajeEstado.style.color = 'blue';
+
+            try {
+                const response = await fetch('/api/inventario?' + params.toString(), {
+                    headers: { Authorization: 'Bearer ' + token }
+                });
+
+                if (response.status === 403) {
+                    const error = await response.json().catch(() => ({}));
+                    mensajeEstado.textContent = '[Acceso Denegado] ' + (error.error || 'No tiene permisos para consultar esta tienda.');
+                    mensajeEstado.style.color = 'red';
+                    tbody.innerHTML = '<tr><td colspan="7" style="color:red;">Acceso bloqueado por falta de permisos.</td></tr>';
+                    return;
+                }
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    mensajeEstado.textContent = '[Error] ' + (error.error || error.message || 'Error al consultar inventario.');
+                    mensajeEstado.style.color = 'red';
+                    tbody.innerHTML = '<tr><td colspan="7">No se pudo obtener el inventario.</td></tr>';
+                    return;
+                }
+
+                const inventarios = await response.json();
+                mensajeEstado.textContent = `Consulta realizada. ${inventarios.length} registro(s) encontrado(s).`;
+                mensajeEstado.style.color = 'green';
+
+                if (inventarios.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7">No hay productos en inventario para los criterios indicados.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = inventarios.map(item => {
+                    const esBajo = item.stockBajo || (item.cantidadActual < item.stockMinimo);
+                    const filaClase = esBajo ? 'class="stock-alerta"' : '';
+                    const badge = esBajo
+                        ? '<span class="badge-alerta">! Stock Bajo</span>'
+                        : '<span class="badge-normal">OK Normal</span>';
+
+                    return `<tr ${filaClase}>
+                        <td>${item.id ?? '-'}</td>
+                        <td>${item.productoId ?? '-'}</td>
+                        <td>${item.nombreProducto ?? 'Producto #' + item.productoId}</td>
+                        <td>${item.categoriaProducto ?? 'General'}</td>
+                        <td><strong>${item.cantidadActual}</strong></td>
+                        <td>${item.stockMinimo}</td>
+                        <td>${badge}</td>
+                    </tr>`;
+                }).join('');
+
+            } catch (err) {
+                mensajeEstado.textContent = 'Error de conexión con el servidor.';
+                mensajeEstado.style.color = 'red';
+            }
+        }
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            consultarInventario();
+        });
+
+        document.getElementById('btn-limpiar').addEventListener('click', () => {
+            document.getElementById('nombre').value = '';
+            document.getElementById('categoria').value = '';
+            document.getElementById('productoId').value = '';
+            consultarInventario();
+        });
+
+        document.getElementById('logout').addEventListener('click', async () => {
+            await supabaseClient.auth.signOut();
+            window.location.href = '/';
+        });
+    </script>
+</body>
+
+</html>

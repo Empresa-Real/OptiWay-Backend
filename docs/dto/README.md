@@ -12,14 +12,18 @@ docs/dto/
 ├── request/
 │   ├── crear-usuario.json
 │   ├── crear-tienda.json
-│   └── crear-centro-distribucion.json
+│   ├── crear-centro-distribucion.json
+│   └── registrar-ingreso-mercancia.json
 └── response/
     ├── crear-usuario-201.json
     ├── listar-usuarios-200.json
     ├── crear-tienda-201.json
     ├── listar-tiendas-200.json
     ├── crear-tienda-400.json
-    └── crear-centro-distribucion-201.json
+    ├── crear-centro-distribucion-201.json
+    ├── consultar-inventario-200.json
+    ├── consultar-inventario-403.json
+    └── registrar-ingreso-mercancia-200.json
 ```
 
 ---
@@ -190,3 +194,112 @@ export interface CentroDistribucionResponse {
   tiendasAbastecidasIds: number[];
 }
 ```
+
+---
+
+## 4. HU-12: Inventario de Tienda (`/api/inventario`)
+
+### Consulta de Inventario (`GET /api/inventario?tiendaId={tiendaId}&nombre={nombre}&categoria={categoria}&productoId={id}`)
+* **Headers:** `Authorization: Bearer <jwt_token>` (Encargado de la tienda o Administrador)
+* **Query Params:**
+  * `tiendaId` (requerido): ID de la tienda.
+  * `nombre` (opcional): Filtro por nombre de producto.
+  * `categoria` (opcional): Filtro por categoría.
+  * `productoId` (opcional): Filtro por ID de producto.
+
+### Response 200 OK (Lista de Inventario)
+* **Archivo:** [`docs/dto/response/consultar-inventario-200.json`](./response/consultar-inventario-200.json)
+
+```json
+[
+  {
+    "id": 1,
+    "tiendaId": 2,
+    "productoId": 10,
+    "nombreProducto": "Arroz Blanco Premium 1kg",
+    "categoriaProducto": "Granos",
+    "cantidadActual": 8,
+    "stockMinimo": 20,
+    "stockBajo": true
+  }
+]
+```
+
+### Response 403 Forbidden (Tienda no asignada)
+* **Archivo:** [`docs/dto/response/consultar-inventario-403.json`](./response/consultar-inventario-403.json)
+
+```json
+{
+  "error": "No tiene permisos para consultar esta tienda"
+}
+```
+
+### TypeScript Interfaces:
+```typescript
+export interface ItemInventarioResponse {
+  id: number;
+  tiendaId: number;
+  productoId: number;
+  nombreProducto: string;
+  categoriaProducto: string;
+  cantidadActual: number;
+  stockMinimo: number;
+  stockBajo: boolean;
+}
+
+export interface ConsultarInventarioParams {
+  tiendaId: number;
+  nombre?: string;
+  categoria?: string;
+  productoId?: number;
+}
+```
+
+---
+
+## 5. HU-18: Ingreso de Mercancía a CD (`/api/ingresos-mercancia`)
+
+### Request Registrar Ingreso (`POST /api/ingresos-mercancia`)
+* **Archivo:** [`docs/dto/request/registrar-ingreso-mercancia.json`](./request/registrar-ingreso-mercancia.json)
+* **Headers:** `Authorization: Bearer <jwt_token>` (Encargado de CD o Administrador)
+
+```json
+{
+  "centroDistribucionId": 1,
+  "productoId": 10,
+  "cantidad": 250,
+  "origen": "Proveedor Alimentos del Valle S.A."
+}
+```
+
+### Response 200 OK / 201 Created
+* **Archivo:** [`docs/dto/response/registrar-ingreso-mercancia-200.json`](./response/registrar-ingreso-mercancia-200.json)
+
+```json
+{
+  "mensaje": "Ingreso de mercancia registrado con exito",
+  "centroDistribucionId": 1,
+  "productoId": 10,
+  "cantidad": 250,
+  "origen": "Proveedor Alimentos del Valle S.A."
+}
+```
+
+### TypeScript Interfaces:
+```typescript
+export interface RegistrarIngresoMercanciaRequest {
+  centroDistribucionId: number;
+  productoId: number;
+  cantidad: number;
+  origen: string;
+}
+
+export interface RegistrarIngresoMercanciaResponse {
+  mensaje: string;
+  centroDistribucionId: number;
+  productoId: number;
+  cantidad: number;
+  origen: string;
+}
+```
+

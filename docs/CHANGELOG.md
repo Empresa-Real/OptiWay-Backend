@@ -1,6 +1,36 @@
 # Changelog
 
+## 2026-09-21
+
+### Added
+
+- **HU-12 (Consultar Inventario de Mi Tienda):**
+  - Caso de uso `ConsultarInventarioUseCase` y servicio `InventarioService`.
+  - Endpoint `GET /api/inventario` con filtros por `tiendaId`, `nombre`, `categoria` y `productoId`.
+  - Validación de acceso para encargados de tienda asignados (`encargadoId == usuario.id`) y administradores.
+  - Cálculo dinámico de stock bajo (`stockBajo: true` cuando `cantidadActual < stockMinimo`).
+  - Modelos de dominio `Inventario`, `Producto` y adaptadores de persistencia JPA.
+  - Documentación de historia de usuario en `docs/Historias de Usuario/HU-12_Consultar_inventario_tienda.md`.
+- **HU-18 (Registrar Ingreso de Mercancía a Centro de Distribución):**
+  - Caso de uso `RegistrarIngresoMercanciaUseCase` y servicio transaccional `IngresoMercanciaService`.
+  - Endpoint `POST /api/ingresos-mercancia` para ingreso de mercancía desde proveedores u otros CDs.
+  - Acumulación de inventario en `InventarioCentroDistribucion` y registro histórico en `IngresoMercancia`.
+  - Validaciones de negocio: cantidad > 0, origen obligatorio y existencia de CD y producto.
+  - Pruebas unitarias para validaciones en `IngresoMercanciaServiceTest`.
+  - Documentación de historia de usuario en `docs/Historias de Usuario/HU-18_Registrar_ingreso_mercancia_CD.md`.
+- **Contratos DTO y Auditoría:**
+  - Nuevos contratos JSON y tipos TypeScript en `docs/dto/` para inventario e ingresos de mercancía.
+  - Informe técnico de auditoría y análisis de rendimiento N+1 en `docs/Fix´s/fix3-hu-12-18.md`.
+
+### Fixed
+
+- **Integración y Merge con Main:**
+  - Resolución de colisiones críticas de fusión preservando la relación `@ManyToMany` en `CentroDistribucionJpaEntity` y `CentroDistribucionRepositoryAdapter`.
+  - Unificación de métodos en `TiendaRepositoryPort` y `TiendaRepositoryAdapter` (`findAll()`, `obtenerPorEncargadoId()`, `obtenerPorId()`).
+  - Mantenimiento de rutas estáticas públicas en `SecurityConfig.java`.
+
 ## 2026-09-20
+
 
 ### Added
 

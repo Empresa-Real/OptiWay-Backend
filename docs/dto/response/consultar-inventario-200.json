@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "tiendaId": 2,
+    "productoId": 10,
+    "nombreProducto": "Arroz Blanco Premium 1kg",
+    "categoriaProducto": "Granos",
+    "cantidadActual": 8,
+    "stockMinimo": 20,
+    "stockBajo": true
+  },
+  {
+    "id": 2,
+    "tiendaId": 2,
+    "productoId": 11,
+    "nombreProducto": "Aceite Vegetal 900ml",
+    "categoriaProducto": "Abarrotes",
+    "cantidadActual": 45,
+    "stockMinimo": 15,
+    "stockBajo": false
+  }
+]
