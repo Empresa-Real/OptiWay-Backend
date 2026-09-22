@@ -102,6 +102,18 @@ public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase,
 
         Tienda tienda = tiendaRepositoryPort.obtenerPorId(tiendaId)
                 .orElseThrow(() -> new IllegalArgumentException("La tienda no existe."));
+
+        if (encargadoId != null) {
+            Usuario encargado = usuarioRepositoryPort.obtenerPorID(encargadoId)
+                    .orElseThrow(() -> new IllegalArgumentException("El usuario encargado no existe."));
+
+            if (encargado.getRol() != Rol.ENCARGADO_TIENDA) {
+                throw new IllegalArgumentException(
+                        "Solo se puede asignar una tienda a un usuario con rol Encargado de tienda (Rol actual: " 
+                        + encargado.getRol() + ").");
+            }
+        }
+
         tienda.setEncargadoId(encargadoId);
         return tiendaRepositoryPort.save(tienda);
     }

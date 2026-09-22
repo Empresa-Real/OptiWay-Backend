@@ -62,6 +62,37 @@
         </thead>
         <tbody id="tabla-usuarios-body"></tbody>
     </table>
+    <!-- Sección / Modal para Asignar / Reasignar Ubicación (HU-02) -->
+    <div id="modal-asignacion" style="display: none;">
+        <hr>
+        <h3 id="modal-titulo">Asignar Sede</h3>
+        <p id="modal-tipo-desc"></p>
+        
+        <label>
+            Ubicación:
+            <select id="modal-select-ubicacion">
+            </select>
+        </label>
+        <br><br>
+
+        <div>
+            <button type="button" onclick="ejecutarAsignacion(false, true)">
+                Reasignar (Reemplaza y revoca anteriores)
+            </button>
+            <button type="button" onclick="ejecutarAsignacion(false, false)">
+                Agregar como Sede Adicional
+            </button>
+            <button type="button" onclick="ejecutarAsignacion(true, false)">
+                Revocar / Desasignar Todas
+            </button>
+            <button type="button" onclick="cerrarModalAsignacion()">
+                Cancelar
+            </button>
+        </div>
+
+        <p id="modal-msg"></p>
+        <hr>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="/config.js"></script>
@@ -150,136 +181,147 @@
             }).join('');
         }
 
-        async function reasignarTienda(usuarioId, nombreUsuario) {
-            if (listaTiendasGlobal.length === 0) {
-                alert('[Aviso] No hay tiendas registradas en el sistema para asignar.');
-                return;
-            }
+        // Modal y lógica de Asignación / Reasignación de Sedes (HU-02)
+        let modalUsuarioActual = null;
+        let modalTipoActual = null; // 'TIENDA' o 'CD'
 
-            let promptMsg = `Gestionar tiendas asignadas para ${nombreUsuario}:\n\n`;
-            listaTiendasGlobal.forEach(t => {
-                const asignada = t.encargadoId === usuarioId
-                    ? ' --> [ASIGNADA A ESTE USUARIO]'
-                    : (t.encargadoId ? ` (Asignada a usuario ID ${t.encargadoId})` : ' (Disponible)');
-                promptMsg += `ID ${t.id}: ${t.codigo} - ${t.nombre}${asignada}\n`;
-            });
-            promptMsg += '\nAcciones:\n- Ingresa el ID de una tienda para ASIGNARLA a este usuario.\n- Si la tienda ya está asignada a este usuario, al ingresar su ID se DESASIGNARÁ.\n- Ingresa 0 para DESASIGNAR TODAS:';
+        function abrirModalAsignacion(usuarioId, nombreUsuario, tipo) {
+            modalUsuarioActual = { id: usuarioId, nombre: nombreUsuario };
+            modalTipoActual = tipo;
 
-            const entrada = prompt(promptMsg);
-            if (entrada === null) return;
-            const tiendaId = parseInt(entrada);
-            if (isNaN(tiendaId)) {
-                alert('[Error] Debes ingresar un número de ID válido.');
-                return;
-            }
+            document.getElementById('modal-titulo').textContent = tipo === 'TIENDA' 
+                ? `Asignar / Reasignar Tiendas - ${nombreUsuario}` 
+                : `Asignar / Reasignar Centro de Distribución - ${nombreUsuario}`;
+            
+            document.getElementById('modal-tipo-desc').textContent = tipo === 'TIENDA'
+                ? 'Selecciona la tienda a asignar. Si ya estaba asignado a otra, el sistema reasignará revocando de inmediato el acceso previo, o puedes asociar múltiples sedes:'
+                : 'Selecciona el CD a asignar. Si ya estaba asignado a otro, el sistema reasignará revocando de inmediato el acceso previo, o puedes asociar múltiples sedes:';
 
-            const token = await getToken();
-            if (!token) return;
+            const select = document.getElementById('modal-select-ubicacion');
+            select.innerHTML = '<option value="">-- Seleccionar ubicación --</option>';
 
-            if (tiendaId === 0) {
-                const tiendasDelUsuario = listaTiendasGlobal.filter(t => t.encargadoId === usuarioId);
-                for (const t of tiendasDelUsuario) {
-                    await fetch(`/api/tiendas/${t.id}/encargado`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-                        body: JSON.stringify({ encargadoId: null })
-                    });
-                }
-                resultado.textContent = `[OK] Todas las tiendas desasignadas para ${nombreUsuario}.`;
-                cargarUsuarios();
-                return;
-            }
-
-            const tiendaExiste = listaTiendasGlobal.find(t => t.id === tiendaId);
-            if (!tiendaExiste) {
-                alert('[Error] Tienda no encontrada con el ID ingresado.');
-                return;
-            }
-
-            const nuevoEncargadoId = (tiendaExiste.encargadoId === usuarioId) ? null : usuarioId;
-
-            const res = await fetch(`/api/tiendas/${tiendaId}/encargado`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-                body: JSON.stringify({ encargadoId: nuevoEncargadoId })
-            });
-
-            if (res.ok) {
-                if (nuevoEncargadoId === null) {
-                    resultado.textContent = `[OK] Tienda "${tiendaExiste.nombre}" desasignada de ${nombreUsuario}.`;
-                } else {
-                    resultado.textContent = `[OK] Tienda "${tiendaExiste.nombre}" asignada a ${nombreUsuario}.`;
-                }
-                cargarUsuarios();
+            if (tipo === 'TIENDA') {
+                listaTiendasGlobal.forEach(t => {
+                    const esAsignada = t.encargadoId === usuarioId;
+                    const opt = document.createElement('option');
+                    opt.value = t.id;
+                    opt.textContent = `${t.codigo || 'TND-' + t.id} - ${t.nombre} ${esAsignada ? ' ★ [ASIGNADA A ESTE USUARIO]' : (t.encargadoId ? ' (Asignada a ID ' + t.encargadoId + ')' : ' (Disponible)')}`;
+                    select.appendChild(opt);
+                });
             } else {
-                resultado.textContent = '[Error] No se pudo actualizar la asignación de la tienda.';
+                listaCentrosGlobal.forEach(c => {
+                    const esAsignada = c.encargadoId === usuarioId;
+                    const opt = document.createElement('option');
+                    opt.value = c.id;
+                    opt.textContent = `${c.codigo || 'CD-' + c.id} - ${c.nombre} ${esAsignada ? ' ★ [ASIGNADA A ESTE USUARIO]' : (c.encargadoId ? ' (Asignada a ID ' + c.encargadoId + ')' : ' (Disponible)')}`;
+                    select.appendChild(opt);
+                });
+            }
+
+            document.getElementById('modal-msg').textContent = '';
+            document.getElementById('modal-asignacion').style.display = 'block';
+        }
+
+        function cerrarModalAsignacion() {
+            document.getElementById('modal-asignacion').style.display = 'none';
+            modalUsuarioActual = null;
+            modalTipoActual = null;
+        }
+
+        async function ejecutarAsignacion(desasignarTodo = false, modoExclusivo = false) {
+            const token = await getToken();
+            if (!token || !modalUsuarioActual) return;
+
+            const modalMsg = document.getElementById('modal-msg');
+            modalMsg.textContent = 'Procesando...';
+
+            try {
+                if (desasignarTodo) {
+                    // Revocar todas las asignaciones actuales de este usuario
+                    if (modalTipoActual === 'TIENDA') {
+                        const asignadas = listaTiendasGlobal.filter(t => t.encargadoId === modalUsuarioActual.id);
+                        for (const t of asignadas) {
+                            await fetch(`/api/tiendas/${t.id}/encargado`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+                                body: JSON.stringify({ encargadoId: null })
+                            });
+                        }
+                        resultado.textContent = `[OK] Todas las tiendas desasignadas para ${modalUsuarioActual.nombre}. Acceso revocado.`;
+                    } else {
+                        const asignadas = listaCentrosGlobal.filter(c => c.encargadoId === modalUsuarioActual.id);
+                        for (const c of asignadas) {
+                            await fetch(`/api/centros-distribucion/${c.id}/encargado`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+                                body: JSON.stringify({ encargadoId: null })
+                            });
+                        }
+                        resultado.textContent = `[OK] Todos los Centros de Distribución desasignados para ${modalUsuarioActual.nombre}. Acceso revocado.`;
+                    }
+                    cerrarModalAsignacion();
+                    cargarUsuarios();
+                    return;
+                }
+
+                const ubicacionId = document.getElementById('modal-select-ubicacion').value;
+                if (!ubicacionId) {
+                    modalMsg.textContent = 'Seleccione una ubicación.';
+                    return;
+                }
+
+                // Si se solicita reasignación exclusiva (revoca las anteriores de inmediato)
+                if (modoExclusivo) {
+                    if (modalTipoActual === 'TIENDA') {
+                        const otrasAsignadas = listaTiendasGlobal.filter(t => t.encargadoId === modalUsuarioActual.id && t.id != ubicacionId);
+                        for (const t of otrasAsignadas) {
+                            await fetch(`/api/tiendas/${t.id}/encargado`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+                                body: JSON.stringify({ encargadoId: null })
+                            });
+                        }
+                    } else {
+                        const otrosAsignados = listaCentrosGlobal.filter(c => c.encargadoId === modalUsuarioActual.id && c.id != ubicacionId);
+                        for (const c of otrosAsignados) {
+                            await fetch(`/api/centros-distribucion/${c.id}/encargado`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+                                body: JSON.stringify({ encargadoId: null })
+                            });
+                        }
+                    }
+                }
+
+                const endpoint = modalTipoActual === 'TIENDA' 
+                    ? `/api/tiendas/${ubicacionId}/encargado` 
+                    : `/api/centros-distribucion/${ubicacionId}/encargado`;
+
+                const res = await fetch(endpoint, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+                    body: JSON.stringify({ encargadoId: modalUsuarioActual.id })
+                });
+
+                if (res.ok) {
+                    resultado.textContent = `[OK] ${modalTipoActual === 'TIENDA' ? 'Tienda' : 'CD'} asignado exitosamente a ${modalUsuarioActual.nombre}.`;
+                    cerrarModalAsignacion();
+                    cargarUsuarios();
+                } else {
+                    const err = await res.json().catch(() => ({}));
+                    modalMsg.textContent = '[Error] ' + (err.error || await res.text() || 'No se pudo asignar.');
+                }
+            } catch (e) {
+                modalMsg.textContent = '[Error] Error de conexión: ' + e.message;
             }
         }
 
+        async function reasignarTienda(usuarioId, nombreUsuario) {
+            abrirModalAsignacion(usuarioId, nombreUsuario, 'TIENDA');
+        }
+
         async function reasignarCD(usuarioId, nombreUsuario) {
-            if (listaCentrosGlobal.length === 0) {
-                alert('[Aviso] No hay Centros de Distribución registrados para asignar.');
-                return;
-            }
-
-            let promptMsg = `Gestionar Centros de Distribución para ${nombreUsuario}:\n\n`;
-            listaCentrosGlobal.forEach(c => {
-                const asignado = c.encargadoId === usuarioId
-                    ? ' --> [ASIGNADO A ESTE USUARIO]'
-                    : (c.encargadoId ? ` (Asignado a usuario ID ${c.encargadoId})` : ' (Disponible)');
-                promptMsg += `ID ${c.id}: ${c.codigo} - ${c.nombre}${asignado}\n`;
-            });
-            promptMsg += '\nAcciones:\n- Ingresa el ID de un CD para ASIGNARLO a este usuario.\n- Si el CD ya está asignado a este usuario, al ingresar su ID se DESASIGNARÁ.\n- Ingresa 0 para DESASIGNAR TODOS:';
-
-            const entrada = prompt(promptMsg);
-            if (entrada === null) return;
-            const centroId = parseInt(entrada);
-            if (isNaN(centroId)) {
-                alert('[Error] Debes ingresar un número de ID válido.');
-                return;
-            }
-
-            const token = await getToken();
-            if (!token) return;
-
-            if (centroId === 0) {
-                const cdsDelUsuario = listaCentrosGlobal.filter(c => c.encargadoId === usuarioId);
-                for (const c of cdsDelUsuario) {
-                    await fetch(`/api/centros-distribucion/${c.id}/encargado`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-                        body: JSON.stringify({ encargadoId: null })
-                    });
-                }
-                resultado.textContent = `[OK] Todos los Centros de Distribución desasignados para ${nombreUsuario}.`;
-                cargarUsuarios();
-                return;
-            }
-
-            const cdExiste = listaCentrosGlobal.find(c => c.id === centroId);
-            if (!cdExiste) {
-                alert('[Error] Centro de Distribución no encontrado con el ID ingresado.');
-                return;
-            }
-
-            const nuevoEncargadoId = (cdExiste.encargadoId === usuarioId) ? null : usuarioId;
-
-            const res = await fetch(`/api/centros-distribucion/${centroId}/encargado`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
-                body: JSON.stringify({ encargadoId: nuevoEncargadoId })
-            });
-
-            if (res.ok) {
-                if (nuevoEncargadoId === null) {
-                    resultado.textContent = `[OK] CD "${cdExiste.nombre}" desasignado de ${nombreUsuario}.`;
-                } else {
-                    resultado.textContent = `[OK] CD "${cdExiste.nombre}" asignado a ${nombreUsuario}.`;
-                }
-                cargarUsuarios();
-            } else {
-                resultado.textContent = '[Error] No se pudo actualizar la asignación del Centro de Distribución.';
-            }
+            abrirModalAsignacion(usuarioId, nombreUsuario, 'CD');
         }
 
         async function cambiarRolUsuario(usuarioId, rolActual) {

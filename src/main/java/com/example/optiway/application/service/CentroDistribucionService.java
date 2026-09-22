@@ -99,6 +99,18 @@ public class CentroDistribucionService implements CrearCentroDistribucionUseCase
 
         CentroDistribucion centro = centroDistribucionRepositoryPort.obtenerPorId(centroId)
                 .orElseThrow(() -> new IllegalArgumentException("El centro de distribución no existe."));
+
+        if (encargadoId != null) {
+            Usuario encargado = usuarioRepositoryPort.obtenerPorID(encargadoId)
+                    .orElseThrow(() -> new IllegalArgumentException("El usuario encargado no existe."));
+
+            if (encargado.getRol() != Rol.ENCARGADO_CD) {
+                throw new IllegalArgumentException(
+                        "Solo se puede asignar un centro de distribución a un usuario con rol Encargado de CD (Rol actual: " 
+                        + encargado.getRol() + ").");
+            }
+        }
+
         centro.setEncargadoId(encargadoId);
         return centroDistribucionRepositoryPort.guardar(centro);
     }
