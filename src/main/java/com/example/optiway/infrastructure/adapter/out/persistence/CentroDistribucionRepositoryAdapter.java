@@ -1,6 +1,7 @@
 package com.example.optiway.infrastructure.adapter.out.persistence;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
@@ -33,6 +34,12 @@ public class CentroDistribucionRepositoryAdapter implements CentroDistribucionRe
         return repository.findAll().stream()
                 .map(this::toDomain)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Optional<CentroDistribucion> obtenerPorId(Long id) {
+        return repository.findById(id)
+                .map(this::toDomain);
     }
 
     private CentroDistribucionJpaEntity toEntity(CentroDistribucion domain) {

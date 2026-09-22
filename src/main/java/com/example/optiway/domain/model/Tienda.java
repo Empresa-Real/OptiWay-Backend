@@ -7,6 +7,7 @@ public class Tienda {
     private String direccion;
     private String ciudad;
     private String estado;
+    private Long encargadoId;
 
     public Tienda() {}
 
@@ -17,6 +18,16 @@ public class Tienda {
         this.direccion = direccion;
         this.ciudad = ciudad;
         this.estado = estado;
+    }
+
+    public Tienda(Long id, String codigo, String nombre, String direccion, String ciudad, String estado, Long encargadoId) {
+        this.id = id;
+        this.codigo = codigo;
+        this.nombre = nombre;
+        this.direccion = direccion;
+        this.ciudad = ciudad;
+        this.estado = estado;
+        this.encargadoId = encargadoId;
     }
 
     public Long getId() { return id; }
@@ -36,4 +47,7 @@ public class Tienda {
 
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
+
+    public Long getEncargadoId() { return encargadoId; }
+    public void setEncargadoId(Long encargadoId) { this.encargadoId = encargadoId; }
 }

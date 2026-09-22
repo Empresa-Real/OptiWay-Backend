@@ -25,17 +25,21 @@ public class TiendaJpaEntity {
     @Column(nullable = false)
     private String estado;
 
+    @Column(name = "encargado_id")
+    private Long encargadoId;
+
     public TiendaJpaEntity() {}
 
-    public TiendaJpaEntity(Long id, String codigo, String nombre, String direccion, String ciudad, String estado) {
+    public TiendaJpaEntity(Long id, String codigo, String nombre, String direccion, String ciudad, String estado, Long encargadoId) {
         this.id = id;
         this.codigo = codigo;
         this.nombre = nombre;
         this.direccion = direccion;
         this.ciudad = ciudad;
         this.estado = estado;
+        this.encargadoId = encargadoId;
     }
-  
+
     public Long getId() { return id;}
     public void setId(Long id) { this.id = id;}
 
@@ -53,4 +57,7 @@ public class TiendaJpaEntity {
 
     public String getEstado() { return estado;}
     public void setEstado(String estado) { this.estado = estado;}
+
+    public Long getEncargadoId() { return encargadoId; }
+    public void setEncargadoId(Long encargadoId) { this.encargadoId = encargadoId; }
 }

@@ -1,6 +1,7 @@
 package com.example.optiway.infrastructure.adapter.out.persistence;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
@@ -26,6 +27,7 @@ public class TiendaRepositoryAdapter implements TiendaRepositoryPort {
         entity.setDireccion(tienda.getDireccion());
         entity.setCiudad(tienda.getCiudad());
         entity.setEstado(tienda.getEstado());
+        entity.setEncargadoId(tienda.getEncargadoId());
 
         TiendaJpaEntity savedEntity = tiendaJpaRepository.save(entity);
 
@@ -35,7 +37,8 @@ public class TiendaRepositoryAdapter implements TiendaRepositoryPort {
                 savedEntity.getNombre(),
                 savedEntity.getDireccion(),
                 savedEntity.getCiudad(),
-                savedEntity.getEstado()
+                savedEntity.getEstado(),
+                savedEntity.getEncargadoId()
         );
     }
 
@@ -53,8 +56,38 @@ public class TiendaRepositoryAdapter implements TiendaRepositoryPort {
                         e.getNombre(),
                         e.getDireccion(),
                         e.getCiudad(),
-                        e.getEstado()
+                        e.getEstado(),
+                        e.getEncargadoId()
                 ))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Tienda> obtenerPorEncargadoId(Long encargadoId) {
+        return tiendaJpaRepository.findByEncargadoId(encargadoId).stream()
+                .map(entity -> new Tienda(
+                        entity.getId(),
+                        entity.getCodigo(),
+                        entity.getNombre(),
+                        entity.getDireccion(),
+                        entity.getCiudad(),
+                        entity.getEstado(),
+                        entity.getEncargadoId()
+                ))
+                .toList();
+    }
+
+    @Override
+    public Optional<Tienda> obtenerPorId(Long id) {
+        return tiendaJpaRepository.findById(id)
+                .map(entity -> new Tienda(
+                        entity.getId(),
+                        entity.getCodigo(),
+                        entity.getNombre(),
+                        entity.getDireccion(),
+                        entity.getCiudad(),
+                        entity.getEstado(),
+                        entity.getEncargadoId()
+                ));
     }
 }

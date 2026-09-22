@@ -2,13 +2,21 @@ package com.example.optiway.infrastructure.adapter.out.persistence;
 
 import java.util.List;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "centros_distribucion")
 public class CentroDistribucionJpaEntity {
 
-    @Id // Aqui se declara como primary Key
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
@@ -25,10 +33,10 @@ public class CentroDistribucionJpaEntity {
     private Integer capacidad;
 
     @ManyToMany
-    @JoinTable( // Una tabla intermedia para la relacion @ManyToMany entre centros_distribucion y tiendas
+    @JoinTable(
         name = "centro_distribucion_tiendas",
-        joinColumns = @JoinColumn(name = "centro_id"), // Foreing Key de centros_distribucion
-        inverseJoinColumns = @JoinColumn(name = "tienda_id") // Foreing Key de tiendas
+        joinColumns = @JoinColumn(name = "centro_id"),
+        inverseJoinColumns = @JoinColumn(name = "tienda_id")
     )
     private List<TiendaJpaEntity> tiendasAbastecidas;
 

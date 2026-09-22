@@ -1,6 +1,4 @@
-
 package com.example.optiway.infrastructure.config;
-
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,17 +11,17 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class SecurityConfig {
 
-@Bean
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/", "/index.html", "/main.html", "/admin.html", "/tiendas.html", "/centros-distribucion.html", "/set-password.html", "/config.js", "/actuator/health")
-                .permitAll()
-                .anyRequest()
-                .authenticated()
-            )
-            .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/", "/index.html", "/main.html", "/admin.html", "/tiendas.html", "/centros-distribucion.html", "/set-password.html", "/config.js", "/actuator/health")
+                        .permitAll()
+                        .anyRequest()
+                        .authenticated()
+                )
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
 
         return http.build();
     }
