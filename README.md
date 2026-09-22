@@ -56,30 +56,77 @@ src/main/java/com/example/optiway/
     └── config/              # Configuración del framework (Spring Security, Beans)
 ```
 
+### Flujo de la Aplicacion
+
+```mermaid
+flowchart TD
+    subgraph Client["Cliente / Frontend"]
+        Req["Petición HTTP / REST (JSON)"]
+    end
+
+    subgraph InfraIn["Infraestructura — Adaptadores de Entrada"]
+        Security["Spring Security (Filtro JWT / Roles)"]
+        Controller["Controladores REST (Usuario, Tienda, etc.)"]
+    end
+
+    subgraph Application["Aplicación — Casos de Uso y Orquestación"]
+        PortIn["Puertos de Entrada (Interfaces UseCase)"]
+        Service["Servicios de Aplicación (Lógica y Orquestación)"]
+        PortOut["Puertos de Salida (Interfaces RepositoryPort / AuthPort)"]
+    end
+
+    subgraph Domain["Dominio — Reglas de Negocio"]
+        Model["Modelos de Dominio (Entidades puras e invariantes)"]
+    end
+
+    subgraph InfraOut["Infraestructura — Adaptadores de Salida"]
+        RepoAdapter["Adaptadores de Persistencia (RepositoryAdapter)"]
+        AuthAdapter["Adaptador de Autenticación (SupabaseAuthAdapter)"]
+        JpaRepo["Spring Data JPA Repositories"]
+    end
+
+    subgraph External["Servicios Externos"]
+        DB[("PostgreSQL (Supabase Cloud)")]
+        SupabaseAuth["Supabase Auth API (Admin)"]
+    end
+
+    Req --> Security
+    Security --> Controller
+    Controller --> PortIn
+    PortIn --> Service
+    Service --> Model
+    Service --> PortOut
+    PortOut --> RepoAdapter
+    PortOut --> AuthAdapter
+    RepoAdapter --> JpaRepo
+    JpaRepo --> DB
+    AuthAdapter --> SupabaseAuth
+```
+
 Para una explicación a fondo del flujo de capas, consulta [`docs/Hexagonal-Arquitecture.md`](docs/Hexagonal-Arquitecture.md).
 
 
-## Endpoints
+### Endpoints
 
-### Usuarios & Autenticación (`HU-01` & `HU-29`)
+#### Usuarios & Autenticación (`HU-01` & `HU-29`)
 * `POST /api/usuarios`: Invitación y creación de usuarios (restringido a rol `ADMINISTRADOR`).
 * `GET /api/usuarios`: Listado de todos los usuarios registrados.
 * `GET /api/usuarios/{id}`: Consulta de usuario por identificador.
 * `DELETE /api/usuarios/{id}`: Eliminación de usuario.
 * `GET /api/usuarios/me`: Consulta de perfil y rol del usuario autenticado a partir del JWT.
 
-### Tiendas (`HU-07`)
+#### Tiendas (`HU-07`)
 * `POST /api/tiendas`: Registro de nueva tienda (generación automática de código `TND-XXXXXXXX`).
 * `GET /api/tiendas`: Consulta y listado de todas las tiendas disponibles.
 
-### Centros de Distribución (`HU-09`)
+#### Centros de Distribución (`HU-09`)
 * `POST /api/centros-distribucion`: Registro de nuevo CD (código `CD-XXXXXXXX`) y asignación de tiendas abastecidas.
 * `GET /api/centros-distribucion`: Consulta y listado de todos los CDs con su información de cobertura.
 
-### Inventario (`HU-11`)
+#### Inventario (`HU-11`)
 * `GET /api/inventario`: Consulta de inventario por tienda (`tiendaId`) con filtros opcionales por `nombre`, `categoria` y `productoId`.
 
-### Ingreso de Mercancía
+#### Ingreso de Mercancía
 * `POST /api/ingresos-mercancia`: Registro de ingreso de mercancía a un centro de distribución.
 
 
