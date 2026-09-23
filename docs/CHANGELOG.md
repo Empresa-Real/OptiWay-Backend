@@ -2,6 +2,19 @@
 
 ## 2026-09-22
 
+### Changed
+
+- **Unificación de Inventarios (`feat: unificar inventarios` - Commit `c1fda48`):**
+  - **Fusión del Modelo de Dominio y Persistencia**: Eliminación de la entidad redundante `InventarioCentroDistribucion` y sus componentes técnicos asociados (`InventarioCentroDistribucionJpaEntity`, `InventarioCentroDistribucionJpaRepository`, `InventarioCentroDistribucionRepositoryAdapter` y el puerto `InventarioCentroDistribucionRepositoryPort`), consolidando todo el control de existencias en el modelo único `Inventario` y la entidad `InventarioJpaEntity`.
+  - **Regla Invariante de Exclusividad de Ubicación (XOR)**:
+    - En el dominio: Implementación del método `validarUbicacionExclusiva()` en `Inventario`, lanzando `IllegalArgumentException` si un registro intenta asociarse simultáneamente a una tienda y a un centro de distribución, o si no cuenta con ninguna de las dos ubicaciones.
+    - En la base de datos: Validación con hooks `@PrePersist` y `@PreUpdate` en `InventarioJpaEntity` que garantizan la integridad relacional previa al guardado en PostgreSQL.
+  - **Consolidación en Puertos y Adaptadores**: Incorporación del método `findByCentroDistribucionIdAndProductoId(...)` en `InventarioRepositoryPort` y su implementación en `InventarioRepositoryAdapter`.
+  - **Refactorización Transaccional en `IngresoMercanciaService`**: Actualización de la lógica de negocio para buscar, inicializar o acumular existencias directamente sobre el puerto unificado de `Inventario`.
+  - **Cobertura de Pruebas**:
+    - Creación de la suite de pruebas `InventarioExclusividadTest` para validar los escenarios válidos e inválidos de ubicación.
+    - Actualización integral de `IngresoMercanciaServiceTest` para verificar el flujo de recepción de mercancía sobre el repositorio unificado.
+
 ### Added
 
 - **HU-29 (Iniciar Sesión según Rol Asignado y Control por Ubicación - Fix 5):**
