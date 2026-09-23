@@ -9,12 +9,12 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.optiway.application.port.in.RegistrarIngresoMercanciaUseCase;
 import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
 import com.example.optiway.application.port.out.IngresoMercanciaRepositoryPort;
-import com.example.optiway.application.port.out.InventarioCentroDistribucionRepositoryPort;
+import com.example.optiway.application.port.out.InventarioRepositoryPort;
 import com.example.optiway.application.port.out.ProductoRepositoryPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.domain.model.CentroDistribucion;
 import com.example.optiway.domain.model.IngresoMercancia;
-import com.example.optiway.domain.model.InventarioCentroDistribucion;
+import com.example.optiway.domain.model.Inventario;
 import com.example.optiway.domain.model.Rol;
 import com.example.optiway.domain.model.Usuario;
 
@@ -22,14 +22,14 @@ import com.example.optiway.domain.model.Usuario;
 public class IngresoMercanciaService implements RegistrarIngresoMercanciaUseCase {
 
     private final IngresoMercanciaRepositoryPort ingresoRepositoryPort;
-    private final InventarioCentroDistribucionRepositoryPort inventarioRepositoryPort;
+    private final InventarioRepositoryPort inventarioRepositoryPort;
     private final CentroDistribucionRepositoryPort centroDistribucionRepositoryPort;
     private final ProductoRepositoryPort productoRepositoryPort;
     private final UsuarioRepositoryPort usuarioRepositoryPort;
 
     public IngresoMercanciaService(
             IngresoMercanciaRepositoryPort ingresoRepositoryPort,
-            InventarioCentroDistribucionRepositoryPort inventarioRepositoryPort,
+            InventarioRepositoryPort inventarioRepositoryPort,
             CentroDistribucionRepositoryPort centroDistribucionRepositoryPort,
             ProductoRepositoryPort productoRepositoryPort,
             UsuarioRepositoryPort usuarioRepositoryPort) {
@@ -94,36 +94,28 @@ public class IngresoMercanciaService implements RegistrarIngresoMercanciaUseCase
                                 "Producto no encontrado"));
 
         // 6. Buscar el inventario actual del producto en el centro
-        InventarioCentroDistribucion inventario =
+        Inventario inventario =
                 inventarioRepositoryPort
-                        .buscarPorCentroYProducto(
+                        .findByCentroDistribucionIdAndProductoId(
                                 centro.getId(),
                                 productoId)
                         .orElse(null);
 
         // 7. Si no existe inventario, crear uno nuevo
         if (inventario == null) {
-
-            inventario = new InventarioCentroDistribucion();
-
-            inventario.setCentroDistribucionId(
-                    centro.getId());
-
-            inventario.setProductoId(
-                    productoId);
-
-            inventario.setCantidadActual(
-                    cantidad);
-
+            inventario = new Inventario();
+            inventario.setCentroDistribucionId(centro.getId());
+            inventario.setProductoId(productoId);
+            inventario.setCantidadActual(cantidad);
+            inventario.setStockMinimo(0);
         } else {
-
             // 8. Si ya existe, sumar la nueva cantidad
             inventario.setCantidadActual(
                     inventario.getCantidadActual() + cantidad);
         }
 
         // 9. Guardar el inventario actualizado
-        inventarioRepositoryPort.guardar(inventario);
+        inventarioRepositoryPort.save(inventario);
 
         // 10. Registrar el ingreso de mercancía
         IngresoMercancia ingreso = new IngresoMercancia();

@@ -10,4 +10,10 @@ public interface InventarioJpaRepository
         extends JpaRepository<InventarioJpaEntity, Long> {
 
     List<InventarioJpaEntity> findByTiendaId(Long tiendaId);
+
+    List<InventarioJpaEntity> findByCentroDistribucionId(Long centroDistribucionId);
+
+    java.util.Optional<InventarioJpaEntity> findByTiendaIdAndProductoId(Long tiendaId, Long productoId);
+
+    java.util.Optional<InventarioJpaEntity> findByCentroDistribucionIdAndProductoId(Long centroDistribucionId, Long productoId);
 }

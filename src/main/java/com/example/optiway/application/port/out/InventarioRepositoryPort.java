@@ -9,4 +9,10 @@ public interface InventarioRepositoryPort {
     Inventario save(Inventario inventario);
 
     List<Inventario> findByTiendaId(Long tiendaId);
+
+    List<Inventario> findByCentroDistribucionId(Long centroDistribucionId);
+
+    java.util.Optional<Inventario> findByTiendaIdAndProductoId(Long tiendaId, Long productoId);
+
+    java.util.Optional<Inventario> findByCentroDistribucionIdAndProductoId(Long centroDistribucionId, Long productoId);
 }

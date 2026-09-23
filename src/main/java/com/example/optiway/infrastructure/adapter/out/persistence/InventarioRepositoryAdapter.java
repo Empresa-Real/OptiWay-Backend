@@ -18,47 +18,60 @@ public class InventarioRepositoryAdapter implements InventarioRepositoryPort {
 
     @Override
     public Inventario save(Inventario inventario) {
+        inventario.validarUbicacionExclusiva();
 
         InventarioJpaEntity entity = new InventarioJpaEntity();
-
+        if (inventario.getId() != null) {
+            entity.setId(inventario.getId());
+        }
         entity.setTiendaId(inventario.getTiendaId());
+        entity.setCentroDistribucionId(inventario.getCentroDistribucionId());
         entity.setProductoId(inventario.getProductoId());
         entity.setCantidadActual(inventario.getCantidadActual());
-        entity.setStockMinimo(inventario.getStockMinimo());
+        entity.setStockMinimo(inventario.getStockMinimo() != null ? inventario.getStockMinimo() : 0);
 
         InventarioJpaEntity savedEntity =
                 inventarioJpaRepository.save(entity);
 
-        Inventario savedInventario = new Inventario();
-
-        savedInventario.setId(savedEntity.getId());
-        savedInventario.setTiendaId(savedEntity.getTiendaId());
-        savedInventario.setProductoId(savedEntity.getProductoId());
-        savedInventario.setCantidadActual(savedEntity.getCantidadActual());
-        savedInventario.setStockMinimo(savedEntity.getStockMinimo());
-
-        return savedInventario;
+        return toDomain(savedEntity);
     }
 
     @Override
     public List<Inventario> findByTiendaId(Long tiendaId) {
-
         return inventarioJpaRepository.findByTiendaId(tiendaId)
                 .stream()
-                .map(entity -> {
-
-                    Inventario inventario = new Inventario();
-
-                    inventario.setId(entity.getId());
-                    inventario.setTiendaId(entity.getTiendaId());
-                    inventario.setProductoId(entity.getProductoId());
-                    inventario.setCantidadActual(
-                            entity.getCantidadActual());
-                    inventario.setStockMinimo(
-                            entity.getStockMinimo());
-
-                    return inventario;
-                })
+                .map(this::toDomain)
                 .toList();
+    }
+
+    @Override
+    public List<Inventario> findByCentroDistribucionId(Long centroDistribucionId) {
+        return inventarioJpaRepository.findByCentroDistribucionId(centroDistribucionId)
+                .stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
+    public java.util.Optional<Inventario> findByTiendaIdAndProductoId(Long tiendaId, Long productoId) {
+        return inventarioJpaRepository.findByTiendaIdAndProductoId(tiendaId, productoId)
+                .map(this::toDomain);
+    }
+
+    @Override
+    public java.util.Optional<Inventario> findByCentroDistribucionIdAndProductoId(Long centroDistribucionId, Long productoId) {
+        return inventarioJpaRepository.findByCentroDistribucionIdAndProductoId(centroDistribucionId, productoId)
+                .map(this::toDomain);
+    }
+
+    private Inventario toDomain(InventarioJpaEntity entity) {
+        Inventario inventario = new Inventario();
+        inventario.setId(entity.getId());
+        inventario.setTiendaId(entity.getTiendaId());
+        inventario.setCentroDistribucionId(entity.getCentroDistribucionId());
+        inventario.setProductoId(entity.getProductoId());
+        inventario.setCantidadActual(entity.getCantidadActual());
+        inventario.setStockMinimo(entity.getStockMinimo());
+        return inventario;
     }
 }
