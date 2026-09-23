@@ -41,3 +41,7 @@ build/
 *.log
 *.zip
 payload.json
+generate_minimal_story_mapping.py
+render.yaml
+wiki.md
+__pycache__
