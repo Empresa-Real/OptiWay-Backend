@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Inicio</title>
+</head>
+
+<body>
+    <h1 id="welcome">Cargando...</h1>
+    <p id="role-message">Cargando permisos...</p>
+    <button id="logout" type="button">Cerrar sesión</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/config.js"></script>
+    <script>
+        const supabaseClient = window.supabase.createClient(
+            window.APP_CONFIG.supabaseUrl,
+            window.APP_CONFIG.supabaseAnonKey
+        );
+
+        async function loadMainPage() {
+            const { data, error } = await supabaseClient.auth.getSession();
+
+            if (error || !data.session) {
+                window.location.href = '/';
+                return;
+            }
+
+            const user = data.session.user;
+            const name = user.user_metadata?.full_name || user.email;
+            document.getElementById('welcome').textContent = 'Bienvenido, ' + name;
+
+            const response = await fetch('/api/usuarios/me', {
+                headers: { Authorization: 'Bearer ' + data.session.access_token }
+            });
+
+            if (!response.ok) {
+                document.getElementById('role-message').textContent =
+                    'Tu cuenta todavía no tiene un usuario configurado en la aplicación.';
+                return;
+            }
+
+            const usuario = await response.json();
+            if (usuario.rol === 'ADMINISTRADOR') {
+                window.location.href = '/admin.html';
+                return;
+            }
+
+            document.getElementById('role-message').textContent =
+                'Has iniciado sesión como ' + usuario.rol + '.';
+        }
+
+        document.getElementById('logout').addEventListener('click', async () => {
+            await supabaseClient.auth.signOut();
+            window.location.href = '/';
+        });
+
+        loadMainPage();
+    </script>
+</body>
+
+</html>
