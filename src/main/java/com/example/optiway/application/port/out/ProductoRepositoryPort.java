@@ -9,6 +9,10 @@ public interface ProductoRepositoryPort {
 
     Producto save(Producto producto);
 
+    boolean existsByIdentificador(String identificador);
+
+    List<Producto> findAll();
+
     Optional<Producto> findById(Long id);
 
     List<Producto> findByNombre(String nombre);

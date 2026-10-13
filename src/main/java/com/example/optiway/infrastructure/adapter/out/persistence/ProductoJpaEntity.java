@@ -1,5 +1,7 @@
 package com.example.optiway.infrastructure.adapter.out.persistence;
 
+import java.math.BigDecimal;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -15,6 +17,18 @@ public class ProductoJpaEntity {
 
     @Column(nullable = false)
     private String categoria;
+
+    @Column(unique = true, length = 100)
+    private String identificador;
+
+    @Column(precision = 12, scale = 2)
+    private BigDecimal precio;
+
+    @Column(name = "unidad_medida", length = 50)
+    private String unidadMedida;
+
+    @Column(length = 20)
+    private String estado;
 
     public ProductoJpaEntity() {
     }
@@ -48,4 +62,13 @@ public class ProductoJpaEntity {
     public void setCategoria(String categoria) {
         this.categoria = categoria;
     }
+
+    public String getIdentificador() { return identificador; }
+    public void setIdentificador(String identificador) { this.identificador = identificador; }
+    public BigDecimal getPrecio() { return precio; }
+    public void setPrecio(BigDecimal precio) { this.precio = precio; }
+    public String getUnidadMedida() { return unidadMedida; }
+    public void setUnidadMedida(String unidadMedida) { this.unidadMedida = unidadMedida; }
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
 }
