@@ -1,3 +1,4 @@
+
 package com.example.optiway.infrastructure.adapter.out.persistence;
 
 import com.example.optiway.application.port.out.ProductoRepositoryPort;
@@ -19,71 +20,53 @@ public class ProductoRepositoryAdapter implements ProductoRepositoryPort {
     @Override
     public Producto save(Producto producto) {
 
-        ProductoJpaEntity entity = new ProductoJpaEntity();
+        ProductoJpaEntity entity;
+
+        if (producto.getId() != null) {
+            entity = productoJpaRepository.findById(producto.getId())
+                    .orElseThrow(() ->
+                            new IllegalArgumentException(
+                                    "El producto no existe"));
+        } else {
+            entity = new ProductoJpaEntity();
+        }
 
         entity.setNombre(producto.getNombre());
         entity.setCategoria(producto.getCategoria());
+        entity.setActivo(producto.isActivo());
 
-        ProductoJpaEntity savedEntity = productoJpaRepository.save(entity);
-
-        Producto savedProducto = new Producto();
-
-        savedProducto.setId(savedEntity.getId());
-        savedProducto.setNombre(savedEntity.getNombre());
-        savedProducto.setCategoria(savedEntity.getCategoria());
-
-        return savedProducto;
+        return toDomain(productoJpaRepository.save(entity));
     }
 
     @Override
     public Optional<Producto> findById(Long id) {
-
-        return productoJpaRepository.findById(id)
-                .map(entity -> {
-
-                    Producto producto = new Producto();
-
-                    producto.setId(entity.getId());
-                    producto.setNombre(entity.getNombre());
-                    producto.setCategoria(entity.getCategoria());
-
-                    return producto;
-                });
+        return productoJpaRepository.findById(id).map(this::toDomain);
     }
 
     @Override
     public List<Producto> findByNombre(String nombre) {
-
         return productoJpaRepository.findByNombreContainingIgnoreCase(nombre)
                 .stream()
-                .map(entity -> {
-
-                    Producto producto = new Producto();
-
-                    producto.setId(entity.getId());
-                    producto.setNombre(entity.getNombre());
-                    producto.setCategoria(entity.getCategoria());
-
-                    return producto;
-                })
+                .map(this::toDomain)
                 .toList();
     }
 
     @Override
     public List<Producto> findByCategoria(String categoria) {
-
         return productoJpaRepository.findByCategoriaIgnoreCase(categoria)
                 .stream()
-                .map(entity -> {
-
-                    Producto producto = new Producto();
-
-                    producto.setId(entity.getId());
-                    producto.setNombre(entity.getNombre());
-                    producto.setCategoria(entity.getCategoria());
-
-                    return producto;
-                })
+                .map(this::toDomain)
                 .toList();
+    }
+
+    private Producto toDomain(ProductoJpaEntity entity) {
+        boolean activo = entity.getActivo() == null || entity.getActivo();
+
+        return new Producto(
+                entity.getId(),
+                entity.getNombre(),
+                entity.getCategoria(),
+                activo
+        );
     }
 }

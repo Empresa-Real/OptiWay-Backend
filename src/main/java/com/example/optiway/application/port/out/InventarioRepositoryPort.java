@@ -15,4 +15,5 @@ public interface InventarioRepositoryPort {
     java.util.Optional<Inventario> findByTiendaIdAndProductoId(Long tiendaId, Long productoId);
 
     java.util.Optional<Inventario> findByCentroDistribucionIdAndProductoId(Long centroDistribucionId, Long productoId);
+    boolean existeStockActivoDeProducto(Long productoId);
 }

@@ -15,6 +15,8 @@ public class ProductoJpaEntity {
 
     @Column(nullable = false)
     private String categoria;
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private Boolean activo = true;
 
     public ProductoJpaEntity() {
     }
@@ -47,5 +49,12 @@ public class ProductoJpaEntity {
 
     public void setCategoria(String categoria) {
         this.categoria = categoria;
+    }
+    public Boolean getActivo() {
+        return activo;
+    }
+
+    public void setActivo(Boolean activo) {
+        this.activo = activo;
     }
 }

@@ -1,3 +1,4 @@
+
 package com.example.optiway.domain.model;
 
 public class Producto {
@@ -5,6 +6,7 @@ public class Producto {
     private Long id;
     private String nombre;
     private String categoria;
+    private boolean activo = true;
 
     public Producto() {
     }
@@ -13,6 +15,14 @@ public class Producto {
         this.id = id;
         this.nombre = nombre;
         this.categoria = categoria;
+        this.activo = true;
+    }
+
+    public Producto(Long id, String nombre, String categoria, boolean activo) {
+        this.id = id;
+        this.nombre = nombre;
+        this.categoria = categoria;
+        this.activo = activo;
     }
 
     public Long getId() {
@@ -37,5 +47,13 @@ public class Producto {
 
     public void setCategoria(String categoria) {
         this.categoria = categoria;
+    }
+
+    public boolean isActivo() {
+        return activo;
+    }
+
+    public void setActivo(boolean activo) {
+        this.activo = activo;
     }
 }

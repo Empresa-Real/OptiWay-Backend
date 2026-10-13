@@ -16,4 +16,8 @@ public interface InventarioJpaRepository
     java.util.Optional<InventarioJpaEntity> findByTiendaIdAndProductoId(Long tiendaId, Long productoId);
 
     java.util.Optional<InventarioJpaEntity> findByCentroDistribucionIdAndProductoId(Long centroDistribucionId, Long productoId);
+    boolean existsByProductoIdAndCantidadActualGreaterThan(
+            Long productoId,
+            Integer cantidad
+    );
 }
