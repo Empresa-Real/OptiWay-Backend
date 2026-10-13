@@ -3,17 +3,22 @@ package com.example.optiway.infrastructure.adapter.out.persistence;
 import com.example.optiway.application.port.out.ProductoRepositoryPort;
 import com.example.optiway.domain.model.Producto;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Component
 public class ProductoRepositoryAdapter implements ProductoRepositoryPort {
 
     private final ProductoJpaRepository productoJpaRepository;
+    private final ProductoEdicionJpaRepository productoEdicionJpaRepository;
 
-    public ProductoRepositoryAdapter(ProductoJpaRepository productoJpaRepository) {
+    public ProductoRepositoryAdapter(ProductoJpaRepository productoJpaRepository,
+                                     ProductoEdicionJpaRepository productoEdicionJpaRepository) {
         this.productoJpaRepository = productoJpaRepository;
+        this.productoEdicionJpaRepository = productoEdicionJpaRepository;
     }
 
     @Override
@@ -38,6 +43,21 @@ public class ProductoRepositoryAdapter implements ProductoRepositoryPort {
         copiarDatosCatalogo(savedEntity, savedProducto);
 
         return savedProducto;
+    }
+
+    @Override
+    @Transactional
+    public Producto update(Producto cambios, UUID usuarioAuthId) {
+        ProductoJpaEntity entity = productoJpaRepository.findById(cambios.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado con ID: " + cambios.getId()));
+
+        entity.setNombre(cambios.getNombre());
+        entity.setCategoria(cambios.getCategoria());
+        entity.setPrecio(cambios.getPrecio());
+        entity.setUnidadMedida(cambios.getUnidadMedida());
+        ProductoJpaEntity savedEntity = productoJpaRepository.save(entity);
+        productoEdicionJpaRepository.save(new ProductoEdicionJpaEntity(savedEntity.getId(), usuarioAuthId));
+        return toDomain(savedEntity);
     }
 
     @Override

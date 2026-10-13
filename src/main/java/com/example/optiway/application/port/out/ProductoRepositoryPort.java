@@ -4,10 +4,13 @@ import com.example.optiway.domain.model.Producto;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface ProductoRepositoryPort {
 
     Producto save(Producto producto);
+
+    Producto update(Producto producto, UUID usuarioAuthId);
 
     boolean existsByIdentificador(String identificador);
 

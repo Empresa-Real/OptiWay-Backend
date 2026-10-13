@@ -1,6 +1,7 @@
 package com.example.optiway.application.service;
 
 import com.example.optiway.application.port.in.CrearProductoUseCase;
+import com.example.optiway.application.port.in.EditarProductoUseCase;
 import com.example.optiway.application.port.in.ObtenerProductosUseCase;
 import com.example.optiway.application.port.out.ProductoRepositoryPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
@@ -16,7 +17,7 @@ import java.util.Locale;
 import java.util.UUID;
 
 @Service
-public class ProductoService implements CrearProductoUseCase, ObtenerProductosUseCase {
+public class ProductoService implements CrearProductoUseCase, ObtenerProductosUseCase, EditarProductoUseCase {
 
     private final ProductoRepositoryPort productoRepositoryPort;
     private final UsuarioRepositoryPort usuarioRepositoryPort;
@@ -70,6 +71,53 @@ public class ProductoService implements CrearProductoUseCase, ObtenerProductosUs
     @Override
     public List<Producto> obtenerProductos() {
         return productoRepositoryPort.findAll();
+    }
+
+    @Override
+    public Producto editarProducto(Long id, Producto cambios, UUID authUserId) {
+        if (authUserId == null) {
+            throw new AccesoDenegadoException("Solo un administrador puede editar productos");
+        }
+        Usuario usuario = usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)
+                .orElseThrow(() -> new AccesoDenegadoException("Usuario no encontrado"));
+        if (usuario.getRol() != Rol.ADMINISTRADOR) {
+            throw new AccesoDenegadoException("Solo un administrador puede editar productos");
+        }
+        if (id == null || id <= 0) {
+            throw new IllegalArgumentException("El ID del producto no es válido.");
+        }
+        if (cambios == null) {
+            throw new IllegalArgumentException("Los datos de edición son obligatorios.");
+        }
+
+        Producto actual = productoRepositoryPort.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado con ID: " + id));
+        boolean hayCambios = false;
+        if (cambios.getNombre() != null) {
+            actual.setNombre(requerido(cambios.getNombre(), "El nombre es obligatorio."));
+            hayCambios = true;
+        }
+        if (cambios.getCategoria() != null) {
+            actual.setCategoria(requerido(cambios.getCategoria(), "La categoría es obligatoria."));
+            hayCambios = true;
+        }
+        if (cambios.getPrecio() != null) {
+            if (cambios.getPrecio().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new IllegalArgumentException("El precio debe ser mayor que cero.");
+            }
+            actual.setPrecio(cambios.getPrecio());
+            hayCambios = true;
+        }
+        if (cambios.getUnidadMedida() != null) {
+            actual.setUnidadMedida(requerido(cambios.getUnidadMedida(), "La unidad de medida es obligatoria."));
+            hayCambios = true;
+        }
+        if (!hayCambios) {
+            throw new IllegalArgumentException("Debe indicar al menos un campo para editar.");
+        }
+
+        // ID, identificador y estado se toman del registro actual y nunca del cuerpo de la solicitud.
+        return productoRepositoryPort.update(actual, authUserId);
     }
 
     private String requerido(String valor, String mensaje) {
