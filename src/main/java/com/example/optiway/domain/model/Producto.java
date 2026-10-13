@@ -1,10 +1,16 @@
 package com.example.optiway.domain.model;
 
+import java.math.BigDecimal;
+
 public class Producto {
 
     private Long id;
     private String nombre;
     private String categoria;
+    private String identificador;
+    private BigDecimal precio;
+    private String unidadMedida;
+    private String estado;
 
     public Producto() {
     }
@@ -14,6 +20,26 @@ public class Producto {
         this.nombre = nombre;
         this.categoria = categoria;
     }
+
+    public Producto(Long id, String identificador, String nombre, String categoria,
+                    BigDecimal precio, String unidadMedida, String estado) {
+        this.id = id;
+        this.identificador = identificador;
+        this.nombre = nombre;
+        this.categoria = categoria;
+        this.precio = precio;
+        this.unidadMedida = unidadMedida;
+        this.estado = estado;
+    }
+
+    public String getIdentificador() { return identificador; }
+    public void setIdentificador(String identificador) { this.identificador = identificador; }
+    public BigDecimal getPrecio() { return precio; }
+    public void setPrecio(BigDecimal precio) { this.precio = precio; }
+    public String getUnidadMedida() { return unidadMedida; }
+    public void setUnidadMedida(String unidadMedida) { this.unidadMedida = unidadMedida; }
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
 
     public Long getId() {
         return id;

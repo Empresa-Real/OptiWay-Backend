@@ -23,6 +23,10 @@ public class ProductoRepositoryAdapter implements ProductoRepositoryPort {
 
         entity.setNombre(producto.getNombre());
         entity.setCategoria(producto.getCategoria());
+        entity.setIdentificador(producto.getIdentificador());
+        entity.setPrecio(producto.getPrecio());
+        entity.setUnidadMedida(producto.getUnidadMedida());
+        entity.setEstado(producto.getEstado());
 
         ProductoJpaEntity savedEntity = productoJpaRepository.save(entity);
 
@@ -31,8 +35,19 @@ public class ProductoRepositoryAdapter implements ProductoRepositoryPort {
         savedProducto.setId(savedEntity.getId());
         savedProducto.setNombre(savedEntity.getNombre());
         savedProducto.setCategoria(savedEntity.getCategoria());
+        copiarDatosCatalogo(savedEntity, savedProducto);
 
         return savedProducto;
+    }
+
+    @Override
+    public boolean existsByIdentificador(String identificador) {
+        return productoJpaRepository.existsByIdentificadorIgnoreCase(identificador);
+    }
+
+    @Override
+    public List<Producto> findAll() {
+        return productoJpaRepository.findAll().stream().map(this::toDomain).toList();
     }
 
     @Override
@@ -46,6 +61,7 @@ public class ProductoRepositoryAdapter implements ProductoRepositoryPort {
                     producto.setId(entity.getId());
                     producto.setNombre(entity.getNombre());
                     producto.setCategoria(entity.getCategoria());
+                    copiarDatosCatalogo(entity, producto);
 
                     return producto;
                 });
@@ -63,6 +79,7 @@ public class ProductoRepositoryAdapter implements ProductoRepositoryPort {
                     producto.setId(entity.getId());
                     producto.setNombre(entity.getNombre());
                     producto.setCategoria(entity.getCategoria());
+                    copiarDatosCatalogo(entity, producto);
 
                     return producto;
                 })
@@ -81,9 +98,26 @@ public class ProductoRepositoryAdapter implements ProductoRepositoryPort {
                     producto.setId(entity.getId());
                     producto.setNombre(entity.getNombre());
                     producto.setCategoria(entity.getCategoria());
+                    copiarDatosCatalogo(entity, producto);
 
                     return producto;
                 })
                 .toList();
+    }
+
+    private Producto toDomain(ProductoJpaEntity entity) {
+        Producto producto = new Producto();
+        producto.setId(entity.getId());
+        producto.setNombre(entity.getNombre());
+        producto.setCategoria(entity.getCategoria());
+        copiarDatosCatalogo(entity, producto);
+        return producto;
+    }
+
+    private void copiarDatosCatalogo(ProductoJpaEntity entity, Producto producto) {
+        producto.setIdentificador(entity.getIdentificador());
+        producto.setPrecio(entity.getPrecio());
+        producto.setUnidadMedida(entity.getUnidadMedida());
+        producto.setEstado(entity.getEstado());
     }
 }
