@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.example.optiway.application.service.AccesoDenegadoException;
 import com.example.optiway.application.service.InvitacionAuthException;
 import com.example.optiway.application.service.UsuarioDuplicadoException;
+import com.example.optiway.application.service.ProductoDuplicadoException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -29,6 +30,12 @@ public class ApiExceptionHandler {
     @ExceptionHandler(UsuarioDuplicadoException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public Map<String, String> usuarioDuplicado(UsuarioDuplicadoException exception) {
+        return Map.of("error", exception.getMessage());
+    }
+
+    @ExceptionHandler(ProductoDuplicadoException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public Map<String, String> productoDuplicado(ProductoDuplicadoException exception) {
         return Map.of("error", exception.getMessage());
     }
 
