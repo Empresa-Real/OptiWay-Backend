@@ -39,4 +39,21 @@ public class InventarioController {
                 categoria,
                 productoId);
     }
+
+    @GetMapping("/centro-distribucion")
+    public List<Inventario> consultarInventarioCD(
+            @AuthUserId UUID authUserId,
+            @RequestParam Long centroDistribucionId,
+            @RequestParam(required = false) String nombre,
+            @RequestParam(required = false) String categoria,
+            @RequestParam(required = false) Long productoId) {
+
+        return consultarInventarioUseCase.consultarInventario(
+                authUserId,
+                null,
+                centroDistribucionId,
+                nombre,
+                categoria,
+                productoId);
+    }
 }
