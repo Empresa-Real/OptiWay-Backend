@@ -14,6 +14,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.example.optiway.application.port.in.RegistrarIngresoCommand;
 import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
 import com.example.optiway.application.port.out.IngresoMercanciaRepositoryPort;
 import com.example.optiway.application.port.out.InventarioRepositoryPort;
@@ -82,7 +83,7 @@ class IngresoMercanciaServiceTest {
         when(inventarioRepositoryPort.findByCentroDistribucionIdAndProductoId(centroId, productoId))
                 .thenReturn(Optional.of(inventarioExistente));
 
-        service.registrarIngreso(authUserId, centroId, productoId, cantidad, origen);
+        service.registrarIngreso(new RegistrarIngresoCommand(centroId, productoId, cantidad, origen), authUserId);
 
         ArgumentCaptor<Inventario> invCaptor = ArgumentCaptor.forClass(Inventario.class);
         verify(inventarioRepositoryPort).save(invCaptor.capture());
@@ -101,11 +102,8 @@ class IngresoMercanciaServiceTest {
         assertThrows(
                 IllegalArgumentException.class,
                 () -> service.registrarIngreso(
-                        authUserId,
-                        1L,
-                        1L,
-                        0,
-                        "Proveedor"
+                        new RegistrarIngresoCommand(1L, 1L, 0, "Proveedor"),
+                        authUserId
                 )
         );
 
@@ -119,11 +117,8 @@ class IngresoMercanciaServiceTest {
         assertThrows(
                 IllegalArgumentException.class,
                 () -> service.registrarIngreso(
-                        authUserId,
-                        1L,
-                        1L,
-                        -10,
-                        "Proveedor"
+                        new RegistrarIngresoCommand(1L, 1L, -10, "Proveedor"),
+                        authUserId
                 )
         );
 

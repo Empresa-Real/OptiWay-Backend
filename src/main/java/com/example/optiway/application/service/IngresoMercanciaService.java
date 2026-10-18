@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.optiway.application.port.in.RegistrarIngresoCommand;
 import com.example.optiway.application.port.in.RegistrarIngresoMercanciaUseCase;
 import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
 import com.example.optiway.application.port.out.IngresoMercanciaRepositoryPort;
@@ -42,87 +43,61 @@ public class IngresoMercanciaService implements RegistrarIngresoMercanciaUseCase
 
     @Override
     @Transactional
-    public void registrarIngreso(
-            UUID authUserId,
-            Long centroDistribucionId,
-            Long productoId,
-            Integer cantidad,
-            String origen) {
-
-        // 1. Validar que la cantidad sea mayor que cero
-        if (cantidad == null || cantidad <= 0) {
-            throw new IllegalArgumentException(
-                    "La cantidad debe ser mayor que cero");
+    public void registrarIngreso(RegistrarIngresoCommand command, UUID authUserId) {
+        if (command == null) {
+            throw new IllegalArgumentException("Los datos de ingreso son obligatorios");
+        }
+        if (command.centroDistribucionId() == null) {
+            throw new IllegalArgumentException("El Centro de Distribución es obligatorio");
+        }
+        if (command.productoId() == null) {
+            throw new IllegalArgumentException("El producto es obligatorio");
+        }
+        if (command.cantidad() == null || command.cantidad() <= 0) {
+            throw new IllegalArgumentException("La cantidad debe ser mayor que cero");
+        }
+        if (command.origen() == null || command.origen().isBlank()) {
+            throw new IllegalArgumentException("El origen es obligatorio");
         }
 
-        // 2. Validar que el origen sea obligatorio
-        if (origen == null || origen.trim().isEmpty()) {
-            throw new IllegalArgumentException(
-                    "El origen es obligatorio");
-        }
-
-        // 3. Verificar que exista el centro de distribución
+        // 1. Verificar que exista el centro de distribución
         CentroDistribucion centro = centroDistribucionRepositoryPort
-                .obtenerPorId(centroDistribucionId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Centro de distribución no encontrado"));
+                .obtenerPorId(command.centroDistribucionId())
+                .orElseThrow(() -> new IllegalArgumentException("Centro de distribución no encontrado"));
 
-        // 4. Validar permisos del usuario sobre el centro de distribución
+        // 2. Validar permisos del usuario sobre el centro de distribución
         Usuario usuario = authorizationService.requirePermisoCentroDistribucion(
                 authUserId, centro, "registrar ingresos en este Centro de Distribución");
 
-        // 5. Verificar que exista el producto
-        productoRepositoryPort
-                .findById(productoId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Producto no encontrado"));
+        // 3. Verificar que exista el producto
+        productoRepositoryPort.findById(command.productoId())
+                .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado"));
 
-        // 6. Buscar el inventario actual del producto en el centro
-        Inventario inventario =
-                inventarioRepositoryPort
-                        .findByCentroDistribucionIdAndProductoId(
-                                centro.getId(),
-                                productoId)
-                        .orElse(null);
+        // 4. Buscar o inicializar inventario del producto en el centro
+        Inventario inventario = inventarioRepositoryPort
+                .findByCentroDistribucionIdAndProductoId(centro.getId(), command.productoId())
+                .orElseGet(() -> {
+                    Inventario nuevo = new Inventario();
+                    nuevo.setCentroDistribucionId(centro.getId());
+                    nuevo.setProductoId(command.productoId());
+                    nuevo.setCantidadActual(0);
+                    nuevo.setStockMinimo(0);
+                    return nuevo;
+                });
 
-        // 7. Si no existe inventario, crear uno nuevo
-        if (inventario == null) {
-            inventario = new Inventario();
-            inventario.setCentroDistribucionId(centro.getId());
-            inventario.setProductoId(productoId);
-            inventario.setCantidadActual(cantidad);
-            inventario.setStockMinimo(0);
-        } else {
-            // 8. Si ya existe, sumar la nueva cantidad
-            inventario.setCantidadActual(
-                    inventario.getCantidadActual() + cantidad);
-        }
-
-        // 9. Guardar el inventario actualizado
+        // 5. Sumar stock y persistir actualización en inventario
+        int stockActual = inventario.getCantidadActual() != null ? inventario.getCantidadActual() : 0;
+        inventario.setCantidadActual(stockActual + command.cantidad());
         inventarioRepositoryPort.save(inventario);
 
-        // 10. Registrar el ingreso de mercancía
+        // 6. Registrar la transacción histórica de ingreso
         IngresoMercancia ingreso = new IngresoMercancia();
-
-        ingreso.setCentroDistribucionId(
-                centro.getId());
-
-        ingreso.setProductoId(
-                productoId);
-
-        ingreso.setCantidad(
-                cantidad);
-
-        ingreso.setOrigen(
-                origen);
-
-        ingreso.setUsuarioId(
-                usuario.getId());
-
-        ingreso.setFechaIngreso(
-                LocalDateTime.now());
+        ingreso.setCentroDistribucionId(centro.getId());
+        ingreso.setProductoId(command.productoId());
+        ingreso.setCantidad(command.cantidad());
+        ingreso.setOrigen(command.origen());
+        ingreso.setUsuarioId(usuario.getId());
+        ingreso.setFechaIngreso(LocalDateTime.now());
 
         ingresoRepositoryPort.guardar(ingreso);
     }

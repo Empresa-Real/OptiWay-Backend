@@ -4,10 +4,5 @@ import java.util.UUID;
 
 public interface RegistrarIngresoMercanciaUseCase {
 
-    void registrarIngreso(
-            UUID authUserId,
-            Long centroDistribucionId,
-            Long productoId,
-            Integer cantidad,
-            String origen);
+    void registrarIngreso(RegistrarIngresoCommand command, UUID authUserId);
 }

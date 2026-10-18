@@ -2,6 +2,7 @@ package com.example.optiway.infrastructure.adapter.in.rest;
 
 import java.util.UUID;
 
+import com.example.optiway.application.port.in.RegistrarIngresoCommand;
 import com.example.optiway.infrastructure.security.AuthUserId;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,8 +22,7 @@ public class IngresoMercanciaController {
     public IngresoMercanciaController(
             RegistrarIngresoMercanciaUseCase registrarIngresoMercanciaUseCase) {
 
-        this.registrarIngresoMercanciaUseCase =
-                registrarIngresoMercanciaUseCase;
+        this.registrarIngresoMercanciaUseCase = registrarIngresoMercanciaUseCase;
     }
 
     @PostMapping
@@ -31,12 +31,13 @@ public class IngresoMercanciaController {
             @AuthUserId UUID authUserId,
             @RequestBody RegistrarIngresoMercanciaRequest request) {
 
-        registrarIngresoMercanciaUseCase.registrarIngreso(
-                authUserId,
+        RegistrarIngresoCommand command = new RegistrarIngresoCommand(
                 request.getCentroDistribucionId(),
                 request.getProductoId(),
                 request.getCantidad(),
                 request.getOrigen()
         );
+
+        registrarIngresoMercanciaUseCase.registrarIngreso(command, authUserId);
     }
 }
