@@ -78,8 +78,20 @@ public class Usuario {
         return this.rol == Rol.ADMINISTRADOR;
     }
 
+    public boolean esPlanificador() {
+        return this.rol == Rol.PLANIFICADOR;
+    }
+
+    public boolean esEncargadoTienda() {
+        return this.rol == Rol.ENCARGADO_TIENDA;
+    }
+
+    public boolean esEncargadoCD() {
+        return this.rol == Rol.ENCARGADO_CD;
+    }
+
     public boolean esEncargado() {
-        return this.rol == Rol.ENCARGADO_TIENDA || this.rol == Rol.ENCARGADO_CD;
+        return esEncargadoTienda() || esEncargadoCD();
     }
 
     /**
@@ -129,7 +141,7 @@ public class Usuario {
      * @return true si puede ver todo el catálogo logístico
      */
     public boolean puedeVerTodoElCatalogoLogistico() {
-        return esAdministrador() || this.rol == Rol.PLANIFICADOR;
+        return esAdministrador() || esPlanificador();
     }
 
     /**

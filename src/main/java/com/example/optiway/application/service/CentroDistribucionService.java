@@ -70,7 +70,7 @@ public class CentroDistribucionService implements CrearCentroDistribucionUseCase
             return centroDistribucionRepositoryPort.obtenerTodos();
         }
 
-        if (usuario.getRol() == Rol.ENCARGADO_CD) {
+        if (usuario.esEncargadoCD()) {
             return centroDistribucionRepositoryPort.obtenerPorEncargadoId(usuario.getId());
         }
 
@@ -93,7 +93,7 @@ public class CentroDistribucionService implements CrearCentroDistribucionUseCase
             Usuario encargado = usuarioRepositoryPort.obtenerPorID(encargadoId)
                     .orElseThrow(() -> new IllegalArgumentException("El usuario encargado no existe."));
 
-            if (encargado.getRol() != Rol.ENCARGADO_CD) {
+            if (!encargado.esEncargadoCD()) {
                 throw new IllegalArgumentException(
                         "Solo se puede asignar un centro de distribución a un usuario con rol Encargado de CD (Rol actual: " 
                         + encargado.getRol() + ").");

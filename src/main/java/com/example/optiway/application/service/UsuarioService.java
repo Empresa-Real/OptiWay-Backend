@@ -76,7 +76,7 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
             throw new IllegalArgumentException("Un administrador no puede eliminarse a sí mismo");
         }
         // Regla 2: Un administrador no puede eliminar a otro administrador
-        if (usuarioAEliminar.getRol() == Rol.ADMINISTRADOR) {
+        if (usuarioAEliminar.esAdministrador()) {
             throw new AccesoDenegadoException("No está permitido eliminar a otro usuario con rol ADMINISTRADOR");
         }
         // Paso 1: Eliminar la cuenta en Supabase Auth si posee auth_user_id

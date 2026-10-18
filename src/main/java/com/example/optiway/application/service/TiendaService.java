@@ -73,7 +73,7 @@ public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase,
             return tiendaRepositoryPort.findAll();
         }
 
-        if (usuario.getRol() == Rol.ENCARGADO_TIENDA) {
+        if (usuario.esEncargadoTienda()) {
             return tiendaRepositoryPort.obtenerPorEncargadoId(usuario.getId());
         }
 
@@ -96,7 +96,7 @@ public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase,
             Usuario encargado = usuarioRepositoryPort.obtenerPorID(encargadoId)
                     .orElseThrow(() -> new IllegalArgumentException("El usuario encargado no existe."));
 
-            if (encargado.getRol() != Rol.ENCARGADO_TIENDA) {
+            if (!encargado.esEncargadoTienda()) {
                 throw new IllegalArgumentException(
                         "Solo se puede asignar una tienda a un usuario con rol Encargado de tienda (Rol actual: " 
                         + encargado.getRol() + ").");
