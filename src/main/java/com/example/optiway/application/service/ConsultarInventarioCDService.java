@@ -4,15 +4,12 @@ import com.example.optiway.application.port.in.ConsultarInventarioCDUseCase;
 import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
 import com.example.optiway.application.port.out.InventarioRepositoryPort;
 import com.example.optiway.application.port.out.ProductoRepositoryPort;
-import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.domain.model.CentroDistribucion;
 import com.example.optiway.domain.model.Inventario;
 import com.example.optiway.domain.model.Producto;
-import com.example.optiway.domain.model.Rol;
-import com.example.optiway.domain.model.Usuario;
+import com.example.optiway.infrastructure.security.AuthorizationService;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -26,18 +23,18 @@ public class ConsultarInventarioCDService implements ConsultarInventarioCDUseCas
     private final InventarioRepositoryPort inventarioRepositoryPort;
     private final ProductoRepositoryPort productoRepositoryPort;
     private final CentroDistribucionRepositoryPort centroDistribucionRepositoryPort;
-    private final UsuarioRepositoryPort usuarioRepositoryPort;
+    private final AuthorizationService authorizationService;
 
     public ConsultarInventarioCDService(
             InventarioRepositoryPort inventarioRepositoryPort,
             ProductoRepositoryPort productoRepositoryPort,
             CentroDistribucionRepositoryPort centroDistribucionRepositoryPort,
-            UsuarioRepositoryPort usuarioRepositoryPort) {
+            AuthorizationService authorizationService) {
 
         this.inventarioRepositoryPort = inventarioRepositoryPort;
         this.productoRepositoryPort = productoRepositoryPort;
         this.centroDistribucionRepositoryPort = centroDistribucionRepositoryPort;
-        this.usuarioRepositoryPort = usuarioRepositoryPort;
+        this.authorizationService = authorizationService;
     }
 
     @Override
@@ -48,24 +45,14 @@ public class ConsultarInventarioCDService implements ConsultarInventarioCDUseCas
             String categoria,
             Long productoId) {
 
-        Usuario usuario = usuarioRepositoryPort
-                .obtenerPorAuthUserId(authUserId)
-                .orElseThrow(() -> new AccesoDenegadoException("Usuario no encontrado"));
-
         CentroDistribucion centro = centroDistribucionRepositoryPort
                 .obtenerPorId(centroDistribucionId)
                 .orElseThrow(() -> new IllegalArgumentException("El centro de distribución no existe"));
 
-        boolean esAdmin = usuario.getRol() == Rol.ADMINISTRADOR;
-        boolean esPlanificador = usuario.getRol() == Rol.PLANIFICADOR;
-        boolean esEncargado = usuario.getRol() == Rol.ENCARGADO_CD 
-                && centro.getEncargadoId() != null 
-                && usuario.getId().equals(centro.getEncargadoId());
-
-        if (!esAdmin && !esPlanificador && !esEncargado) {
-            throw new AccesoDenegadoException(
-                    "No tiene permisos para consultar el inventario de este centro de distribución");
-        }
+        authorizationService.requirePermisoCentroDistribucion(
+                authUserId,
+                centro,
+                "consultar el inventario de este centro de distribución");
 
         List<Inventario> inventarios = inventarioRepositoryPort
                 .findByCentroDistribucionId(centroDistribucionId);
@@ -74,16 +61,14 @@ public class ConsultarInventarioCDService implements ConsultarInventarioCDUseCas
             return List.of();
         }
 
-        // Optimización N+1: Cargar productos únicos asociados en memoria
+        // Optimización N+1: Carga batch de productos en una sola consulta SQL
         Set<Long> productoIds = inventarios.stream()
                 .map(Inventario::getProductoId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
-        Map<Long, Producto> productosMap = new HashMap<>();
-        for (Long pId : productoIds) {
-            productoRepositoryPort.findById(pId).ifPresent(p -> productosMap.put(pId, p));
-        }
+        Map<Long, Producto> productosMap = productoRepositoryPort.findAllById(productoIds).stream()
+                .collect(Collectors.toMap(Producto::getId, p -> p));
 
         String nombreFiltro = (nombre != null && !nombre.isBlank()) ? nombre.trim().toLowerCase() : null;
         String catFiltro = (categoria != null && !categoria.isBlank()) ? categoria.trim().toLowerCase() : null;

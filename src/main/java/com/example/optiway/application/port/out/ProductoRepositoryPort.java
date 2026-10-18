@@ -19,6 +19,8 @@ public interface ProductoRepositoryPort {
     boolean existsByIdentificador(String identificador);
 
     List<Producto> findAll();
+ 
+    List<Producto> findAllById(Iterable<Long> ids);
 
     Optional<Producto> findById(Long id);
 

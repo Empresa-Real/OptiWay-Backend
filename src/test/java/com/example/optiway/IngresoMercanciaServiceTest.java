@@ -26,6 +26,7 @@ import com.example.optiway.domain.model.Inventario;
 import com.example.optiway.domain.model.Producto;
 import com.example.optiway.domain.model.Rol;
 import com.example.optiway.domain.model.Usuario;
+import com.example.optiway.infrastructure.security.AuthorizationService;
 
 @ExtendWith(MockitoExtension.class)
 class IngresoMercanciaServiceTest {
@@ -49,12 +50,13 @@ class IngresoMercanciaServiceTest {
 
     @BeforeEach
     void setUp() {
+        AuthorizationService authorizationService = new AuthorizationService(usuarioRepositoryPort);
         service = new IngresoMercanciaService(
                 ingresoRepositoryPort,
                 inventarioRepositoryPort,
                 centroDistribucionRepositoryPort,
                 productoRepositoryPort,
-                usuarioRepositoryPort);
+                authorizationService);
     }
 
     @Test

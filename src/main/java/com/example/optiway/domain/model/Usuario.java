@@ -131,4 +131,32 @@ public class Usuario {
     public boolean puedeVerTodoElCatalogoLogistico() {
         return esAdministrador() || this.rol == Rol.PLANIFICADOR;
     }
+
+    /**
+     * Verifica si este usuario puede consultar el inventario de una tienda.
+     * Puede hacerlo si tiene visión logística global o es el Encargado asignado a esa tienda.
+     *
+     * @param tienda la tienda a consultar
+     * @return true si tiene permisos para consultar
+     */
+    public boolean puedeConsultarTienda(Tienda tienda) {
+        if (tienda == null) {
+            return false;
+        }
+        return puedeVerTodoElCatalogoLogistico() || esEncargadoDe(tienda);
+    }
+
+    /**
+     * Verifica si este usuario puede operar o consultar un Centro de Distribución.
+     * Puede hacerlo si tiene visión logística global o es el Encargado asignado a ese CD.
+     *
+     * @param centroDistribucion el centro de distribución a verificar
+     * @return true si tiene permisos
+     */
+    public boolean puedeOperarCentroDistribucion(CentroDistribucion centroDistribucion) {
+        if (centroDistribucion == null) {
+            return false;
+        }
+        return puedeVerTodoElCatalogoLogistico() || esEncargadoDe(centroDistribucion);
+    }
 }

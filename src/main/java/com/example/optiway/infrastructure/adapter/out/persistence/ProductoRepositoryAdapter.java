@@ -83,57 +83,31 @@ public class ProductoRepositoryAdapter implements ProductoRepositoryPort {
     }
 
     @Override
+    public List<Producto> findAllById(Iterable<Long> ids) {
+        if (ids == null) {
+            return List.of();
+        }
+        return productoJpaRepository.findAllById(ids).stream().map(this::toDomain).toList();
+    }
+
+    @Override
     public Optional<Producto> findById(Long id) {
-
-        return productoJpaRepository.findById(id)
-                .map(entity -> {
-
-                    Producto producto = new Producto();
-
-                    producto.setId(entity.getId());
-                    producto.setNombre(entity.getNombre());
-                    producto.setCategoria(entity.getCategoria());
-                    copiarDatosCatalogo(entity, producto);
-
-                    return producto;
-                });
+        return productoJpaRepository.findById(id).map(this::toDomain);
     }
 
     @Override
     public List<Producto> findByNombre(String nombre) {
-
         return productoJpaRepository.findByNombreContainingIgnoreCase(nombre)
                 .stream()
-                .map(entity -> {
-
-                    Producto producto = new Producto();
-
-                    producto.setId(entity.getId());
-                    producto.setNombre(entity.getNombre());
-                    producto.setCategoria(entity.getCategoria());
-                    copiarDatosCatalogo(entity, producto);
-
-                    return producto;
-                })
+                .map(this::toDomain)
                 .toList();
     }
 
     @Override
     public List<Producto> findByCategoria(String categoria) {
-
         return productoJpaRepository.findByCategoriaIgnoreCase(categoria)
                 .stream()
-                .map(entity -> {
-
-                    Producto producto = new Producto();
-
-                    producto.setId(entity.getId());
-                    producto.setNombre(entity.getNombre());
-                    producto.setCategoria(entity.getCategoria());
-                    copiarDatosCatalogo(entity, producto);
-
-                    return producto;
-                })
+                .map(this::toDomain)
                 .toList();
     }
 

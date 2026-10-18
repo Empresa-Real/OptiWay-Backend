@@ -91,17 +91,34 @@ public class AuthorizationService {
     }
 
     /**
-     * Valida que el usuario autenticado tenga permisos para operar en un Centro de Distribución
-     * (debe ser Administrador o Encargado asignado a ese CD).
+     * Valida que el usuario autenticado tenga permisos para operar o consultar un Centro de Distribución
+     * (debe ser Administrador, Planificador o Encargado asignado a ese CD).
      *
      * @param authUserId         identificador de autenticación
      * @param centroDistribucion centro de distribución sobre el que se operará
      * @param accion             descripción de la acción
      * @return el Usuario autenticado y autorizado
      */
-    public Usuario requirePermisoCentroDistribucion(UUID authUserId, CentroDistribucion centroDistribucion, String accion) {
+     public Usuario requirePermisoCentroDistribucion(UUID authUserId, CentroDistribucion centroDistribucion, String accion) {
+         Usuario usuario = requireAuthenticated(authUserId);
+         if (!usuario.puedeOperarCentroDistribucion(centroDistribucion)) {
+             throw new AccesoDenegadoException("No tiene permisos para " + accion);
+         }
+         return usuario;
+     }
+
+    /**
+     * Valida que el usuario autenticado tenga permisos para consultar el inventario de una tienda
+     * (debe ser Administrador, Planificador o Encargado asignado a esa tienda).
+     *
+     * @param authUserId identificador de autenticación
+     * @param tienda     tienda a consultar
+     * @param accion     descripción de la acción
+     * @return el Usuario autenticado y autorizado
+     */
+    public Usuario requirePermisoConsultarTienda(UUID authUserId, Tienda tienda, String accion) {
         Usuario usuario = requireAuthenticated(authUserId);
-        if (!usuario.esAdministrador() && !usuario.esEncargadoDe(centroDistribucion)) {
+        if (!usuario.puedeConsultarTienda(tienda)) {
             throw new AccesoDenegadoException("No tiene permisos para " + accion);
         }
         return usuario;

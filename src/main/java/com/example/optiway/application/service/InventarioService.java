@@ -4,16 +4,18 @@ import com.example.optiway.application.port.in.ConsultarInventarioUseCase;
 import com.example.optiway.application.port.out.InventarioRepositoryPort;
 import com.example.optiway.application.port.out.ProductoRepositoryPort;
 import com.example.optiway.application.port.out.TiendaRepositoryPort;
-import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.domain.model.Inventario;
 import com.example.optiway.domain.model.Producto;
-import com.example.optiway.domain.model.Rol;
 import com.example.optiway.domain.model.Tienda;
-import com.example.optiway.domain.model.Usuario;
+import com.example.optiway.infrastructure.security.AuthorizationService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class InventarioService implements ConsultarInventarioUseCase {
@@ -21,18 +23,18 @@ public class InventarioService implements ConsultarInventarioUseCase {
     private final InventarioRepositoryPort inventarioRepositoryPort;
     private final ProductoRepositoryPort productoRepositoryPort;
     private final TiendaRepositoryPort tiendaRepositoryPort;
-    private final UsuarioRepositoryPort usuarioRepositoryPort;
+    private final AuthorizationService authorizationService;
 
     public InventarioService(
             InventarioRepositoryPort inventarioRepositoryPort,
             ProductoRepositoryPort productoRepositoryPort,
             TiendaRepositoryPort tiendaRepositoryPort,
-            UsuarioRepositoryPort usuarioRepositoryPort) {
+            AuthorizationService authorizationService) {
 
         this.inventarioRepositoryPort = inventarioRepositoryPort;
         this.productoRepositoryPort = productoRepositoryPort;
         this.tiendaRepositoryPort = tiendaRepositoryPort;
-        this.usuarioRepositoryPort = usuarioRepositoryPort;
+        this.authorizationService = authorizationService;
     }
 
     @Override
@@ -43,77 +45,56 @@ public class InventarioService implements ConsultarInventarioUseCase {
             String categoria,
             Long productoId) {
 
-        Usuario usuario = usuarioRepositoryPort
-                .obtenerPorAuthUserId(authUserId)
-                .orElseThrow(() ->
-                        new AccesoDenegadoException(
-                                "Usuario no encontrado"));
-
         Tienda tienda = tiendaRepositoryPort
                 .obtenerPorId(tiendaId)
-                .orElseThrow(() ->
-                        new AccesoDenegadoException(
-                                "La tienda no existe"));
+                .orElseThrow(() -> new AccesoDenegadoException("La tienda no existe"));
 
-        boolean esAdmin = usuario.getRol() == Rol.ADMINISTRADOR;
-        boolean esPlanificador = usuario.getRol() == Rol.PLANIFICADOR;
-        boolean esEncargado = usuario.getId().equals(tienda.getEncargadoId());
+        authorizationService.requirePermisoConsultarTienda(authUserId, tienda, "consultar esta tienda");
 
-        if (!esAdmin && !esPlanificador && !esEncargado) {
-            throw new AccesoDenegadoException(
-                    "No tiene permisos para consultar esta tienda");
+        List<Inventario> inventarios = inventarioRepositoryPort.findByTiendaId(tiendaId);
+
+        if (inventarios.isEmpty()) {
+            return List.of();
         }
 
-        List<Inventario> inventarios =
-                inventarioRepositoryPort.findByTiendaId(tiendaId);
+        // Optimización N+1: Carga batch de productos en una sola consulta SQL
+        Set<Long> productoIds = inventarios.stream()
+                .map(Inventario::getProductoId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        Map<Long, Producto> productosMap = productoRepositoryPort.findAllById(productoIds).stream()
+                .collect(Collectors.toMap(Producto::getId, p -> p));
+
+        String nombreFiltro = (nombre != null && !nombre.isBlank()) ? nombre.trim().toLowerCase() : null;
+        String catFiltro = (categoria != null && !categoria.isBlank()) ? categoria.trim().toLowerCase() : null;
 
         return inventarios.stream()
+                .filter(inventario -> productoId == null || inventario.getProductoId().equals(productoId))
                 .filter(inventario -> {
-
-                    if (productoId != null &&
-                            !inventario.getProductoId().equals(productoId)) {
-                        return false;
-                    }
-
-                    Producto producto = productoRepositoryPort
-                            .findById(inventario.getProductoId())
-                            .orElse(null);
-
+                    Producto producto = productosMap.get(inventario.getProductoId());
                     if (producto == null) {
                         return false;
                     }
-
-                    if (nombre != null && !nombre.isBlank() &&
-                            !producto.getNombre()
-                                    .toLowerCase()
-                                    .contains(nombre.toLowerCase())) {
+                    if (nombreFiltro != null && (producto.getNombre() == null
+                            || !producto.getNombre().toLowerCase().contains(nombreFiltro))) {
                         return false;
                     }
-
-                    if (categoria != null && !categoria.isBlank() &&
-                            !producto.getCategoria()
-                                    .equalsIgnoreCase(categoria)) {
+                    if (catFiltro != null && (producto.getCategoria() == null
+                            || !producto.getCategoria().equalsIgnoreCase(catFiltro))) {
                         return false;
                     }
-
                     return true;
                 })
                 .map(inventario -> {
-
-                    Producto producto = productoRepositoryPort
-                            .findById(inventario.getProductoId())
-                            .orElse(null);
-
+                    Producto producto = productosMap.get(inventario.getProductoId());
                     if (producto != null) {
                         inventario.setNombreProducto(producto.getNombre());
-                        inventario.setCategoriaProducto(
-                                producto.getCategoria());
+                        inventario.setCategoriaProducto(producto.getCategoria());
                     }
-
-                    inventario.setStockBajo(
-                            inventario.getCantidadActual()
-                                    < inventario.getStockMinimo());
-
+                    int stockMin = inventario.getStockMinimo() != null ? inventario.getStockMinimo() : 0;
+                    int cantActual = inventario.getCantidadActual() != null ? inventario.getCantidadActual() : 0;
+                    inventario.setStockBajo(cantActual < stockMin);
                     return inventario;
                 })
                 .toList();

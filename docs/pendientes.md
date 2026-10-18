@@ -19,6 +19,14 @@ Este documento resume los puntos pendientes y el estado de la deuda técnica en 
   - Implementado `GET /api/inventario/centro-distribucion` con permisos multirrol (Admin, Planificador, Encargado) y optimización de consultas N+1 en memoria.
 - [x] **Estandarización de Inyección de Identidad (Fix 7):**
   - Implementación de `@AuthUserId` con `AuthUserIdArgumentResolver` y `WebMvcConfig`, eliminando 15 duplicaciones de extracción de JWT en los controladores.
+- [x] **Patrón Information Expert y Fachada de Autorización (Fix 15):**
+  - Eliminado *Feature Envy* en servicios delegando la lógica de pertenencia y permisos a `Usuario` (`puedeOperarTienda`, `puedeConsultarTienda`, `puedeOperarCentroDistribucion`, etc.).
+  - Centralización de comprobaciones de autorización en `AuthorizationService` (`requirePermisoTienda`, `requirePermisoCentroDistribucion`, `requirePermisoConsultarTienda`).
+  - Filtrado de tiendas delegado a PostgreSQL (`tiendaRepositoryPort.obtenerPorEncargadoId`) en lugar de stream en memoria.
+- [x] **Optimización N+1 y Limpieza en Servicios de Inventario (Fix 16):**
+  - Incorporación del método batch `findAllById(Iterable<Long> ids)` en `ProductoRepositoryPort` y `ProductoRepositoryAdapter`.
+  - Reemplazo de consultas individuales repetitivas (`findById` en bucle/stream) por una sola consulta SQL (`SELECT ... WHERE id IN (...)`) tanto en `ConsultarInventarioCDService` como en `InventarioService`.
+  - Simplificación drástica de validaciones y dependencias en `IngresoMercanciaService`, `ConsultarInventarioCDService`, `InventarioService` y `VentaService`.
 
 ---
 
@@ -61,4 +69,4 @@ Este documento resume los puntos pendientes y el estado de la deuda técnica en 
 ---
 
 ### 6. Rendimiento y Optimización (Backend)
-- [ ] **Resolver N+1 en Inventario:** Cambiar la búsqueda individual de productos (`findById` en bucle) en `InventarioService` por una consulta batch (`findAllById`) o proyección con `JOIN` en JPA.
+- [x] **Resolver N+1 en Inventario:** Implementada la carga batch de productos (`findAllById`) en `ProductoRepositoryPort` y adaptador JPA (`ProductoRepositoryAdapter`), eliminando las búsquedas repetitivas `findById` en bucle/stream tanto en `InventarioService` como en `ConsultarInventarioCDService`.

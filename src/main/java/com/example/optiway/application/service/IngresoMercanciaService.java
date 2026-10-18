@@ -11,12 +11,11 @@ import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort
 import com.example.optiway.application.port.out.IngresoMercanciaRepositoryPort;
 import com.example.optiway.application.port.out.InventarioRepositoryPort;
 import com.example.optiway.application.port.out.ProductoRepositoryPort;
-import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.domain.model.CentroDistribucion;
 import com.example.optiway.domain.model.IngresoMercancia;
 import com.example.optiway.domain.model.Inventario;
-import com.example.optiway.domain.model.Rol;
 import com.example.optiway.domain.model.Usuario;
+import com.example.optiway.infrastructure.security.AuthorizationService;
 
 @Service
 public class IngresoMercanciaService implements RegistrarIngresoMercanciaUseCase {
@@ -25,20 +24,20 @@ public class IngresoMercanciaService implements RegistrarIngresoMercanciaUseCase
     private final InventarioRepositoryPort inventarioRepositoryPort;
     private final CentroDistribucionRepositoryPort centroDistribucionRepositoryPort;
     private final ProductoRepositoryPort productoRepositoryPort;
-    private final UsuarioRepositoryPort usuarioRepositoryPort;
+    private final AuthorizationService authorizationService;
 
     public IngresoMercanciaService(
             IngresoMercanciaRepositoryPort ingresoRepositoryPort,
             InventarioRepositoryPort inventarioRepositoryPort,
             CentroDistribucionRepositoryPort centroDistribucionRepositoryPort,
             ProductoRepositoryPort productoRepositoryPort,
-            UsuarioRepositoryPort usuarioRepositoryPort) {
+            AuthorizationService authorizationService) {
 
         this.ingresoRepositoryPort = ingresoRepositoryPort;
         this.inventarioRepositoryPort = inventarioRepositoryPort;
         this.centroDistribucionRepositoryPort = centroDistribucionRepositoryPort;
         this.productoRepositoryPort = productoRepositoryPort;
-        this.usuarioRepositoryPort = usuarioRepositoryPort;
+        this.authorizationService = authorizationService;
     }
 
     @Override
@@ -62,29 +61,16 @@ public class IngresoMercanciaService implements RegistrarIngresoMercanciaUseCase
                     "El origen es obligatorio");
         }
 
-        // 3. Buscar al usuario que registra el ingreso
-        Usuario usuario = usuarioRepositoryPort
-                .obtenerPorAuthUserId(authUserId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Usuario no encontrado"));
-
-        // 4. Verificar que exista el centro de distribución
+        // 3. Verificar que exista el centro de distribución
         CentroDistribucion centro = centroDistribucionRepositoryPort
                 .obtenerPorId(centroDistribucionId)
                 .orElseThrow(() ->
                         new IllegalArgumentException(
                                 "Centro de distribución no encontrado"));
 
-        // Validar permisos sobre el centro de distribución
-        boolean esAdmin = usuario.getRol() == Rol.ADMINISTRADOR;
-        boolean esPlanificador = usuario.getRol() == Rol.PLANIFICADOR;
-        boolean esEncargado = usuario.getId() != null && usuario.getId().equals(centro.getEncargadoId());
-
-        if (!esAdmin && !esPlanificador && !esEncargado) {
-            throw new AccesoDenegadoException(
-                    "No tiene permisos para registrar ingresos en este Centro de Distribución");
-        }
+        // 4. Validar permisos del usuario sobre el centro de distribución
+        Usuario usuario = authorizationService.requirePermisoCentroDistribucion(
+                authUserId, centro, "registrar ingresos en este Centro de Distribución");
 
         // 5. Verificar que exista el producto
         productoRepositoryPort
