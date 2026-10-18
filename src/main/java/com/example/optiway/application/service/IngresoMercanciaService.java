@@ -43,7 +43,7 @@ public class IngresoMercanciaService implements RegistrarIngresoMercanciaUseCase
 
     @Override
     @Transactional
-    public void registrarIngreso(RegistrarIngresoCommand command, UUID authUserId) {
+    public IngresoMercancia registrarIngreso(RegistrarIngresoCommand command, UUID authUserId) {
         if (command == null) {
             throw new IllegalArgumentException("Los datos de ingreso son obligatorios");
         }
@@ -73,7 +73,19 @@ public class IngresoMercanciaService implements RegistrarIngresoMercanciaUseCase
         productoRepositoryPort.findById(command.productoId())
                 .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado"));
 
-        // 4. Buscar o inicializar inventario del producto en el centro
+        // 4. Validar capacidad máxima del Centro de Distribución
+        if (centro.getCapacidad() != null && centro.getCapacidad() > 0) {
+            int stockTotalActual = inventarioRepositoryPort.findByCentroDistribucionId(centro.getId())
+                    .stream()
+                    .mapToInt(Inventario::getCantidadActual)
+                    .sum();
+            if (stockTotalActual + command.cantidad() > centro.getCapacidad()) {
+                throw new IllegalArgumentException("El ingreso excede la capacidad máxima del centro de distribución ("
+                        + centro.getCapacidad() + "). Capacidad disponible: " + Math.max(0, centro.getCapacidad() - stockTotalActual));
+            }
+        }
+
+        // 5. Buscar o inicializar inventario del producto en el centro
         Inventario inventario = inventarioRepositoryPort
                 .findByCentroDistribucionIdAndProductoId(centro.getId(), command.productoId())
                 .orElseGet(() -> {
@@ -85,11 +97,11 @@ public class IngresoMercanciaService implements RegistrarIngresoMercanciaUseCase
                     return nuevo;
                 });
 
-        // 5. Sumar stock y persistir actualización en inventario
+        // 6. Sumar stock y persistir actualización en inventario
         inventario.agregarStock(command.cantidad());
         inventarioRepositoryPort.save(inventario);
 
-        // 6. Registrar la transacción histórica de ingreso
+        // 7. Registrar la transacción histórica de ingreso
         IngresoMercancia ingreso = new IngresoMercancia();
         ingreso.setCentroDistribucionId(centro.getId());
         ingreso.setProductoId(command.productoId());
@@ -98,6 +110,8 @@ public class IngresoMercanciaService implements RegistrarIngresoMercanciaUseCase
         ingreso.setUsuarioId(usuario.getId());
         ingreso.setFechaIngreso(LocalDateTime.now());
 
-        ingresoRepositoryPort.guardar(ingreso);
+        IngresoMercancia guardado = ingresoRepositoryPort.guardar(ingreso);
+        guardado.setStockTotalActualizado(inventario.getCantidadActual());
+        return guardado;
     }
 }

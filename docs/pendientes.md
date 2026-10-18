@@ -67,9 +67,11 @@ Este documento resume los puntos pendientes y el estado de la deuda técnica en 
 
 ---
 
-### 5. Validaciones y Mejoras de HU-18
+### 5. Validaciones y Mejoras de HU-18 y HU-12 (Sprint 1)
 - [x] **Validación de entrada:** Agregada dependencia `spring-boot-starter-validation`, anotaciones `@NotNull`, `@Positive` (cantidad > 0) y `@NotBlank` (origen obligatorio) con `@Valid` en `IngresoMercanciaController` y manejador en `ApiExceptionHandler` para responder `400 Bad Request`.
-- [ ] **Alineación de endpoint:** Migrar de `POST /api/ingresos-mercancia` a `POST /api/centros-distribucion/{id}/ingresos` retornando `201 Created` con el detalle del movimiento.
+- [x] **Alineación de endpoint y constancia:** Implementado `POST /api/centros-distribucion/{id}/ingresos` (con `RegistrarIngresoRequest`), retornando `201 Created` con `IngresoMercanciaResponse` (con `stockTotalActualizado`), y retorno de constancia también en `POST /api/ingresos-mercancia`.
+- [x] **Validación de capacidad máxima de CD:** Verificación de aforo disponible en `IngresoMercanciaService` antes de persistir existencias.
+- [x] **Pruebas unitarias completas de Inventario (HU-12 y HU-18):** Implementación de `InventarioServiceTest` (8 casos de prueba) y ampliación de `IngresoMercanciaServiceTest` (7 casos de prueba).
 
 ---
 

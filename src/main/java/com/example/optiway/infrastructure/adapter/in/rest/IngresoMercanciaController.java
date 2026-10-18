@@ -5,6 +5,8 @@ import java.util.UUID;
 import jakarta.validation.Valid;
 
 import com.example.optiway.application.port.in.RegistrarIngresoCommand;
+import com.example.optiway.domain.model.IngresoMercancia;
+import com.example.optiway.infrastructure.adapter.in.rest.dto.IngresoMercanciaResponse;
 import com.example.optiway.infrastructure.security.AuthUserId;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,7 +31,7 @@ public class IngresoMercanciaController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public void registrarIngreso(
+    public IngresoMercanciaResponse registrarIngreso(
             @Valid @RequestBody RegistrarIngresoMercanciaRequest request,
             @AuthUserId UUID authUserId) {
 
@@ -40,6 +42,7 @@ public class IngresoMercanciaController {
                 request.getOrigen()
         );
 
-        registrarIngresoMercanciaUseCase.registrarIngreso(command, authUserId);
+        IngresoMercancia ingreso = registrarIngresoMercanciaUseCase.registrarIngreso(command, authUserId);
+        return IngresoMercanciaResponse.from(ingreso);
     }
 }
