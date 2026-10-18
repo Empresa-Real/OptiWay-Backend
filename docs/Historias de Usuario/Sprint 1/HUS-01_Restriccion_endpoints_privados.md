@@ -40,16 +40,57 @@
 
 ---
 
+## Modelo de Seguridad en Dos Capas (Autenticación vs. Autorización)
+
+El sistema implementa una arquitectura de seguridad en dos barreras consecutivas:
+
+```text
+Solicitud HTTP
+      │
+      ▼
+┌────────────────────────────────────────────────────────┐
+│  CAPA 1: AUTENTICACIÓN (Spring Security - HUS-01)      │
+│  ¿El usuario ha iniciado sesión con token válido?      │
+└────────────────────────────────────────────────────────┘
+      │
+      ├── NO ──► HTTP 401 Unauthorized (Bloqueo inmediato)
+      │
+      ▼ SÍ
+┌────────────────────────────────────────────────────────┐
+│  CAPA 2: AUTORIZACIÓN POR ROLES Y UBICACIÓN (RBAC)     │
+│  ¿El rol y la sede asignada le permiten esta acción?   │
+└────────────────────────────────────────────────────────┘
+      │
+      ├── NO ──► HTTP 403 Forbidden (AccesoDenegadoException)
+      │
+      ▼ SÍ
+  Ejecución en Controlador, Caso de Uso y Base de Datos
+```
+
+### Matriz de Autorización por Rol (Capa 2)
+
+| Recurso / Acción | Endpoint | `ADMINISTRADOR` | `PLANIFICADOR` | `ENCARGADO_TIENDA` | `ENCARGADO_CD` |
+| :--- | :--- | :---: | :---: | :---: | :---: |
+| **Gestión de Usuarios** | `POST/GET /api/usuarios` | ✅ Sí | ❌ No (`403`) | ❌ No (`403`) | ❌ No (`403`) |
+| **Crear / Editar Tiendas** | `POST/PUT /api/tiendas` | ✅ Sí | ✅ Sí | ❌ No (`403`) | ❌ No (`403`) |
+| **Crear / Editar CDs** | `POST/PUT /api/centros-distribucion` | ✅ Sí | ✅ Sí | ❌ No (`403`) | ❌ No (`403`) |
+| **Gestión Catálogo Productos** | `POST/PATCH /api/productos` | ✅ Sí | ❌ No (`403`) | ❌ No (`403`) | ❌ No (`403`) |
+| **Inventario de Tienda** | `GET /api/inventario?tiendaId=X` | ✅ Todas | ✅ Todas | 🔒 Solo tienda asignada | ❌ No (`403`) |
+| **Inventario de CD** | `GET /api/inventario/centro-distribucion` | ✅ Todos | ✅ Todos | ❌ No (`403`) | 🔒 Solo CD asignado |
+| **Ingreso de Mercancía CD** | `POST /api/ingresos-mercancia` | ✅ Sí | ✅ Sí | ❌ No (`403`) | 🔒 Solo CD asignado |
+| **Registrar Ventas Tienda** | `POST /api/ventas` | ✅ Sí | ❌ No (`403`) | 🔒 Solo tienda asignada | ❌ No (`403`) |
+
+---
+
 ## Matriz de Verificación de Endpoints
 
 | Ruta | Método | Condición | Respuesta Esperada | Componente Responsable |
 | :--- | :---: | :--- | :---: | :--- |
-| `/api/productos` | `GET` / `POST` | Sin cabecera `Authorization` | **`401 Unauthorized`** | `SecurityFilterChain` |
-| `/api/tiendas` | `GET` / `POST` | Sin cabecera `Authorization` | **`401 Unauthorized`** | `SecurityFilterChain` |
-| `/api/ventas` | `POST` | Sin cabecera `Authorization` | **`401 Unauthorized`** | `SecurityFilterChain` |
-| `/api/inventario` | `GET` | Sin cabecera `Authorization` | **`401 Unauthorized`** | `SecurityFilterChain` |
-| `/api/centros-distribucion` | `GET` / `POST` | Sin cabecera `Authorization` | **`401 Unauthorized`** | `SecurityFilterChain` |
-| `/api/productos` | `GET` | Con JWT válido de Supabase | **`200 OK`** | `OAuth2AuthenticationToken` |
+| `/api/**` (Cualquier endpoint privado) | `Cualquiera` | Sin cabecera `Authorization` | **`401 Unauthorized`** | `SecurityFilterChain` |
+| `/api/usuarios` | `POST` | Autenticado con rol `PLANIFICADOR` | **`403 Forbidden`** | `UsuarioService` |
+| `/api/ventas` | `POST` | Autenticado con `ENCARGADO_TIENDA` ajeno | **`403 Forbidden`** | `VentaService` |
+| `/api/inventario/cd` | `GET` | Autenticado con `ENCARGADO_CD` ajeno | **`403 Forbidden`** | `ConsultarInventarioCDService` |
+| `/api/productos` | `GET` | Autenticado con rol válido | **`200 OK`** | `ProductoController` |
 | `/index.html` | `GET` | Sin cabecera (Público) | **`200 OK`** | Lista blanca `permitAll()` |
 
 ---
