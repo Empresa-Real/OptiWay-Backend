@@ -100,4 +100,29 @@ public class Inventario {
     public void setStockBajo(boolean stockBajo) {
         this.stockBajo = stockBajo;
     }
+
+    /**
+     * Calcula si el nivel de existencias actual está por debajo del umbral mínimo requerido.
+     *
+     * @return true si la cantidad actual es menor que el stock mínimo configurado
+     */
+    public boolean calcularStockBajo() {
+        return this.cantidadActual != null && this.stockMinimo != null && this.cantidadActual < this.stockMinimo;
+    }
+
+    /**
+     * Enriquece el registro de inventario con los atributos del producto asociado
+     * y recalcula automáticamente el estado de stock bajo.
+     *
+     * @param producto producto del catálogo asociado a este inventario
+     * @return esta misma instancia para encadenamiento fluido
+     */
+    public Inventario enriquecerConProducto(Producto producto) {
+        if (producto != null) {
+            this.nombreProducto = producto.getNombre();
+            this.categoriaProducto = producto.getCategoria();
+        }
+        this.stockBajo = calcularStockBajo();
+        return this;
+    }
 }

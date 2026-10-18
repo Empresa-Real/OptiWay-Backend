@@ -45,64 +45,66 @@ public class InventarioService implements ConsultarInventarioUseCase {
             String categoria,
             Long productoId) {
 
-        Tienda tienda = tiendaRepositoryPort
-                .obtenerPorId(tiendaId)
-                .orElseThrow(() -> new AccesoDenegadoException("La tienda no existe"));
+        validarAccesoATienda(authUserId, tiendaId);
 
-        authorizationService.requirePermisoConsultarTienda(authUserId, tienda, "consultar esta tienda");
-
-        List<Inventario> inventarios;
-        if (productoId != null) {
-            inventarios = inventarioRepositoryPort.findByTiendaIdAndProductoId(tiendaId, productoId)
-                    .map(List::of)
-                    .orElseGet(List::of);
-        } else {
-            inventarios = inventarioRepositoryPort.findByTiendaId(tiendaId);
-        }
-
+        List<Inventario> inventarios = obtenerInventarios(tiendaId, productoId);
         if (inventarios.isEmpty()) {
             return List.of();
         }
 
-        // Optimización N+1: Carga batch de productos en una sola consulta SQL
+        Map<Long, Producto> productosMap = cargarProductosEnBatch(inventarios);
+
+        String nombreFiltro = normalizar(nombre);
+        String catFiltro = normalizar(categoria);
+
+        return inventarios.stream()
+                .filter(i -> coincideFiltros(productosMap.get(i.getProductoId()), nombreFiltro, catFiltro))
+                .map(i -> i.enriquecerConProducto(productosMap.get(i.getProductoId())))
+                .toList();
+    }
+
+    private void validarAccesoATienda(UUID authUserId, Long tiendaId) {
+        Tienda tienda = tiendaRepositoryPort.obtenerPorId(tiendaId)
+                .orElseThrow(() -> new AccesoDenegadoException("La tienda no existe"));
+
+        authorizationService.requirePermisoConsultarTienda(authUserId, tienda, "consultar esta tienda");
+    }
+
+    private List<Inventario> obtenerInventarios(Long tiendaId, Long productoId) {
+        if (productoId != null) {
+            return inventarioRepositoryPort.findByTiendaIdAndProductoId(tiendaId, productoId)
+                    .map(List::of)
+                    .orElseGet(List::of);
+        }
+        return inventarioRepositoryPort.findByTiendaId(tiendaId);
+    }
+
+    private Map<Long, Producto> cargarProductosEnBatch(List<Inventario> inventarios) {
         Set<Long> productoIds = inventarios.stream()
                 .map(Inventario::getProductoId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
-        Map<Long, Producto> productosMap = productoRepositoryPort.findAllById(productoIds).stream()
+        return productoRepositoryPort.findAllById(productoIds).stream()
                 .collect(Collectors.toMap(Producto::getId, p -> p));
+    }
 
-        String nombreFiltro = (nombre != null && !nombre.isBlank()) ? nombre.trim().toLowerCase() : null;
-        String catFiltro = (categoria != null && !categoria.isBlank()) ? categoria.trim().toLowerCase() : null;
+    private boolean coincideFiltros(Producto producto, String nombreFiltro, String catFiltro) {
+        if (producto == null) {
+            return nombreFiltro == null && catFiltro == null;
+        }
+        if (nombreFiltro != null && (producto.getNombre() == null
+                || !producto.getNombre().toLowerCase().contains(nombreFiltro))) {
+            return false;
+        }
+        if (catFiltro != null && (producto.getCategoria() == null
+                || !producto.getCategoria().equalsIgnoreCase(catFiltro))) {
+            return false;
+        }
+        return true;
+    }
 
-        return inventarios.stream()
-                .filter(inventario -> {
-                    Producto producto = productosMap.get(inventario.getProductoId());
-                    if (producto == null) {
-                        return false;
-                    }
-                    if (nombreFiltro != null && (producto.getNombre() == null
-                            || !producto.getNombre().toLowerCase().contains(nombreFiltro))) {
-                        return false;
-                    }
-                    if (catFiltro != null && (producto.getCategoria() == null
-                            || !producto.getCategoria().equalsIgnoreCase(catFiltro))) {
-                        return false;
-                    }
-                    return true;
-                })
-                .map(inventario -> {
-                    Producto producto = productosMap.get(inventario.getProductoId());
-                    if (producto != null) {
-                        inventario.setNombreProducto(producto.getNombre());
-                        inventario.setCategoriaProducto(producto.getCategoria());
-                    }
-                    int stockMin = inventario.getStockMinimo() != null ? inventario.getStockMinimo() : 0;
-                    int cantActual = inventario.getCantidadActual() != null ? inventario.getCantidadActual() : 0;
-                    inventario.setStockBajo(cantActual < stockMin);
-                    return inventario;
-                })
-                .toList();
+    private String normalizar(String valor) {
+        return (valor != null && !valor.isBlank()) ? valor.trim().toLowerCase() : null;
     }
 }
