@@ -1,4 +1,4 @@
-# Fix 22 — Endurecimiento de Controladores REST, Persistencia y Seguridad
+# Fix 24 — Endurecimiento de Controladores REST, Persistencia y Seguridad
 
 **Fecha:** 18 de Octubre de 2026  
 **Área:** Capa de Infraestructura (Adaptadores de Entrada REST, Adaptadores de Salida JPA, Seguridad)  

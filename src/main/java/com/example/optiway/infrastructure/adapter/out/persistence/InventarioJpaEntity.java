@@ -40,7 +40,7 @@ public class InventarioJpaEntity {
 
     @PrePersist
     @PreUpdate
-    private void validarExclusividadUbicacion() {
+    protected void validarExclusividadUbicacion() {
         boolean tieneTienda = (this.tiendaId != null);
         boolean tieneCd = (this.centroDistribucionId != null);
         if (tieneTienda && tieneCd) {

@@ -5,6 +5,7 @@ import com.example.optiway.domain.model.Venta;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class VentaRepositoryAdapter implements VentaRepositoryPort {
@@ -28,7 +29,7 @@ public class VentaRepositoryAdapter implements VentaRepositoryPort {
     }
 
     @Override
-    public java.util.Optional<Venta> findById(Long id) {
+    public Optional<Venta> findById(Long id) {
         return ventaJpaRepository.findById(id).map(this::toDomain);
     }
 

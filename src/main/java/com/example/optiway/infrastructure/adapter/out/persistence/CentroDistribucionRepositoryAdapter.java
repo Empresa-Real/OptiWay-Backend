@@ -6,6 +6,12 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Component;
+
 import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
 import com.example.optiway.domain.model.CentroDistribucion;
 
@@ -13,9 +19,13 @@ import com.example.optiway.domain.model.CentroDistribucion;
 public class CentroDistribucionRepositoryAdapter implements CentroDistribucionRepositoryPort {
 
     private final CentroDistribucionJpaRepository repository;
+    private final TiendaJpaRepository tiendaJpaRepository;
 
-    public CentroDistribucionRepositoryAdapter(CentroDistribucionJpaRepository repository) {
+    public CentroDistribucionRepositoryAdapter(
+            CentroDistribucionJpaRepository repository,
+            TiendaJpaRepository tiendaJpaRepository) {
         this.repository = repository;
+        this.tiendaJpaRepository = tiendaJpaRepository;
     }
 
     @Override
@@ -56,11 +66,17 @@ public class CentroDistribucionRepositoryAdapter implements CentroDistribucionRe
         entity.setDireccion(domain.getDireccion());
         entity.setCapacidad(domain.getCapacidad());
         entity.setEncargadoId(domain.getEncargadoId());
-        entity.setTiendasAbastecidasIds(domain.getTiendasAbastecidasIds());
+        if (domain.getTiendasAbastecidasIds() != null && !domain.getTiendasAbastecidasIds().isEmpty()) {
+            entity.setTiendasAbastecidas(tiendaJpaRepository.findAllById(domain.getTiendasAbastecidasIds()));
+        }
         return entity;
     }
 
     private CentroDistribucion toDomain(CentroDistribucionJpaEntity entity) {
+        List<Long> tiendaIds = entity.getTiendasAbastecidas() != null
+                ? entity.getTiendasAbastecidas().stream().map(TiendaJpaEntity::getId).collect(Collectors.toList())
+                : List.of();
+
         return new CentroDistribucion(
                 entity.getId(),
                 entity.getCodigo(),
@@ -68,7 +84,7 @@ public class CentroDistribucionRepositoryAdapter implements CentroDistribucionRe
                 entity.getDireccion(),
                 entity.getCapacidad(),
                 entity.getEncargadoId(),
-                entity.getTiendasAbastecidasIds()
+                tiendaIds
         );
     }
 }

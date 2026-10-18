@@ -55,7 +55,9 @@ public class IngresoMercanciaRepositoryAdapter
     }
 
     private IngresoMercancia toDomain(IngresoMercanciaJpaEntity entity) {
-        if (entity == null) return null;
+        if (entity == null) {
+            throw new IllegalArgumentException("La entidad IngresoMercanciaJpaEntity no puede ser nula");
+        }
         IngresoMercancia resultado = new IngresoMercancia();
         resultado.setId(entity.getId());
         resultado.setCentroDistribucionId(entity.getCentroDistribucionId());
