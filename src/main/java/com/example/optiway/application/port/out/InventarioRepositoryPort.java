@@ -7,6 +7,9 @@ import java.util.List;
 public interface InventarioRepositoryPort {
 
     Inventario save(Inventario inventario);
+    default Inventario guardar(Inventario inventario) {
+        return save(inventario);
+    }
 
     List<Inventario> findByTiendaId(Long tiendaId);
 

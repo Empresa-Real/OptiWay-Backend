@@ -10,6 +10,10 @@ public interface UsuarioRepositoryPort {
 
     Usuario guardar(Usuario usuario);
 
+    default Usuario save(Usuario usuario) {
+        return guardar(usuario);
+    }
+
     List<Usuario> obtenerTodos();
 
     Optional<Usuario> obtenerPorID(Long id);

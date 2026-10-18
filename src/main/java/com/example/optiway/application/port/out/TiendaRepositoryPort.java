@@ -7,6 +7,9 @@ import com.example.optiway.domain.model.Tienda;
 
 public interface TiendaRepositoryPort {
     Tienda save(Tienda tienda);
+    default Tienda guardar(Tienda tienda) {
+        return save(tienda);
+    }
     boolean existsByCodigo(String codigo);
     List<Tienda> findAll();
     List<Tienda> obtenerPorEncargadoId(Long encargadoId);

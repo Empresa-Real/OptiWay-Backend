@@ -6,13 +6,13 @@ import java.util.UUID;
 
 import com.example.optiway.infrastructure.security.AuthUserId;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.optiway.application.port.in.AsignarEncargadoCDUseCase;
@@ -35,7 +35,8 @@ public class CentroDistribucionController {
     }
 
     @PostMapping
-    public ResponseEntity<CentroDistribucion> crear(
+    @ResponseStatus(HttpStatus.CREATED)
+    public CentroDistribucion crear(
             @RequestBody CrearCentroDistribucionRequest request,
             @AuthUserId UUID authUserId) {
         CentroDistribucion domain = new CentroDistribucion(
@@ -47,29 +48,23 @@ public class CentroDistribucionController {
                 request.getEncargadoId(),
                 request.getTiendasAbastecidasIds()
         );
-        CentroDistribucion creado = crearCentroDistribucionUseCase.crearCentroDistribucion(domain, authUserId);
-        return new ResponseEntity<>(creado, HttpStatus.CREATED);
+        return crearCentroDistribucionUseCase.crearCentroDistribucion(domain, authUserId);
     }
 
     @GetMapping
-    public ResponseEntity<List<CentroDistribucion>> listar(@AuthUserId UUID authUserId) {
-        return ResponseEntity.ok(crearCentroDistribucionUseCase.listarCentrosDistribucion(authUserId));
+    public List<CentroDistribucion> listar(@AuthUserId UUID authUserId) {
+        return crearCentroDistribucionUseCase.listarCentrosDistribucion(authUserId);
     }
 
     @PutMapping("/{id}/encargado")
-    public ResponseEntity<?> asignarEncargado(
+    public CentroDistribucion asignarEncargado(
             @PathVariable Long id,
             @RequestBody(required = false) Map<String, Object> body,
             @AuthUserId UUID authUserId) {
-        try {
-            Long encargadoId = null;
-            if (body != null && body.get("encargadoId") != null) {
-                encargadoId = Long.valueOf(body.get("encargadoId").toString());
-            }
-            CentroDistribucion actualizado = asignarEncargadoCDUseCase.asignarEncargado(id, encargadoId, authUserId);
-            return ResponseEntity.ok(actualizado);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+        Long encargadoId = null;
+        if (body != null && body.get("encargadoId") != null) {
+            encargadoId = Long.valueOf(body.get("encargadoId").toString());
         }
+        return asignarEncargadoCDUseCase.asignarEncargado(id, encargadoId, authUserId);
     }
 }

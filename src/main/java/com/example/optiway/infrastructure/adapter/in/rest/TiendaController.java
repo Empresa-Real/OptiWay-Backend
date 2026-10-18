@@ -6,13 +6,13 @@ import java.util.UUID;
 
 import com.example.optiway.infrastructure.security.AuthUserId;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.optiway.application.port.in.AsignarEncargadoTiendaUseCase;
@@ -38,36 +38,27 @@ public class TiendaController {
     }
 
     @PostMapping
-    public ResponseEntity<?> crearTienda(
+    @ResponseStatus(HttpStatus.CREATED)
+    public Tienda crearTienda(
             @RequestBody Tienda tienda,
             @AuthUserId UUID authUserId) {
-        try {
-            Tienda nuevaTienda = crearTiendaUseCase.crearTienda(tienda, authUserId);
-            return ResponseEntity.status(HttpStatus.CREATED).body(nuevaTienda);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        return crearTiendaUseCase.crearTienda(tienda, authUserId);
     }
 
     @GetMapping
-    public ResponseEntity<List<Tienda>> obtenerTiendas(@AuthUserId UUID authUserId) {
-        return ResponseEntity.ok(obtenerTiendasUseCase.obtenerTiendas(authUserId));
+    public List<Tienda> obtenerTiendas(@AuthUserId UUID authUserId) {
+        return obtenerTiendasUseCase.obtenerTiendas(authUserId);
     }
 
     @PutMapping("/{id}/encargado")
-    public ResponseEntity<?> asignarEncargado(
+    public Tienda asignarEncargado(
             @PathVariable Long id,
             @RequestBody(required = false) Map<String, Object> body,
             @AuthUserId UUID authUserId) {
-        try {
-            Long encargadoId = null;
-            if (body != null && body.get("encargadoId") != null) {
-                encargadoId = Long.valueOf(body.get("encargadoId").toString());
-            }
-            Tienda actualizada = asignarEncargadoTiendaUseCase.asignarEncargado(id, encargadoId, authUserId);
-            return ResponseEntity.ok(actualizada);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+        Long encargadoId = null;
+        if (body != null && body.get("encargadoId") != null) {
+            encargadoId = Long.valueOf(body.get("encargadoId").toString());
         }
+        return asignarEncargadoTiendaUseCase.asignarEncargado(id, encargadoId, authUserId);
     }
 }

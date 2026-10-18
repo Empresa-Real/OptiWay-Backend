@@ -10,6 +10,10 @@ public interface ProductoRepositoryPort {
 
     Producto save(Producto producto);
 
+    default Producto guardar(Producto producto) {
+        return save(producto);
+    }
+
     Producto update(Producto producto, UUID usuarioAuthId);
 
     boolean existsByIdentificador(String identificador);

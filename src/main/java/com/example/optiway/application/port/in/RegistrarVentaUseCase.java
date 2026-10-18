@@ -7,8 +7,4 @@ import java.util.UUID;
 public interface RegistrarVentaUseCase {
 
     Venta registrarVenta(RegistrarVentaCommand command, UUID authUserId);
-
-    default Venta registrarVenta(RegistrarVentaCommand command) {
-        return registrarVenta(command, null);
-    }
 }

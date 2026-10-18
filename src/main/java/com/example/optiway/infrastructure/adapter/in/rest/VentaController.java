@@ -6,10 +6,10 @@ import com.example.optiway.domain.model.Venta;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.RegistrarVentaRequest;
 import com.example.optiway.infrastructure.security.AuthUserId;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
@@ -26,7 +26,8 @@ public class VentaController {
     }
 
     @PostMapping
-    public ResponseEntity<Venta> registrarVenta(
+    @ResponseStatus(HttpStatus.CREATED)
+    public Venta registrarVenta(
             @RequestBody RegistrarVentaRequest request,
             @AuthUserId UUID authUserId) {
         RegistrarVentaCommand command = new RegistrarVentaCommand(
@@ -36,7 +37,6 @@ public class VentaController {
                 request.getFechaHora() != null ? request.getFechaHora() : LocalDateTime.now()
         );
 
-        Venta ventaRegistrada = registrarVentaUseCase.registrarVenta(command, authUserId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ventaRegistrada);
+        return registrarVentaUseCase.registrarVenta(command, authUserId);
     }
 }
