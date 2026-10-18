@@ -25,8 +25,13 @@ Este documento resume los puntos pendientes y el estado de la deuda técnica en 
   - Filtrado de tiendas delegado a PostgreSQL (`tiendaRepositoryPort.obtenerPorEncargadoId`) en lugar de stream en memoria.
 - [x] **Optimización N+1 y Limpieza en Servicios de Inventario (Fix 16):**
   - Incorporación del método batch `findAllById(Iterable<Long> ids)` en `ProductoRepositoryPort` y `ProductoRepositoryAdapter`.
-  - Reemplazo de consultas individuales repetitivas (`findById` en bucle/stream) por una sola consulta SQL (`SELECT ... WHERE id IN (...)`) tanto en `ConsultarInventarioCDService` como en `InventarioService`.
-  - Simplificación drástica de validaciones y dependencias en `IngresoMercanciaService`, `ConsultarInventarioCDService`, `InventarioService` y `VentaService`.
+  - Reemplazo de consultas individuales repetitivas (`findById` en bucle/stream) por una sola consulta SQL (`SELECT ... WHERE id IN (...)`).
+  - Simplificación drástica de validaciones y dependencias en `IngresoMercanciaService`, `InventarioService` y `VentaService`.
+- [x] **Unificación de Servicios de Inventario (Fix 17):**
+  - Consolidación total de la lógica de inventario en `InventarioService`, implementando tanto `ConsultarInventarioUseCase` como `ConsultarInventarioCDUseCase`.
+  - Eliminación definitiva del servicio duplicado `ConsultarInventarioCDService.java`.
+  - Centralización del procesamiento de batching, filtrado y enriquecimiento (`enriquecerConProducto`) en un único flujo reutilizado.
+
 
 ---
 
