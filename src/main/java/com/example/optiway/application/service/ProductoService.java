@@ -8,7 +8,6 @@ import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.domain.model.Producto;
 import com.example.optiway.domain.model.Rol;
 import com.example.optiway.domain.model.Usuario;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -60,12 +59,7 @@ public class ProductoService implements CrearProductoUseCase, ObtenerProductosUs
             throw new ProductoDuplicadoException("Ya existe un producto con ese identificador.");
         }
         producto.setEstado("activo");
-        try {
-            return productoRepositoryPort.save(producto);
-        } catch (DataIntegrityViolationException e) {
-            // La restricción única de la base protege también ante altas simultáneas.
-            throw new ProductoDuplicadoException("Ya existe un producto con ese identificador.");
-        }
+        return productoRepositoryPort.save(producto);
     }
 
     @Override

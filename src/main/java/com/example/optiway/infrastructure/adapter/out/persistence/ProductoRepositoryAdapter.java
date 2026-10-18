@@ -1,7 +1,9 @@
 package com.example.optiway.infrastructure.adapter.out.persistence;
 
 import com.example.optiway.application.port.out.ProductoRepositoryPort;
+import com.example.optiway.application.service.ProductoDuplicadoException;
 import com.example.optiway.domain.model.Producto;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,16 +35,20 @@ public class ProductoRepositoryAdapter implements ProductoRepositoryPort {
         entity.setUnidadMedida(producto.getUnidadMedida());
         entity.setEstado(producto.getEstado());
 
-        ProductoJpaEntity savedEntity = productoJpaRepository.save(entity);
+        try {
+            ProductoJpaEntity savedEntity = productoJpaRepository.save(entity);
 
-        Producto savedProducto = new Producto();
+            Producto savedProducto = new Producto();
 
-        savedProducto.setId(savedEntity.getId());
-        savedProducto.setNombre(savedEntity.getNombre());
-        savedProducto.setCategoria(savedEntity.getCategoria());
-        copiarDatosCatalogo(savedEntity, savedProducto);
+            savedProducto.setId(savedEntity.getId());
+            savedProducto.setNombre(savedEntity.getNombre());
+            savedProducto.setCategoria(savedEntity.getCategoria());
+            copiarDatosCatalogo(savedEntity, savedProducto);
 
-        return savedProducto;
+            return savedProducto;
+        } catch (DataIntegrityViolationException e) {
+            throw new ProductoDuplicadoException("Ya existe un producto con ese identificador.");
+        }
     }
 
     @Override
