@@ -33,12 +33,6 @@ public class ProductoJpaEntity {
     public ProductoJpaEntity() {
     }
 
-    public ProductoJpaEntity(Long id, String nombre, String categoria) {
-        this.id = id;
-        this.nombre = nombre;
-        this.categoria = categoria;
-        this.activo = true;
-    }
 
     public Long getId() {
         return id;

@@ -140,7 +140,7 @@
                     <td>${t.nombre}</td>
                     <td>${t.direccion}</td>
                     <td>${t.ciudad}</td>
-                    <td>${t.estado}</td>
+                    <td>${t.activo !== false ? 'Activa' : 'Inactiva'}</td>
                     <td>${encargadoTexto}</td>
                 </tr>`;
             }).join('');

@@ -11,14 +11,7 @@ public class Tienda {
 
     public Tienda() {}
 
-    public Tienda(Long id, String codigo, String nombre, String direccion, String ciudad, Boolean activo) {
-        this.id = id;
-        this.codigo = codigo;
-        this.nombre = nombre;
-        this.direccion = direccion;
-        this.ciudad = ciudad;
-        this.activo = activo != null ? activo : true;
-    }
+
 
     public Tienda(Long id, String codigo, String nombre, String direccion, String ciudad, Boolean activo, Long encargadoId) {
         this.id = id;

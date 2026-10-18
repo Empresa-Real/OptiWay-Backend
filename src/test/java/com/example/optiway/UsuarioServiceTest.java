@@ -39,8 +39,7 @@ class UsuarioServiceTest {
     void setUp() {
         usuarioService = new UsuarioService(usuarioRepositoryPort, authPort);
         adminAuthId = UUID.randomUUID();
-        adminUsuario = new Usuario(1L, "Admin User", "admin@optiway.com", Rol.ADMINISTRADOR, null);
-        adminUsuario.setAuthUserId(adminAuthId);
+        adminUsuario = new Usuario(1L, adminAuthId, "Admin User", "admin@optiway.com", Rol.ADMINISTRADOR, null);
     }
 
     @Nested
@@ -52,8 +51,7 @@ class UsuarioServiceTest {
         void eliminarUsuario_exitoso() {
             Long usuarioId = 2L;
             UUID targetAuthId = UUID.randomUUID();
-            Usuario usuarioAEliminar = new Usuario(usuarioId, "Encargado", "encargado@optiway.com", Rol.ENCARGADO_TIENDA, adminAuthId);
-            usuarioAEliminar.setAuthUserId(targetAuthId);
+            Usuario usuarioAEliminar = new Usuario(usuarioId, targetAuthId, "Encargado", "encargado@optiway.com", Rol.ENCARGADO_TIENDA, adminAuthId);
 
             when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(adminUsuario));
             when(usuarioRepositoryPort.obtenerPorID(usuarioId)).thenReturn(Optional.of(usuarioAEliminar));
@@ -69,8 +67,7 @@ class UsuarioServiceTest {
         @DisplayName("Eliminar usuario sin authUserId en Supabase (solo BD local)")
         void eliminarUsuario_sinAuthUserId_eliminaSoloEnBdLocal() {
             Long usuarioId = 3L;
-            Usuario usuarioSinAuth = new Usuario(usuarioId, "Invitado Pendiente", "invitado@optiway.com", Rol.PLANIFICADOR, adminAuthId);
-            usuarioSinAuth.setAuthUserId(null);
+            Usuario usuarioSinAuth = new Usuario(usuarioId, null, "Invitado Pendiente", "invitado@optiway.com", Rol.PLANIFICADOR, adminAuthId);
 
             when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(adminUsuario));
             when(usuarioRepositoryPort.obtenerPorID(usuarioId)).thenReturn(Optional.of(usuarioSinAuth));
@@ -85,8 +82,7 @@ class UsuarioServiceTest {
         @DisplayName("Rechazar eliminación si el solicitante no es Administrador (HTTP 403)")
         void eliminarUsuario_solicitanteNoEsAdmin_lanzaAccesoDenegado() {
             UUID planificadorAuthId = UUID.randomUUID();
-            Usuario planificador = new Usuario(5L, "Planificador", "plan@optiway.com", Rol.PLANIFICADOR, null);
-            planificador.setAuthUserId(planificadorAuthId);
+            Usuario planificador = new Usuario(5L, planificadorAuthId, "Planificador", "plan@optiway.com", Rol.PLANIFICADOR, null);
 
             when(usuarioRepositoryPort.obtenerPorAuthUserId(planificadorAuthId)).thenReturn(Optional.of(planificador));
 
@@ -128,8 +124,7 @@ class UsuarioServiceTest {
         void eliminarUsuario_eliminarOtroAdmin_lanzaAccesoDenegado() {
             Long otroAdminId = 99L;
             UUID otroAdminAuthId = UUID.randomUUID();
-            Usuario otroAdmin = new Usuario(otroAdminId, "Otro Admin", "admin2@optiway.com", Rol.ADMINISTRADOR, null);
-            otroAdmin.setAuthUserId(otroAdminAuthId);
+            Usuario otroAdmin = new Usuario(otroAdminId, otroAdminAuthId, "Otro Admin", "admin2@optiway.com", Rol.ADMINISTRADOR, null);
 
             when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(adminUsuario));
             when(usuarioRepositoryPort.obtenerPorID(otroAdminId)).thenReturn(Optional.of(otroAdmin));

@@ -47,13 +47,13 @@ class AsignacionUbicacionTest {
         centroDistribucionService = new CentroDistribucionService(centroDistribucionRepositoryPort, usuarioRepositoryPort);
 
         adminAuthId = UUID.randomUUID();
-        adminUsuario = new Usuario(1L, "Admin", "admin@optiway.com", Rol.ADMINISTRADOR, null);
+        adminUsuario = new Usuario(1L, null, "Admin", "admin@optiway.com", Rol.ADMINISTRADOR, null);
     }
 
     @Test
     void asignarTienda_conEncargadoTienda_exitoso() {
         Tienda tienda = new Tienda(10L, "TND-001", "Tienda Central", "Calle 1", "Medellin", true, null);
-        Usuario encargado = new Usuario(2L, "Encargado TND", "tnd@optiway.com", Rol.ENCARGADO_TIENDA, null);
+        Usuario encargado = new Usuario(2L, null, "Encargado TND", "tnd@optiway.com", Rol.ENCARGADO_TIENDA, null);
 
         when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(adminUsuario));
         when(tiendaRepositoryPort.obtenerPorId(10L)).thenReturn(Optional.of(tienda));
@@ -69,7 +69,7 @@ class AsignacionUbicacionTest {
     @Test
     void asignarTienda_conEncargadoCD_lanzaErrorRolInvalido() {
         Tienda tienda = new Tienda(10L, "TND-001", "Tienda Central", "Calle 1", "Medellin", true, null);
-        Usuario encargadoCd = new Usuario(3L, "Encargado CD", "cd@optiway.com", Rol.ENCARGADO_CD, null);
+        Usuario encargadoCd = new Usuario(3L, null, "Encargado CD", "cd@optiway.com", Rol.ENCARGADO_CD, null);
 
         when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(adminUsuario));
         when(tiendaRepositoryPort.obtenerPorId(10L)).thenReturn(Optional.of(tienda));
@@ -84,7 +84,7 @@ class AsignacionUbicacionTest {
     @Test
     void asignarCD_conEncargadoCD_exitoso() {
         CentroDistribucion cd = new CentroDistribucion(20L, "CD-001", "CD Norte", "Autopista 2", 5000, null, null);
-        Usuario encargadoCd = new Usuario(3L, "Encargado CD", "cd@optiway.com", Rol.ENCARGADO_CD, null);
+        Usuario encargadoCd = new Usuario(3L, null, "Encargado CD", "cd@optiway.com", Rol.ENCARGADO_CD, null);
 
         when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(adminUsuario));
         when(centroDistribucionRepositoryPort.obtenerPorId(20L)).thenReturn(Optional.of(cd));
@@ -100,7 +100,7 @@ class AsignacionUbicacionTest {
     @Test
     void asignarCD_conEncargadoTienda_lanzaErrorRolInvalido() {
         CentroDistribucion cd = new CentroDistribucion(20L, "CD-001", "CD Norte", "Autopista 2", 5000, null, null);
-        Usuario encargadoTnd = new Usuario(2L, "Encargado TND", "tnd@optiway.com", Rol.ENCARGADO_TIENDA, null);
+        Usuario encargadoTnd = new Usuario(2L, null, "Encargado TND", "tnd@optiway.com", Rol.ENCARGADO_TIENDA, null);
 
         when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(adminUsuario));
         when(centroDistribucionRepositoryPort.obtenerPorId(20L)).thenReturn(Optional.of(cd));

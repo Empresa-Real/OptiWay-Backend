@@ -104,6 +104,7 @@ public class VentaService implements RegistrarVentaUseCase {
 
         // 7. Registrar transacción histórica de la venta
         Venta venta = new Venta(
+                null,
                 command.tiendaId(),
                 command.productoId(),
                 command.cantidad(),

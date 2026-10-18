@@ -36,7 +36,8 @@ codigo       VARCHAR UNIQUE NOT NULL -- Formato de negocio: TND-XXXXXXXX
 nombre       VARCHAR UNIQUE NOT NULL
 direccion    VARCHAR
 ciudad       VARCHAR
-estado       VARCHAR -- ej: "Activa"
+activo       BOOLEAN NOT NULL DEFAULT TRUE -- Estado operativo de la tienda
+encargado_id BIGINT REFERENCES usuarios(id)
 
 centros_distribucion
 --------------------

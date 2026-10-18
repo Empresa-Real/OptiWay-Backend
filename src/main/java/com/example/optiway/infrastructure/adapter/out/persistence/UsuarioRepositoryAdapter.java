@@ -81,15 +81,13 @@ public class UsuarioRepositoryAdapter implements UsuarioRepositoryPort {
     }
 
     private Usuario toDomain(UsuarioJpaEntity entity) {
-
-        Usuario usuario = new Usuario(
+        return new Usuario(
                 entity.getId(),
+                entity.getAuthUserId(),
                 entity.getNombre(),
-            entity.getEmail(),
+                entity.getEmail(),
                 entity.getRol(),
                 entity.getCreadoPor()
         );
-        usuario.setAuthUserId(entity.getAuthUserId());
-        return usuario;
     }
 }

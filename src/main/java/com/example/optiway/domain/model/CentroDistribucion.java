@@ -13,9 +13,6 @@ public class CentroDistribucion {
 
     public CentroDistribucion() {}
 
-    public CentroDistribucion(Long id, String codigo, String nombre, String direccion, Integer capacidad, List<Long> tiendasAbastecidasIds) {
-        this(id, codigo, nombre, direccion, capacidad, null, tiendasAbastecidasIds);
-    }
 
     public CentroDistribucion(Long id, String codigo, String nombre, String direccion, Integer capacidad, Long encargadoId, List<Long> tiendasAbastecidasIds) {
         this.id = id;

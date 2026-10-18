@@ -73,8 +73,7 @@ class VentaServiceTest {
         Long encargadoId = 100L;
 
         Tienda tienda = new Tienda(tiendaId, "TND-001", "Tienda Norte", "Calle 10", "Medellin", true, encargadoId);
-        Usuario usuario = new Usuario(encargadoId, "Carlos", "carlos@optiway.com", Rol.ENCARGADO_TIENDA, null);
-        usuario.setAuthUserId(authUserId);
+        Usuario usuario = new Usuario(encargadoId, authUserId, "Carlos", "carlos@optiway.com", Rol.ENCARGADO_TIENDA, null);
 
         Producto producto = new Producto(productoId, "PROD-001", "Camisa", "Ropa", BigDecimal.valueOf(50.0), "Unidad", true);
         Inventario inventario = new Inventario(1L, tiendaId, null, productoId, 15, 5);
@@ -144,8 +143,7 @@ class VentaServiceTest {
         UUID authUserId = UUID.randomUUID();
 
         Tienda tienda = new Tienda(tiendaId, "TND-001", "Tienda Norte", "Calle 10", "Medellin", true, 100L);
-        Usuario usuarioAjeno = new Usuario(200L, "Pedro", "pedro@optiway.com", Rol.ENCARGADO_TIENDA, null); // Encargado de OTRA tienda
-        usuarioAjeno.setAuthUserId(authUserId);
+        Usuario usuarioAjeno = new Usuario(200L, authUserId, "Pedro", "pedro@optiway.com", Rol.ENCARGADO_TIENDA, null); // Encargado de OTRA tienda
 
         when(tiendaRepositoryPort.obtenerPorId(tiendaId)).thenReturn(Optional.of(tienda));
         when(usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)).thenReturn(Optional.of(usuarioAjeno));

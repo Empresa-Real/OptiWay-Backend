@@ -65,9 +65,9 @@ class IngresoMercanciaServiceTest {
         Integer cantidad = 50;
         String origen = "Proveedor Nacional";
 
-        Usuario usuario = new Usuario(1L, "Encargado", "user@test.com", Rol.ENCARGADO_CD, null);
+        Usuario usuario = new Usuario(1L, null, "Encargado", "user@test.com", Rol.ENCARGADO_CD, null);
         CentroDistribucion centro = new CentroDistribucion(centroId, "CD-01", "Principal", "Dir", 1000, 1L, null);
-        Producto producto = new Producto(productoId, "Arroz", "Granos");
+        Producto producto = new Producto(productoId, null, "Arroz", "Granos", null, null, true);
 
         Inventario inventarioExistente = new Inventario();
         inventarioExistente.setCentroDistribucionId(centroId);

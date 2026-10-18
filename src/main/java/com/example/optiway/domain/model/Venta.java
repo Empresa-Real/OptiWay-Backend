@@ -20,9 +20,6 @@ public class Venta {
         this.fechaHora = fechaHora != null ? fechaHora : LocalDateTime.now();
     }
 
-    public Venta(Long tiendaId, Long productoId, Integer cantidad, LocalDateTime fechaHora) {
-        this(null, tiendaId, productoId, cantidad, fechaHora);
-    }
 
     public void setCantidad(Integer cantidad) {
         if (cantidad == null || cantidad <= 0) {

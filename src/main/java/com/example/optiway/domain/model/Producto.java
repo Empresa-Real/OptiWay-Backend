@@ -15,12 +15,6 @@ public class Producto {
     public Producto() {
     }
 
-    public Producto(Long id, String nombre, String categoria) {
-        this.id = id;
-        this.nombre = nombre;
-        this.categoria = categoria;
-        this.activo = true;
-    }
 
     public Producto(Long id, String identificador, String nombre, String categoria,
                     BigDecimal precio, String unidadMedida, Boolean activo) {
