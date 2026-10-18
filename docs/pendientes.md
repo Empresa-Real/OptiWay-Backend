@@ -68,7 +68,7 @@ Este documento resume los puntos pendientes y el estado de la deuda técnica en 
 ---
 
 ### 5. Validaciones y Mejoras de HU-18
-- [ ] **Validación de entrada:** Agregar anotaciones `@NotNull`, `@Positive` (cantidad > 0) y `@NotBlank` (origen obligatorio) con `@Valid` en el controlador para responder `400 Bad Request`.
+- [x] **Validación de entrada:** Agregada dependencia `spring-boot-starter-validation`, anotaciones `@NotNull`, `@Positive` (cantidad > 0) y `@NotBlank` (origen obligatorio) con `@Valid` en `IngresoMercanciaController` y manejador en `ApiExceptionHandler` para responder `400 Bad Request`.
 - [ ] **Alineación de endpoint:** Migrar de `POST /api/ingresos-mercancia` a `POST /api/centros-distribucion/{id}/ingresos` retornando `201 Created` con el detalle del movimiento.
 
 ---

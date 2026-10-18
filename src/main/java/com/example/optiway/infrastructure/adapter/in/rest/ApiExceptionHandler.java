@@ -60,6 +60,17 @@ public class ApiExceptionHandler {
         return Map.of("error", exception.getMessage());
     }
 
+    @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> validacionFallida(org.springframework.web.bind.MethodArgumentNotValidException exception) {
+        String mensaje = exception.getBindingResult().getFieldErrors().stream()
+                .map(org.springframework.validation.FieldError::getDefaultMessage)
+                .filter(java.util.Objects::nonNull)
+                .findFirst()
+                .orElse("Formato de solicitud o valor no válido.");
+        return Map.of("error", mensaje);
+    }
+
     @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String, String> mensajeNoLegible(org.springframework.http.converter.HttpMessageNotReadableException exception) {

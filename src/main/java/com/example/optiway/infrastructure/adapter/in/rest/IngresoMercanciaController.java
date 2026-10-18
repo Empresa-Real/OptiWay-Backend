@@ -2,6 +2,8 @@ package com.example.optiway.infrastructure.adapter.in.rest;
 
 import java.util.UUID;
 
+import jakarta.validation.Valid;
+
 import com.example.optiway.application.port.in.RegistrarIngresoCommand;
 import com.example.optiway.infrastructure.security.AuthUserId;
 import org.springframework.http.HttpStatus;
@@ -28,7 +30,7 @@ public class IngresoMercanciaController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public void registrarIngreso(
-            @RequestBody RegistrarIngresoMercanciaRequest request,
+            @Valid @RequestBody RegistrarIngresoMercanciaRequest request,
             @AuthUserId UUID authUserId) {
 
         RegistrarIngresoCommand command = new RegistrarIngresoCommand(
