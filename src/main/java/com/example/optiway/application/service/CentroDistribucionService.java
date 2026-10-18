@@ -12,18 +12,22 @@ import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.domain.model.CentroDistribucion;
 import com.example.optiway.domain.model.Rol;
 import com.example.optiway.domain.model.Usuario;
+import com.example.optiway.infrastructure.security.AuthorizationService;
 
 @Service
 public class CentroDistribucionService implements CrearCentroDistribucionUseCase, AsignarEncargadoCDUseCase {
 
     private final CentroDistribucionRepositoryPort centroDistribucionRepositoryPort;
     private final UsuarioRepositoryPort usuarioRepositoryPort;
+    private final AuthorizationService authorizationService;
 
     public CentroDistribucionService(
             CentroDistribucionRepositoryPort centroDistribucionRepositoryPort,
-            UsuarioRepositoryPort usuarioRepositoryPort) {
+            UsuarioRepositoryPort usuarioRepositoryPort,
+            AuthorizationService authorizationService) {
         this.centroDistribucionRepositoryPort = centroDistribucionRepositoryPort;
         this.usuarioRepositoryPort = usuarioRepositoryPort;
+        this.authorizationService = authorizationService;
     }
 
     @Override
@@ -33,13 +37,7 @@ public class CentroDistribucionService implements CrearCentroDistribucionUseCase
 
     @Override
     public CentroDistribucion crearCentroDistribucion(CentroDistribucion centroDistribucion, UUID authUserId) {
-        if (authUserId != null) {
-            Usuario usuario = usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)
-                    .orElseThrow(() -> new AccesoDenegadoException("Usuario no encontrado"));
-            if (usuario.getRol() != Rol.ADMINISTRADOR) {
-                throw new AccesoDenegadoException("Solo un administrador puede crear Centros de Distribución");
-            }
-        }
+        authorizationService.requireAdministradorIfPresent(authUserId, "crear Centros de Distribución");
 
         if (centroDistribucion.getDireccion() == null || centroDistribucion.getDireccion().trim().isEmpty()) {
             throw new IllegalArgumentException("La dirección del centro de distribución es obligatoria.");
@@ -89,13 +87,7 @@ public class CentroDistribucionService implements CrearCentroDistribucionUseCase
 
     @Override
     public CentroDistribucion asignarEncargado(Long centroId, Long encargadoId, UUID authUserId) {
-        if (authUserId != null) {
-            Usuario usuario = usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)
-                    .orElseThrow(() -> new AccesoDenegadoException("Usuario no encontrado"));
-            if (usuario.getRol() != Rol.ADMINISTRADOR) {
-                throw new AccesoDenegadoException("Solo un administrador puede asignar encargados a Centros de Distribución");
-            }
-        }
+        authorizationService.requireAdministradorIfPresent(authUserId, "asignar encargados a Centros de Distribución");
 
         CentroDistribucion centro = centroDistribucionRepositoryPort.obtenerPorId(centroId)
                 .orElseThrow(() -> new IllegalArgumentException("El centro de distribución no existe."));

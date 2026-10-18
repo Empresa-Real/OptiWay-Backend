@@ -13,13 +13,15 @@ public class Usuario {
     public Usuario() {
     }
 
-    public Usuario(Long id, String nombre, String email, Rol rol, UUID creadoPor) {
+    public Usuario(Long id, UUID authUserId, String nombre, String email, Rol rol, UUID creadoPor) {
         this.id = id;
+        this.authUserId = authUserId;
         this.nombre = nombre;
         this.email = email;
         this.rol = rol;
-        this.creadoPor = creadoPor; // UUID del Admin que creo el usuario de la tabal Users
+        this.creadoPor = creadoPor;
     }
+
 
     public Long getId() {
         return id;
@@ -67,5 +69,13 @@ public class Usuario {
 
     public void setCreadoPor(UUID creadoPor) {
         this.creadoPor = creadoPor;
+    }
+
+    public boolean esAdministrador() {
+        return this.rol == Rol.ADMINISTRADOR;
+    }
+
+    public boolean esEncargado() {
+        return this.rol == Rol.ENCARGADO_TIENDA || this.rol == Rol.ENCARGADO_CD;
     }
 }

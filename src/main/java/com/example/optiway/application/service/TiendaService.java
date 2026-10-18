@@ -13,18 +13,22 @@ import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.domain.model.Rol;
 import com.example.optiway.domain.model.Tienda;
 import com.example.optiway.domain.model.Usuario;
+import com.example.optiway.infrastructure.security.AuthorizationService;
 
 @Service
 public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase, AsignarEncargadoTiendaUseCase {
 
     private final TiendaRepositoryPort tiendaRepositoryPort;
     private final UsuarioRepositoryPort usuarioRepositoryPort;
+    private final AuthorizationService authorizationService;
 
     public TiendaService(
             TiendaRepositoryPort tiendaRepositoryPort,
-            UsuarioRepositoryPort usuarioRepositoryPort) {
+            UsuarioRepositoryPort usuarioRepositoryPort,
+            AuthorizationService authorizationService) {
         this.tiendaRepositoryPort = tiendaRepositoryPort;
         this.usuarioRepositoryPort = usuarioRepositoryPort;
+        this.authorizationService = authorizationService;
     }
 
     @Override
@@ -34,13 +38,7 @@ public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase,
 
     @Override
     public Tienda crearTienda(Tienda tienda, UUID authUserId) {
-        if (authUserId != null) {
-            Usuario usuario = usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)
-                    .orElseThrow(() -> new AccesoDenegadoException("Usuario no encontrado"));
-            if (usuario.getRol() != Rol.ADMINISTRADOR) {
-                throw new AccesoDenegadoException("Solo un administrador puede crear tiendas");
-            }
-        }
+        authorizationService.requireAdministradorIfPresent(authUserId, "crear tiendas");
 
         if (tienda.getNombre() == null || tienda.getNombre().trim().isEmpty()) {
             throw new IllegalArgumentException("El nombre de la tienda es obligatorio.");
@@ -92,13 +90,7 @@ public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase,
 
     @Override
     public Tienda asignarEncargado(Long tiendaId, Long encargadoId, UUID authUserId) {
-        if (authUserId != null) {
-            Usuario usuario = usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)
-                    .orElseThrow(() -> new AccesoDenegadoException("Usuario no encontrado"));
-            if (usuario.getRol() != Rol.ADMINISTRADOR) {
-                throw new AccesoDenegadoException("Solo un administrador puede asignar encargados a tiendas");
-            }
-        }
+        authorizationService.requireAdministradorIfPresent(authUserId, "asignar encargados a tiendas");
 
         Tienda tienda = tiendaRepositoryPort.obtenerPorId(tiendaId)
                 .orElseThrow(() -> new IllegalArgumentException("La tienda no existe."));

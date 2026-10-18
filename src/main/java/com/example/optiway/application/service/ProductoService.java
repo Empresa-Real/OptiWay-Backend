@@ -8,8 +8,7 @@ import com.example.optiway.application.port.out.InventarioRepositoryPort;
 import com.example.optiway.application.port.out.ProductoRepositoryPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.domain.model.Producto;
-import com.example.optiway.domain.model.Rol;
-import com.example.optiway.domain.model.Usuario;
+import com.example.optiway.infrastructure.security.AuthorizationService;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -23,25 +22,21 @@ public class ProductoService implements CrearProductoUseCase, ObtenerProductosUs
     private final ProductoRepositoryPort productoRepositoryPort;
     private final UsuarioRepositoryPort usuarioRepositoryPort;
     private final InventarioRepositoryPort inventarioRepositoryPort;
+    private final AuthorizationService authorizationService;
 
     public ProductoService(ProductoRepositoryPort productoRepositoryPort,
                            UsuarioRepositoryPort usuarioRepositoryPort,
-                           InventarioRepositoryPort inventarioRepositoryPort) {
+                           InventarioRepositoryPort inventarioRepositoryPort,
+                           AuthorizationService authorizationService) {
         this.productoRepositoryPort = productoRepositoryPort;
         this.usuarioRepositoryPort = usuarioRepositoryPort;
         this.inventarioRepositoryPort = inventarioRepositoryPort;
+        this.authorizationService = authorizationService;
     }
 
     @Override
     public Producto crearProducto(Producto producto, UUID authUserId) {
-        if (authUserId == null) {
-            throw new AccesoDenegadoException("Solo un administrador puede crear productos");
-        }
-        Usuario usuario = usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)
-                .orElseThrow(() -> new AccesoDenegadoException("Usuario no encontrado"));
-        if (usuario.getRol() != Rol.ADMINISTRADOR) {
-            throw new AccesoDenegadoException("Solo un administrador puede crear productos");
-        }
+        authorizationService.requireAdministrador(authUserId, "crear productos");
         if (producto == null) {
             throw new IllegalArgumentException("Los datos del producto son obligatorios.");
         }
@@ -74,14 +69,7 @@ public class ProductoService implements CrearProductoUseCase, ObtenerProductosUs
 
     @Override
     public Producto editarProducto(Long id, Producto cambios, UUID authUserId) {
-        if (authUserId == null) {
-            throw new AccesoDenegadoException("Solo un administrador puede editar productos");
-        }
-        Usuario usuario = usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)
-                .orElseThrow(() -> new AccesoDenegadoException("Usuario no encontrado"));
-        if (usuario.getRol() != Rol.ADMINISTRADOR) {
-            throw new AccesoDenegadoException("Solo un administrador puede editar productos");
-        }
+        authorizationService.requireAdministrador(authUserId, "editar productos");
         if (id == null || id <= 0) {
             throw new IllegalArgumentException("El ID del producto no es válido.");
         }
@@ -121,14 +109,7 @@ public class ProductoService implements CrearProductoUseCase, ObtenerProductosUs
 
     @Override
     public Producto cambiarEstadoProducto(UUID authUserId, Long productoId, boolean activo) {
-        if (authUserId == null) {
-            throw new AccesoDenegadoException("Solo un administrador puede activar o desactivar productos");
-        }
-        Usuario usuario = usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)
-                .orElseThrow(() -> new AccesoDenegadoException("Usuario no encontrado"));
-        if (usuario.getRol() != Rol.ADMINISTRADOR) {
-            throw new AccesoDenegadoException("Solo un administrador puede activar o desactivar productos");
-        }
+        authorizationService.requireAdministrador(authUserId, "activar o desactivar productos");
         if (productoId == null || productoId <= 0) {
             throw new IllegalArgumentException("El ID del producto no es válido.");
         }
