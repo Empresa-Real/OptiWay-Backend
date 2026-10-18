@@ -16,10 +16,15 @@ public class VentaRepositoryAdapter implements VentaRepositoryPort {
     }
 
     @Override
-    public Venta guardar(Venta venta) {
+    public Venta save(Venta venta) {
         VentaJpaEntity entity = toEntity(venta);
         VentaJpaEntity savedEntity = ventaJpaRepository.save(entity);
         return toDomain(savedEntity);
+    }
+
+    @Override
+    public Venta guardar(Venta venta) {
+        return save(venta);
     }
 
     @Override

@@ -6,7 +6,11 @@ import java.util.List;
 
 public interface VentaRepositoryPort {
 
-    Venta guardar(Venta venta);
+    Venta save(Venta venta);
+
+    default Venta guardar(Venta venta) {
+        return save(venta);
+    }
 
     List<Venta> findByTiendaId(Long tiendaId);
 }
