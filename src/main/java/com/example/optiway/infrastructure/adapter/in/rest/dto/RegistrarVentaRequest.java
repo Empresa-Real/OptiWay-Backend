@@ -1,34 +1,31 @@
 package com.example.optiway.infrastructure.adapter.in.rest.dto;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+
 import java.time.LocalDateTime;
 
-public class RegistrarVentaRequest {
+public record RegistrarVentaRequest(
+        @NotNull(message = "El ID de la tienda es obligatorio")
+        @Positive(message = "El ID de la tienda debe ser positivo")
+        Long tiendaId,
 
-    private Long tiendaId;
-    private Long productoId;
-    private Integer cantidad;
-    private LocalDateTime fechaHora;
+        @NotNull(message = "El ID del producto es obligatorio")
+        @Positive(message = "El ID del producto debe ser positivo")
+        Long productoId,
 
-    public RegistrarVentaRequest() {
-        this.fechaHora = LocalDateTime.now();
-    }
+        @NotNull(message = "La cantidad vendida es obligatoria")
+        @Positive(message = "La cantidad vendida debe ser mayor a cero")
+        Integer cantidad,
 
-    public RegistrarVentaRequest(Long tiendaId, Long productoId, Integer cantidad, LocalDateTime fechaHora) {
-        this.tiendaId = tiendaId;
-        this.productoId = productoId;
-        this.cantidad = cantidad;
-        this.fechaHora = fechaHora != null ? fechaHora : LocalDateTime.now();
+        LocalDateTime fechaHora
+) {
+    public RegistrarVentaRequest(Long tiendaId, Long productoId, Integer cantidad) {
+        this(tiendaId, productoId, cantidad, LocalDateTime.now());
     }
 
     public Long getTiendaId() { return tiendaId; }
-    public void setTiendaId(Long tiendaId) { this.tiendaId = tiendaId; }
-
     public Long getProductoId() { return productoId; }
-    public void setProductoId(Long productoId) { this.productoId = productoId; }
-
     public Integer getCantidad() { return cantidad; }
-    public void setCantidad(Integer cantidad) { this.cantidad = cantidad; }
-
-    public LocalDateTime getFechaHora() { return fechaHora; }
-    public void setFechaHora(LocalDateTime fechaHora) { this.fechaHora = fechaHora; }
+    public LocalDateTime getFechaHora() { return fechaHora != null ? fechaHora : LocalDateTime.now(); }
 }

@@ -29,16 +29,7 @@ public class TiendaRepositoryAdapter implements TiendaRepositoryPort {
         entity.setEncargadoId(tienda.getEncargadoId());
 
         TiendaJpaEntity savedEntity = tiendaJpaRepository.save(entity);
-
-        return new Tienda(
-                savedEntity.getId(),
-                savedEntity.getCodigo(),
-                savedEntity.getNombre(),
-                savedEntity.getDireccion(),
-                savedEntity.getCiudad(),
-                savedEntity.getActivo(),
-                savedEntity.getEncargadoId()
-        );
+        return toDomain(savedEntity);
     }
 
     @Override
@@ -49,44 +40,40 @@ public class TiendaRepositoryAdapter implements TiendaRepositoryPort {
     @Override
     public List<Tienda> findAll() {
         return tiendaJpaRepository.findAll().stream()
-                .map(e -> new Tienda(
-                        e.getId(),
-                        e.getCodigo(),
-                        e.getNombre(),
-                        e.getDireccion(),
-                        e.getCiudad(),
-                        e.getActivo(),
-                        e.getEncargadoId()
-                ))
-                .collect(Collectors.toList());
+                .map(this::toDomain)
+                .toList();
     }
 
     @Override
     public List<Tienda> obtenerPorEncargadoId(Long encargadoId) {
         return tiendaJpaRepository.findByEncargadoId(encargadoId).stream()
-                .map(entity -> new Tienda(
-                        entity.getId(),
-                        entity.getCodigo(),
-                        entity.getNombre(),
-                        entity.getDireccion(),
-                        entity.getCiudad(),
-                        entity.getActivo(),
-                        entity.getEncargadoId()
-                ))
+                .map(this::toDomain)
                 .toList();
     }
 
     @Override
     public Optional<Tienda> obtenerPorId(Long id) {
         return tiendaJpaRepository.findById(id)
-                .map(entity -> new Tienda(
-                        entity.getId(),
-                        entity.getCodigo(),
-                        entity.getNombre(),
-                        entity.getDireccion(),
-                        entity.getCiudad(),
-                        entity.getActivo(),
-                        entity.getEncargadoId()
-                ));
+                .map(this::toDomain);
+    }
+
+    private Tienda toDomain(TiendaJpaEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+        List<Long> centrosIds = entity.getCentrosDistribucion() != null
+                ? entity.getCentrosDistribucion().stream().map(CentroDistribucionJpaEntity::getId).toList()
+                : List.of();
+
+        return new Tienda(
+                entity.getId(),
+                entity.getCodigo(),
+                entity.getNombre(),
+                entity.getDireccion(),
+                entity.getCiudad(),
+                entity.getActivo(),
+                entity.getEncargadoId(),
+                centrosIds
+        );
     }
 }

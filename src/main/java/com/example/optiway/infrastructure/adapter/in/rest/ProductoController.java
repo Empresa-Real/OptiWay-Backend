@@ -69,10 +69,10 @@ public class ProductoController {
     public Producto cambiarEstado(@PathVariable Long id,
                                   @Valid @RequestBody CambiarEstadoProductoRequest request,
                                   @AuthUserId UUID authUserId) {
-        if (request == null || request.getActivo() == null) {
+        if (request == null || request.activo() == null) {
             throw new IllegalArgumentException("Debe indicar si el producto estará activo o inactivo");
         }
-        return cambiarEstadoProductoUseCase.cambiarEstadoProducto(authUserId, id, request.getActivo());
+        return cambiarEstadoProductoUseCase.cambiarEstadoProducto(authUserId, id, request.activo());
     }
 
     @GetMapping("/{id}/tiene-stock")

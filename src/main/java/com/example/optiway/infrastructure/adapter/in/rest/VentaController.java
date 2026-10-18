@@ -32,10 +32,10 @@ public class VentaController {
             @Valid @RequestBody RegistrarVentaRequest request,
             @AuthUserId UUID authUserId) {
         RegistrarVentaCommand command = new RegistrarVentaCommand(
-                request.getTiendaId(),
-                request.getProductoId(),
-                request.getCantidad(),
-                request.getFechaHora() != null ? request.getFechaHora() : LocalDateTime.now()
+                request.tiendaId(),
+                request.productoId(),
+                request.cantidad(),
+                request.fechaHora() != null ? request.fechaHora() : LocalDateTime.now()
         );
 
         return registrarVentaUseCase.registrarVenta(command, authUserId);

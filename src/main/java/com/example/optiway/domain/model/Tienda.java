@@ -1,5 +1,7 @@
 package com.example.optiway.domain.model;
 
+import java.util.List;
+
 public class Tienda {
     private Long id;
     private String codigo;
@@ -8,12 +10,15 @@ public class Tienda {
     private String ciudad;
     private Boolean activo = true;
     private Long encargadoId;
+    private List<Long> centrosAbastecedoresIds = List.of();
 
     public Tienda() {}
 
-
-
     public Tienda(Long id, String codigo, String nombre, String direccion, String ciudad, Boolean activo, Long encargadoId) {
+        this(id, codigo, nombre, direccion, ciudad, activo, encargadoId, List.of());
+    }
+
+    public Tienda(Long id, String codigo, String nombre, String direccion, String ciudad, Boolean activo, Long encargadoId, List<Long> centrosAbastecedoresIds) {
         this.id = id;
         this.codigo = codigo;
         this.nombre = nombre;
@@ -21,6 +26,7 @@ public class Tienda {
         this.ciudad = ciudad;
         this.activo = activo != null ? activo : true;
         this.encargadoId = encargadoId;
+        this.centrosAbastecedoresIds = centrosAbastecedoresIds != null ? centrosAbastecedoresIds : List.of();
     }
 
     public Long getId() { return id; }
@@ -44,4 +50,12 @@ public class Tienda {
 
     public Long getEncargadoId() { return encargadoId; }
     public void setEncargadoId(Long encargadoId) { this.encargadoId = encargadoId; }
+
+    public List<Long> getCentrosAbastecedoresIds() {
+        return centrosAbastecedoresIds != null ? centrosAbastecedoresIds : List.of();
+    }
+
+    public void setCentrosAbastecedoresIds(List<Long> centrosAbastecedoresIds) {
+        this.centrosAbastecedoresIds = centrosAbastecedoresIds != null ? centrosAbastecedoresIds : List.of();
+    }
 }

@@ -5,7 +5,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
+import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 @Table(name = "tiendas")
@@ -32,6 +35,9 @@ public class TiendaJpaEntity {
 
     @Column(name = "encargado_id")
     private Long encargadoId;
+
+    @ManyToMany(mappedBy = "tiendasAbastecidas")
+    private List<CentroDistribucionJpaEntity> centrosDistribucion = new ArrayList<>();
 
     public TiendaJpaEntity() {}
 
@@ -65,4 +71,12 @@ public class TiendaJpaEntity {
 
     public Long getEncargadoId() { return encargadoId; }
     public void setEncargadoId(Long encargadoId) { this.encargadoId = encargadoId; }
+
+    public List<CentroDistribucionJpaEntity> getCentrosDistribucion() {
+        return centrosDistribucion != null ? centrosDistribucion : List.of();
+    }
+
+    public void setCentrosDistribucion(List<CentroDistribucionJpaEntity> centrosDistribucion) {
+        this.centrosDistribucion = centrosDistribucion != null ? centrosDistribucion : new ArrayList<>();
+    }
 }
