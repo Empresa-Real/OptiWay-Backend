@@ -54,8 +54,16 @@ public class ConsultarInventarioCDService implements ConsultarInventarioCDUseCas
                 centro,
                 "consultar el inventario de este centro de distribución");
 
-        List<Inventario> inventarios = inventarioRepositoryPort
-                .findByCentroDistribucionId(centroDistribucionId);
+        List<Inventario> inventarios;
+        if (productoId != null) {
+            inventarios = inventarioRepositoryPort
+                    .findByCentroDistribucionIdAndProductoId(centroDistribucionId, productoId)
+                    .map(List::of)
+                    .orElseGet(List::of);
+        } else {
+            inventarios = inventarioRepositoryPort
+                    .findByCentroDistribucionId(centroDistribucionId);
+        }
 
         if (inventarios.isEmpty()) {
             return List.of();
@@ -74,7 +82,6 @@ public class ConsultarInventarioCDService implements ConsultarInventarioCDUseCas
         String catFiltro = (categoria != null && !categoria.isBlank()) ? categoria.trim().toLowerCase() : null;
 
         return inventarios.stream()
-                .filter(i -> productoId == null || productoId.equals(i.getProductoId()))
                 .filter(i -> {
                     Producto producto = productosMap.get(i.getProductoId());
                     if (producto == null) {

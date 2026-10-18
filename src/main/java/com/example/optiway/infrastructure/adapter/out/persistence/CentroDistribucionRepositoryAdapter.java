@@ -37,6 +37,16 @@ public class CentroDistribucionRepositoryAdapter implements CentroDistribucionRe
     }
 
     @Override
+    public List<CentroDistribucion> obtenerPorEncargadoId(Long encargadoId) {
+        if (encargadoId == null) {
+            return List.of();
+        }
+        return repository.findByEncargadoId(encargadoId).stream()
+                .map(this::toDomain)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public Optional<CentroDistribucion> obtenerPorId(Long id) {
         return repository.findById(id)
                 .map(this::toDomain);

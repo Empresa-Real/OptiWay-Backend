@@ -51,7 +51,14 @@ public class InventarioService implements ConsultarInventarioUseCase {
 
         authorizationService.requirePermisoConsultarTienda(authUserId, tienda, "consultar esta tienda");
 
-        List<Inventario> inventarios = inventarioRepositoryPort.findByTiendaId(tiendaId);
+        List<Inventario> inventarios;
+        if (productoId != null) {
+            inventarios = inventarioRepositoryPort.findByTiendaIdAndProductoId(tiendaId, productoId)
+                    .map(List::of)
+                    .orElseGet(List::of);
+        } else {
+            inventarios = inventarioRepositoryPort.findByTiendaId(tiendaId);
+        }
 
         if (inventarios.isEmpty()) {
             return List.of();
@@ -70,7 +77,6 @@ public class InventarioService implements ConsultarInventarioUseCase {
         String catFiltro = (categoria != null && !categoria.isBlank()) ? categoria.trim().toLowerCase() : null;
 
         return inventarios.stream()
-                .filter(inventario -> productoId == null || inventario.getProductoId().equals(productoId))
                 .filter(inventario -> {
                     Producto producto = productosMap.get(inventario.getProductoId());
                     if (producto == null) {

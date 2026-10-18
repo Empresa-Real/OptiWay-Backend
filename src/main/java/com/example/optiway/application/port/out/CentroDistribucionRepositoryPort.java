@@ -12,5 +12,6 @@ public interface CentroDistribucionRepositoryPort {
         return guardar(centroDistribucion);
     }
     List<CentroDistribucion> obtenerTodos();
+    List<CentroDistribucion> obtenerPorEncargadoId(Long encargadoId);
     Optional<CentroDistribucion> obtenerPorId(Long id);
 }

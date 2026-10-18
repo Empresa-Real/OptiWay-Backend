@@ -71,9 +71,7 @@ public class CentroDistribucionService implements CrearCentroDistribucionUseCase
         }
 
         if (usuario.getRol() == Rol.ENCARGADO_CD) {
-            return centroDistribucionRepositoryPort.obtenerTodos().stream()
-                    .filter(usuario::esEncargadoDe)
-                    .toList();
+            return centroDistribucionRepositoryPort.obtenerPorEncargadoId(usuario.getId());
         }
 
         return List.of();
