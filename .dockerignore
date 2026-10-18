@@ -5,4 +5,6 @@ src/test/
 .vscode/
 docs/
 graphify-out/
+src/main/resources/static/web/
 *.log
+

@@ -5,6 +5,8 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 src/main/resources/static/config.js
+src/main/resources/static/web/config.js
+
 
 ### STS ###
 .apt_generated
