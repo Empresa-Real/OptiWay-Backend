@@ -26,13 +26,20 @@ public class ProductoRepositoryAdapter implements ProductoRepositoryPort {
     @Override
     public Producto save(Producto producto) {
 
-        ProductoJpaEntity entity = new ProductoJpaEntity();
+        ProductoJpaEntity entity;
+        if (producto.getId() != null) {
+            entity = productoJpaRepository.findById(producto.getId())
+                    .orElse(new ProductoJpaEntity());
+        } else {
+            entity = new ProductoJpaEntity();
+        }
 
         entity.setNombre(producto.getNombre());
         entity.setCategoria(producto.getCategoria());
         entity.setIdentificador(producto.getIdentificador());
         entity.setPrecio(producto.getPrecio());
         entity.setUnidadMedida(producto.getUnidadMedida());
+        entity.setActivo(producto.isActivo());
         entity.setEstado(producto.getEstado());
 
         try {
@@ -144,6 +151,7 @@ public class ProductoRepositoryAdapter implements ProductoRepositoryPort {
         producto.setIdentificador(entity.getIdentificador());
         producto.setPrecio(entity.getPrecio());
         producto.setUnidadMedida(entity.getUnidadMedida());
+        producto.setActivo(entity.getActivo());
         producto.setEstado(entity.getEstado());
     }
 }

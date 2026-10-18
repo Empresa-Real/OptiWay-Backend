@@ -30,6 +30,9 @@ public class ProductoJpaEntity {
     @Column(length = 20)
     private String estado;
 
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private Boolean activo = true;
+
     public ProductoJpaEntity() {
     }
 
@@ -37,6 +40,8 @@ public class ProductoJpaEntity {
         this.id = id;
         this.nombre = nombre;
         this.categoria = categoria;
+        this.activo = true;
+        this.estado = "activo";
     }
 
     public Long getId() {
@@ -69,6 +74,14 @@ public class ProductoJpaEntity {
     public void setPrecio(BigDecimal precio) { this.precio = precio; }
     public String getUnidadMedida() { return unidadMedida; }
     public void setUnidadMedida(String unidadMedida) { this.unidadMedida = unidadMedida; }
-    public String getEstado() { return estado; }
-    public void setEstado(String estado) { this.estado = estado; }
+    public String getEstado() { return estado != null ? estado : (getActivo() ? "activo" : "inactivo"); }
+    public void setEstado(String estado) {
+        this.estado = estado;
+        this.activo = !"inactivo".equalsIgnoreCase(estado);
+    }
+    public Boolean getActivo() { return activo != null ? activo : true; }
+    public void setActivo(Boolean activo) {
+        this.activo = activo != null ? activo : true;
+        this.estado = this.activo ? "activo" : "inactivo";
+    }
 }

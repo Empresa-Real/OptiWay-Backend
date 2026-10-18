@@ -17,12 +17,23 @@
   - Anotación `@AuthUserId` y resolvedor `AuthUserIdArgumentResolver` para inyectar automáticamente el `UUID` del usuario autenticado sin manipular objetos `Jwt` en controladores.
   - Registro centralizado en `WebMvcConfig`.
 
+- **HU-16 (Consultar Inventario en Centros de Distribución - Fix 8):**
+  - Caso de uso `ConsultarInventarioCDUseCase` y servicio `ConsultarInventarioCDService`.
+  - Endpoint `GET /api/inventario/centro-distribucion` con filtros por nombre, categoría y productoId, y cálculo dinámico de `stockBajo`.
+  - Autorización flexible que permite supervisión a `ADMINISTRADOR` y `PLANIFICADOR`, y restringe al `ENCARGADO_CD` exclusivamente a su sede asignada.
+  - Optimización de rendimiento eliminando llamadas redundantes a base de datos (Query N+1 x 3) mediante precarga en memoria de productos asociados.
+- **HU-06 (Desactivar y Reactivar Productos - Fix 9):**
+  - Caso de uso `CambiarEstadoProductoUseCase` integrado en `ProductoService`.
+  - Endpoint `PATCH /api/productos/{id}/estado` para actualización directa de estado con DTO `CambiarEstadoProductoRequest`.
+  - Endpoint auxiliar `GET /api/productos/{id}/tiene-stock` para que el Frontend verifique existencias antes de solicitar confirmación al usuario.
+  - Unificación del modelo de datos hacia booleanos seguros (`Boolean activo`), asegurando consistencia con PostgreSQL y retrocompatibilidad con `estado`.
+
 ### Changed
 
 - **Desacoplamiento Hexagonal y DTO en Productos (Fix 6):**
   - Introducción del DTO `CrearProductoRequest` en `POST /api/productos` desacoplando el modelo de dominio interno.
   - Traslado de la captura y traducción de `DataIntegrityViolationException` a `ProductoRepositoryAdapter`, manteniendo `ProductoService` 100% puro y agnóstico a Spring Data.
-  - Refactorización de los 6 controladores (`ProductoController`, `UsuarioController`, `TiendaController`, `CentroDistribucionController`, `InventarioController`, `IngresoMercanciaController`) para usar `@AuthUserId UUID authUserId`, eliminando 15 duplicaciones de código de extracción de JWT.
+  - Refactorización de todos los controladores para usar `@AuthUserId UUID authUserId`, eliminando 15 duplicaciones de código de extracción de JWT.
 
 ## 2026-09-22
 

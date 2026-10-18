@@ -74,4 +74,9 @@ public class InventarioRepositoryAdapter implements InventarioRepositoryPort {
         inventario.setStockMinimo(entity.getStockMinimo());
         return inventario;
     }
+
+    @Override
+    public boolean existeStockActivoDeProducto(Long productoId) {
+        return inventarioJpaRepository.existsByProductoIdAndCantidadActualGreaterThan(productoId, 0);
+    }
 }

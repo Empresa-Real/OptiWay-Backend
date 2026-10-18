@@ -1,8 +1,10 @@
 package com.example.optiway.application.service;
 
+import com.example.optiway.application.port.in.CambiarEstadoProductoUseCase;
 import com.example.optiway.application.port.in.CrearProductoUseCase;
 import com.example.optiway.application.port.in.EditarProductoUseCase;
 import com.example.optiway.application.port.in.ObtenerProductosUseCase;
+import com.example.optiway.application.port.out.InventarioRepositoryPort;
 import com.example.optiway.application.port.out.ProductoRepositoryPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.domain.model.Producto;
@@ -16,15 +18,18 @@ import java.util.Locale;
 import java.util.UUID;
 
 @Service
-public class ProductoService implements CrearProductoUseCase, ObtenerProductosUseCase, EditarProductoUseCase {
+public class ProductoService implements CrearProductoUseCase, ObtenerProductosUseCase, EditarProductoUseCase, CambiarEstadoProductoUseCase {
 
     private final ProductoRepositoryPort productoRepositoryPort;
     private final UsuarioRepositoryPort usuarioRepositoryPort;
+    private final InventarioRepositoryPort inventarioRepositoryPort;
 
     public ProductoService(ProductoRepositoryPort productoRepositoryPort,
-                           UsuarioRepositoryPort usuarioRepositoryPort) {
+                           UsuarioRepositoryPort usuarioRepositoryPort,
+                           InventarioRepositoryPort inventarioRepositoryPort) {
         this.productoRepositoryPort = productoRepositoryPort;
         this.usuarioRepositoryPort = usuarioRepositoryPort;
+        this.inventarioRepositoryPort = inventarioRepositoryPort;
     }
 
     @Override
@@ -112,6 +117,35 @@ public class ProductoService implements CrearProductoUseCase, ObtenerProductosUs
 
         // ID, identificador y estado se toman del registro actual y nunca del cuerpo de la solicitud.
         return productoRepositoryPort.update(actual, authUserId);
+    }
+
+    @Override
+    public Producto cambiarEstadoProducto(UUID authUserId, Long productoId, boolean activo) {
+        if (authUserId == null) {
+            throw new AccesoDenegadoException("Solo un administrador puede activar o desactivar productos");
+        }
+        Usuario usuario = usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)
+                .orElseThrow(() -> new AccesoDenegadoException("Usuario no encontrado"));
+        if (usuario.getRol() != Rol.ADMINISTRADOR) {
+            throw new AccesoDenegadoException("Solo un administrador puede activar o desactivar productos");
+        }
+        if (productoId == null || productoId <= 0) {
+            throw new IllegalArgumentException("El ID del producto no es válido.");
+        }
+
+        Producto producto = productoRepositoryPort.findById(productoId)
+                .orElseThrow(() -> new IllegalArgumentException("El producto no existe con ID: " + productoId));
+
+        producto.setActivo(activo);
+        return productoRepositoryPort.save(producto);
+    }
+
+    @Override
+    public boolean tieneStockActivo(Long productoId) {
+        if (productoId == null) {
+            return false;
+        }
+        return inventarioRepositoryPort.existeStockActivoDeProducto(productoId);
     }
 
     private String requerido(String valor, String mensaje) {
