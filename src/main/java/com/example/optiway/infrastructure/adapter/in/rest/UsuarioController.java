@@ -7,6 +7,7 @@ import java.util.UUID;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.ActualizarRolRequest;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.CrearUsuarioRequest;
 import com.example.optiway.infrastructure.security.AuthUserId;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,7 +25,6 @@ import com.example.optiway.application.port.in.CrearUsuarioUseCase;
 import com.example.optiway.application.port.in.EliminarUsuarioUseCase;
 import com.example.optiway.application.port.in.ObtenerUsuarioUseCase;
 import com.example.optiway.application.port.in.ObtenerUsuariosUseCase;
-import com.example.optiway.domain.model.Rol;
 import com.example.optiway.domain.model.Usuario;
 
 @RestController
@@ -54,7 +54,7 @@ public class UsuarioController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Usuario crearUsuario(
-            @RequestBody CrearUsuarioRequest request,
+            @Valid @RequestBody CrearUsuarioRequest request,
             @AuthUserId UUID authUserId) {
 
         Usuario usuario = request != null ? request.toDomain() : null;
@@ -91,7 +91,7 @@ public class UsuarioController {
     @PatchMapping("/{id}/rol")
     public Usuario actualizarRol(
             @PathVariable Long id,
-            @RequestBody(required = false) ActualizarRolRequest request,
+            @Valid @RequestBody(required = false) ActualizarRolRequest request,
             @AuthUserId UUID authUserId) {
 
         if (request == null || request.rol() == null) {

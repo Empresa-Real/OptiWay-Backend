@@ -16,7 +16,11 @@ public interface UsuarioRepositoryPort {
 
     List<Usuario> obtenerTodos();
 
-    Optional<Usuario> obtenerPorID(Long id);
+    Optional<Usuario> obtenerPorId(Long id);
+
+    default Optional<Usuario> obtenerPorID(Long id) {
+        return obtenerPorId(id);
+    }
 
     boolean existePorEmail(String email);
 
@@ -24,5 +28,5 @@ public interface UsuarioRepositoryPort {
 
     Optional<Usuario> obtenerPorAuthUserId(UUID authUserId);
 
-    Void eliminar(Long id);
+    void eliminar(Long id);
 }

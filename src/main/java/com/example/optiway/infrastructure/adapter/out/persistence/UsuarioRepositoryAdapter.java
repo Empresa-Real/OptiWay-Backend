@@ -38,7 +38,7 @@ public class UsuarioRepositoryAdapter implements UsuarioRepositoryPort {
     }
 
     @Override
-    public Optional<Usuario> obtenerPorID(Long id) {
+    public Optional<Usuario> obtenerPorId(Long id) {
 
         return usuarioJpaRepository.findById(id)
                 .map(this::toDomain);
@@ -62,10 +62,9 @@ public class UsuarioRepositoryAdapter implements UsuarioRepositoryPort {
     }
 
     @Override
-    public Void eliminar(Long id) {
+    public void eliminar(Long id) {
 
         usuarioJpaRepository.deleteById(id);
-        return null;
     }
 
     private UsuarioJpaEntity toEntity(Usuario usuario) {

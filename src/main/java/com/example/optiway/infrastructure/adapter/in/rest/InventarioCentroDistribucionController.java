@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping({"/api/inventario/centro-distribucion", "/api/inventario/cd"})
+@RequestMapping("/api/inventario/centro-distribucion")
 public class InventarioCentroDistribucionController {
 
     private final ConsultarInventarioUseCase consultarInventarioUseCase;

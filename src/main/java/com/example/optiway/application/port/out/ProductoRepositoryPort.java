@@ -14,13 +14,21 @@ public interface ProductoRepositoryPort {
         return save(producto);
     }
 
-    Producto update(Producto producto, UUID usuarioAuthId);
+    Producto update(Producto producto, UUID authUserId);
 
     boolean existsByIdentificador(String identificador);
 
     List<Producto> findAll();
  
-    List<Producto> findAllById(Iterable<Long> ids);
+    List<Producto> findAllById(List<Long> ids);
+
+    default List<Producto> findAllById(Iterable<Long> ids) {
+        if (ids == null) return List.of();
+        if (ids instanceof List<Long> list) return findAllById(list);
+        List<Long> list = new java.util.ArrayList<>();
+        ids.forEach(list::add);
+        return findAllById(list);
+    }
 
     Optional<Producto> findById(Long id);
 

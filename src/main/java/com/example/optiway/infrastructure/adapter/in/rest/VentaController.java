@@ -5,6 +5,7 @@ import com.example.optiway.application.port.in.RegistrarVentaUseCase;
 import com.example.optiway.domain.model.Venta;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.RegistrarVentaRequest;
 import com.example.optiway.infrastructure.security.AuthUserId;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,7 +29,7 @@ public class VentaController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Venta registrarVenta(
-            @RequestBody RegistrarVentaRequest request,
+            @Valid @RequestBody RegistrarVentaRequest request,
             @AuthUserId UUID authUserId) {
         RegistrarVentaCommand command = new RegistrarVentaCommand(
                 request.getTiendaId(),

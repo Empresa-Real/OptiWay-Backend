@@ -162,6 +162,9 @@ public class Inventario {
             throw new IllegalArgumentException("La cantidad de venta debe ser mayor a cero.");
         }
         int actual = this.cantidadActual != null ? this.cantidadActual : 0;
+        if (actual < cantidad) {
+            throw new IllegalStateException("Stock insuficiente para realizar el descuento: disponible " + actual + ", solicitado " + cantidad);
+        }
         this.cantidadActual = actual - cantidad;
         this.stockBajo = calcularStockBajo();
     }

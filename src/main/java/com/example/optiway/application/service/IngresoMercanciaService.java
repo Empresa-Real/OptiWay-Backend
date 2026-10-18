@@ -110,8 +110,6 @@ public class IngresoMercanciaService implements RegistrarIngresoMercanciaUseCase
         ingreso.setUsuarioId(usuario.getId());
         ingreso.setFechaIngreso(LocalDateTime.now());
 
-        IngresoMercancia guardado = ingresoRepositoryPort.guardar(ingreso);
-        guardado.setStockTotalActualizado(inventario.getCantidadActual());
-        return guardado;
+        return ingresoRepositoryPort.guardar(ingreso);
     }
 }

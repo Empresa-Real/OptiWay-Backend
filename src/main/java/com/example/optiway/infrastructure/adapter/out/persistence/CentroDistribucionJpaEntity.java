@@ -7,9 +7,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 
 @Entity
@@ -35,13 +32,8 @@ public class CentroDistribucionJpaEntity {
     @Column(name = "encargado_id")
     private Long encargadoId;
 
-    @ManyToMany
-    @JoinTable(
-        name = "centro_distribucion_tiendas",
-        joinColumns = @JoinColumn(name = "centro_id"),
-        inverseJoinColumns = @JoinColumn(name = "tienda_id")
-    )
-    private List<TiendaJpaEntity> tiendasAbastecidas;
+    @Column(name = "tiendas_abastecidas_ids")
+    private List<Long> tiendasAbastecidasIds;
 
     public CentroDistribucionJpaEntity() {}
 
@@ -63,6 +55,6 @@ public class CentroDistribucionJpaEntity {
     public Long getEncargadoId() { return encargadoId; }
     public void setEncargadoId(Long encargadoId) { this.encargadoId = encargadoId; }
 
-    public List<TiendaJpaEntity> getTiendasAbastecidas() { return tiendasAbastecidas; }
-    public void setTiendasAbastecidas(List<TiendaJpaEntity> tiendasAbastecidas) { this.tiendasAbastecidas = tiendasAbastecidas; }
+    public List<Long> getTiendasAbastecidasIds() { return tiendasAbastecidasIds; }
+    public void setTiendasAbastecidasIds(List<Long> tiendasAbastecidasIds) { this.tiendasAbastecidasIds = tiendasAbastecidasIds; }
 }

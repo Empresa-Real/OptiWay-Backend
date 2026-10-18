@@ -59,7 +59,7 @@ public class ProductoRepositoryAdapter implements ProductoRepositoryPort {
 
     @Override
     @Transactional
-    public Producto update(Producto cambios, UUID usuarioAuthId) {
+    public Producto update(Producto cambios, UUID authUserId) {
         ProductoJpaEntity entity = productoJpaRepository.findById(cambios.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado con ID: " + cambios.getId()));
 
@@ -68,7 +68,7 @@ public class ProductoRepositoryAdapter implements ProductoRepositoryPort {
         entity.setPrecio(cambios.getPrecio());
         entity.setUnidadMedida(cambios.getUnidadMedida());
         ProductoJpaEntity savedEntity = productoJpaRepository.save(entity);
-        productoEdicionJpaRepository.save(new ProductoEdicionJpaEntity(savedEntity.getId(), usuarioAuthId));
+        productoEdicionJpaRepository.save(new ProductoEdicionJpaEntity(savedEntity.getId(), authUserId));
         return toDomain(savedEntity);
     }
 
@@ -83,8 +83,8 @@ public class ProductoRepositoryAdapter implements ProductoRepositoryPort {
     }
 
     @Override
-    public List<Producto> findAllById(Iterable<Long> ids) {
-        if (ids == null) {
+    public List<Producto> findAllById(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
             return List.of();
         }
         return productoJpaRepository.findAllById(ids).stream().map(this::toDomain).toList();

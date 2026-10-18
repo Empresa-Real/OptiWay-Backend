@@ -60,7 +60,7 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
 
     @Override
     public Optional<Usuario> obtenerUsuario(Long id) {
-        return usuarioRepositoryPort.obtenerPorID(id);
+        return usuarioRepositoryPort.obtenerPorId(id);
     }
     @Override
     public Optional<Usuario> obtenerUsuarioPorAuthId(UUID authUserId) {
@@ -69,7 +69,7 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
     @Override
     public void eliminarUsuario(Long id, UUID authUserId) {
         authorizationService.requireAdministrador(authUserId, "eliminar usuarios");
-        Usuario usuarioAEliminar = usuarioRepositoryPort.obtenerPorID(id)
+        Usuario usuarioAEliminar = usuarioRepositoryPort.obtenerPorId(id)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con ID: " + id));
         // Regla 1: Un administrador no puede eliminarse a sí mismo
         if (authUserId.equals(usuarioAEliminar.getAuthUserId())) {
@@ -92,7 +92,7 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
         if (nuevoRol == null) {
             throw new IllegalArgumentException("El nuevo rol es obligatorio");
         }
-        Usuario usuario = usuarioRepositoryPort.obtenerPorID(usuarioId)
+        Usuario usuario = usuarioRepositoryPort.obtenerPorId(usuarioId)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con ID: " + usuarioId));
         usuario.setRol(nuevoRol);
         return usuarioRepositoryPort.guardar(usuario);

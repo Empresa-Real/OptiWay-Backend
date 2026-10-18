@@ -9,8 +9,10 @@ import com.example.optiway.domain.model.Producto;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.CambiarEstadoProductoRequest;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.CrearProductoRequest;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.EditarProductoRequest;
+import com.example.optiway.infrastructure.adapter.in.rest.dto.ProductoStockResponse;
 import com.example.optiway.infrastructure.security.AuthUserId;
 import org.springframework.http.HttpStatus;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,7 +23,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -48,14 +49,8 @@ public class ProductoController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Producto crearProducto(@RequestBody CrearProductoRequest request, @AuthUserId UUID authUserId) {
-        Producto producto = new Producto();
-        producto.setIdentificador(request.getIdentificador());
-        producto.setNombre(request.getNombre());
-        producto.setCategoria(request.getCategoria());
-        producto.setPrecio(request.getPrecio());
-        producto.setUnidadMedida(request.getUnidadMedida());
-        return crearProductoUseCase.crearProducto(producto, authUserId);
+    public Producto crearProducto(@Valid @RequestBody CrearProductoRequest request, @AuthUserId UUID authUserId) {
+        return crearProductoUseCase.crearProducto(request.toDomain(), authUserId);
     }
 
     @GetMapping
@@ -65,19 +60,14 @@ public class ProductoController {
 
     @PatchMapping("/{id}")
     public Producto editarProducto(@PathVariable Long id,
-                                   @RequestBody EditarProductoRequest request,
+                                   @Valid @RequestBody EditarProductoRequest request,
                                    @AuthUserId UUID authUserId) {
-        Producto cambios = new Producto();
-        cambios.setNombre(request.getNombre());
-        cambios.setCategoria(request.getCategoria());
-        cambios.setPrecio(request.getPrecio());
-        cambios.setUnidadMedida(request.getUnidadMedida());
-        return editarProductoUseCase.editarProducto(id, cambios, authUserId);
+        return editarProductoUseCase.editarProducto(id, request.toDomain(), authUserId);
     }
 
     @PatchMapping("/{id}/estado")
     public Producto cambiarEstado(@PathVariable Long id,
-                                  @RequestBody CambiarEstadoProductoRequest request,
+                                  @Valid @RequestBody CambiarEstadoProductoRequest request,
                                   @AuthUserId UUID authUserId) {
         if (request == null || request.getActivo() == null) {
             throw new IllegalArgumentException("Debe indicar si el producto estará activo o inactivo");
@@ -86,7 +76,7 @@ public class ProductoController {
     }
 
     @GetMapping("/{id}/tiene-stock")
-    public Map<String, Boolean> tieneStock(@PathVariable Long id) {
-        return Map.of("tieneStock", verificarStockProductoUseCase.tieneStockActivo(id));
+    public ProductoStockResponse tieneStock(@PathVariable Long id) {
+        return new ProductoStockResponse(verificarStockProductoUseCase.tieneStockActivo(id));
     }
 }

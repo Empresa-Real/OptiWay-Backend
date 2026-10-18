@@ -90,7 +90,7 @@ public class CentroDistribucionService implements CrearCentroDistribucionUseCase
                 .orElseThrow(() -> new IllegalArgumentException("El centro de distribución no existe."));
 
         if (encargadoId != null) {
-            Usuario encargado = usuarioRepositoryPort.obtenerPorID(encargadoId)
+            Usuario encargado = usuarioRepositoryPort.obtenerPorId(encargadoId)
                     .orElseThrow(() -> new IllegalArgumentException("El usuario encargado no existe."));
 
             if (!encargado.esEncargadoCD()) {

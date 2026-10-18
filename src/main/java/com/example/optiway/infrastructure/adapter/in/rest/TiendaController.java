@@ -6,6 +6,7 @@ import java.util.UUID;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.AsignarEncargadoRequest;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.CrearTiendaRequest;
 import com.example.optiway.infrastructure.security.AuthUserId;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,7 +42,7 @@ public class TiendaController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Tienda crearTienda(
-            @RequestBody CrearTiendaRequest request,
+            @Valid @RequestBody CrearTiendaRequest request,
             @AuthUserId UUID authUserId) {
         Tienda tienda = request != null ? request.toDomain() : null;
         return crearTiendaUseCase.crearTienda(tienda, authUserId);
@@ -55,7 +56,7 @@ public class TiendaController {
     @PutMapping("/{id}/encargado")
     public Tienda asignarEncargado(
             @PathVariable Long id,
-            @RequestBody(required = false) AsignarEncargadoRequest request,
+            @Valid @RequestBody(required = false) AsignarEncargadoRequest request,
             @AuthUserId UUID authUserId) {
         Long encargadoId = request != null ? request.encargadoId() : null;
         return asignarEncargadoTiendaUseCase.asignarEncargado(id, encargadoId, authUserId);

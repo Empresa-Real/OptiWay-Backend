@@ -28,6 +28,16 @@ public class VentaRepositoryAdapter implements VentaRepositoryPort {
     }
 
     @Override
+    public java.util.Optional<Venta> findById(Long id) {
+        return ventaJpaRepository.findById(id).map(this::toDomain);
+    }
+
+    @Override
+    public List<Venta> findAll() {
+        return ventaJpaRepository.findAll().stream().map(this::toDomain).toList();
+    }
+
+    @Override
     public List<Venta> findByTiendaId(Long tiendaId) {
         return ventaJpaRepository.findByTiendaId(tiendaId)
                 .stream()

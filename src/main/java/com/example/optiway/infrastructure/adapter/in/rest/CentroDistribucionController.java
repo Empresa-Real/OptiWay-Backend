@@ -51,18 +51,9 @@ public class CentroDistribucionController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CentroDistribucion crear(
-            @RequestBody CrearCentroDistribucionRequest request,
+            @Valid @RequestBody CrearCentroDistribucionRequest request,
             @AuthUserId UUID authUserId) {
-        CentroDistribucion domain = new CentroDistribucion(
-                null,
-                null,
-                request.getNombre(),
-                request.getDireccion(),
-                request.getCapacidad(),
-                request.getEncargadoId(),
-                request.getTiendasAbastecidasIds()
-        );
-        return crearCentroDistribucionUseCase.crearCentroDistribucion(domain, authUserId);
+        return crearCentroDistribucionUseCase.crearCentroDistribucion(request.toDomain(), authUserId);
     }
 
     @GetMapping
@@ -73,7 +64,7 @@ public class CentroDistribucionController {
     @PutMapping("/{id}/encargado")
     public CentroDistribucion asignarEncargado(
             @PathVariable Long id,
-            @RequestBody(required = false) AsignarEncargadoRequest request,
+            @Valid @RequestBody(required = false) AsignarEncargadoRequest request,
             @AuthUserId UUID authUserId) {
         Long encargadoId = request != null ? request.encargadoId() : null;
         return asignarEncargadoCDUseCase.asignarEncargado(id, encargadoId, authUserId);

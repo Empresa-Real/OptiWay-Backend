@@ -11,8 +11,7 @@ public record IngresoMercanciaResponse(
         Integer cantidad,
         String origen,
         Long usuarioId,
-        LocalDateTime fechaIngreso,
-        Integer stockTotalActualizado
+        LocalDateTime fechaIngreso
 ) {
     public static IngresoMercanciaResponse from(IngresoMercancia ingreso) {
         return new IngresoMercanciaResponse(
@@ -22,8 +21,7 @@ public record IngresoMercanciaResponse(
                 ingreso.getCantidad(),
                 ingreso.getOrigen(),
                 ingreso.getUsuarioId(),
-                ingreso.getFechaIngreso(),
-                ingreso.getStockTotalActualizado()
+                ingreso.getFechaIngreso()
         );
     }
 }

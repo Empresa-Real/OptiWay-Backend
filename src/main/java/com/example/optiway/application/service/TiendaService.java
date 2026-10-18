@@ -92,7 +92,7 @@ public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase,
                 .orElseThrow(() -> new IllegalArgumentException("La tienda no existe."));
 
         if (encargadoId != null) {
-            Usuario encargado = usuarioRepositoryPort.obtenerPorID(encargadoId)
+            Usuario encargado = usuarioRepositoryPort.obtenerPorId(encargadoId)
                     .orElseThrow(() -> new IllegalArgumentException("El usuario encargado no existe."));
 
             if (!encargado.esEncargadoTienda()) {

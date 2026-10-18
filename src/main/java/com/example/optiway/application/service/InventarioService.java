@@ -102,10 +102,11 @@ public class InventarioService implements ConsultarInventarioUseCase {
     }
 
     private Map<Long, Producto> cargarProductosEnBatch(List<Inventario> inventarios) {
-        Set<Long> productoIds = inventarios.stream()
+        List<Long> productoIds = inventarios.stream()
                 .map(Inventario::getProductoId)
                 .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
+                .distinct()
+                .toList();
 
         return productoRepositoryPort.findAllById(productoIds).stream()
                 .collect(Collectors.toMap(Producto::getId, p -> p));

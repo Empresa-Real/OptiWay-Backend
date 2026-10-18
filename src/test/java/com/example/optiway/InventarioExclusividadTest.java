@@ -38,4 +38,17 @@ class InventarioExclusividadTest {
             new Inventario(1L, null, null, 5L, 100, 10);
         });
     }
+
+    @Test
+    void inventario_DescontarStock_ConStockSuficiente_DescuentaCorrectamente() {
+        Inventario inv = new Inventario(1L, 10L, null, 5L, 50, 10);
+        inv.descontarStock(20);
+        org.junit.jupiter.api.Assertions.assertEquals(30, inv.getCantidadActual());
+    }
+
+    @Test
+    void inventario_DescontarStock_ConStockInsuficiente_LanzaError() {
+        Inventario inv = new Inventario(1L, 10L, null, 5L, 10, 5);
+        assertThrows(IllegalStateException.class, () -> inv.descontarStock(15));
+    }
 }

@@ -85,14 +85,4 @@ public class IngresoMercancia {
     public void setCentroDistribucionId(Long centroDistribucionId) {
         this.centroDistribucionId = centroDistribucionId;
     }
-
-    private Integer stockTotalActualizado;
-
-    public Integer getStockTotalActualizado() {
-        return stockTotalActualizado;
-    }
-
-    public void setStockTotalActualizado(Integer stockTotalActualizado) {
-        this.stockTotalActualizado = stockTotalActualizado;
-    }
 }

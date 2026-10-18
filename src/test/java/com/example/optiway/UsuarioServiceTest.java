@@ -56,7 +56,7 @@ class UsuarioServiceTest {
             Usuario usuarioAEliminar = new Usuario(usuarioId, targetAuthId, "Encargado", "encargado@optiway.com", Rol.ENCARGADO_TIENDA, adminAuthId);
 
             when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(adminUsuario));
-            when(usuarioRepositoryPort.obtenerPorID(usuarioId)).thenReturn(Optional.of(usuarioAEliminar));
+            when(usuarioRepositoryPort.obtenerPorId(usuarioId)).thenReturn(Optional.of(usuarioAEliminar));
 
             usuarioService.eliminarUsuario(usuarioId, adminAuthId);
 
@@ -72,7 +72,7 @@ class UsuarioServiceTest {
             Usuario usuarioSinAuth = new Usuario(usuarioId, null, "Invitado Pendiente", "invitado@optiway.com", Rol.PLANIFICADOR, adminAuthId);
 
             when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(adminUsuario));
-            when(usuarioRepositoryPort.obtenerPorID(usuarioId)).thenReturn(Optional.of(usuarioSinAuth));
+            when(usuarioRepositoryPort.obtenerPorId(usuarioId)).thenReturn(Optional.of(usuarioSinAuth));
 
             usuarioService.eliminarUsuario(usuarioId, adminAuthId);
 
@@ -110,7 +110,7 @@ class UsuarioServiceTest {
         @DisplayName("Regla 1: Un administrador no puede eliminarse a sí mismo (HTTP 400)")
         void eliminarUsuario_autoEliminacion_lanzaIllegalArgumentException() {
             when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(adminUsuario));
-            when(usuarioRepositoryPort.obtenerPorID(1L)).thenReturn(Optional.of(adminUsuario));
+            when(usuarioRepositoryPort.obtenerPorId(1L)).thenReturn(Optional.of(adminUsuario));
 
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
                     usuarioService.eliminarUsuario(1L, adminAuthId)
@@ -129,7 +129,7 @@ class UsuarioServiceTest {
             Usuario otroAdmin = new Usuario(otroAdminId, otroAdminAuthId, "Otro Admin", "admin2@optiway.com", Rol.ADMINISTRADOR, null);
 
             when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(adminUsuario));
-            when(usuarioRepositoryPort.obtenerPorID(otroAdminId)).thenReturn(Optional.of(otroAdmin));
+            when(usuarioRepositoryPort.obtenerPorId(otroAdminId)).thenReturn(Optional.of(otroAdmin));
 
             AccesoDenegadoException exception = assertThrows(AccesoDenegadoException.class, () ->
                     usuarioService.eliminarUsuario(otroAdminId, adminAuthId)
@@ -145,7 +145,7 @@ class UsuarioServiceTest {
         void eliminarUsuario_usuarioNoExiste_lanzaIllegalArgumentException() {
             Long idInexistente = 999L;
             when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(adminUsuario));
-            when(usuarioRepositoryPort.obtenerPorID(idInexistente)).thenReturn(Optional.empty());
+            when(usuarioRepositoryPort.obtenerPorId(idInexistente)).thenReturn(Optional.empty());
 
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
                     usuarioService.eliminarUsuario(idInexistente, adminAuthId)

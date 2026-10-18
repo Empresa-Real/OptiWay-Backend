@@ -41,28 +41,40 @@ public class IngresoMercanciaRepositoryAdapter
         com.example.optiway.infrastructure.adapter.out.persistence.IngresoMercanciaJpaEntity saved =
                 repository.save(entity);
 
-        IngresoMercancia resultado =
-                new IngresoMercancia();
+        return toDomain(saved);
+    }
 
-        resultado.setId(saved.getId());
-        resultado.setCentroDistribucionId(
-                saved.getCentroDistribucionId());
+    @Override
+    public java.util.Optional<IngresoMercancia> findById(Long id) {
+        return repository.findById(id).map(this::toDomain);
+    }
 
-        resultado.setProductoId(
-                saved.getProductoId());
+    @Override
+    public java.util.List<IngresoMercancia> findByCentroDistribucionId(Long centroDistribucionId) {
+        return repository.findByCentroDistribucionId(centroDistribucionId)
+                .stream()
+                .map(this::toDomain)
+                .toList();
+    }
 
-        resultado.setCantidad(
-                saved.getCantidad());
+    @Override
+    public java.util.List<IngresoMercancia> findAll() {
+        return repository.findAll()
+                .stream()
+                .map(this::toDomain)
+                .toList();
+    }
 
-        resultado.setOrigen(
-                saved.getOrigen());
-
-        resultado.setUsuarioId(
-                saved.getUsuarioId());
-
-        resultado.setFechaIngreso(
-                saved.getFechaIngreso());
-
+    private IngresoMercancia toDomain(IngresoMercanciaJpaEntity entity) {
+        if (entity == null) return null;
+        IngresoMercancia resultado = new IngresoMercancia();
+        resultado.setId(entity.getId());
+        resultado.setCentroDistribucionId(entity.getCentroDistribucionId());
+        resultado.setProductoId(entity.getProductoId());
+        resultado.setCantidad(entity.getCantidad());
+        resultado.setOrigen(entity.getOrigen());
+        resultado.setUsuarioId(entity.getUsuarioId());
+        resultado.setFechaIngreso(entity.getFechaIngreso());
         return resultado;
     }
 }

@@ -86,7 +86,7 @@ class InventarioServiceTest {
         when(tiendaRepositoryPort.obtenerPorId(tiendaId)).thenReturn(Optional.of(tienda));
         when(usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)).thenReturn(Optional.of(usuario));
         when(inventarioRepositoryPort.findByTiendaId(tiendaId)).thenReturn(List.of(inv1));
-        when(productoRepositoryPort.findAllById(Set.of(1L))).thenReturn(List.of(prod1));
+        when(productoRepositoryPort.findAllById(List.of(1L))).thenReturn(List.of(prod1));
 
         List<Inventario> resultado = inventarioService.consultarInventario(
                 authUserId, tiendaId, null, null, null, null);
@@ -127,7 +127,7 @@ class InventarioServiceTest {
         when(tiendaRepositoryPort.obtenerPorId(tiendaId)).thenReturn(Optional.of(tienda));
         when(usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)).thenReturn(Optional.of(usuario));
         when(inventarioRepositoryPort.findByTiendaId(tiendaId)).thenReturn(List.of(inv1, inv2));
-        when(productoRepositoryPort.findAllById(Set.of(1L, 2L))).thenReturn(List.of(prod1, prod2));
+        when(productoRepositoryPort.findAllById(List.of(1L, 2L))).thenReturn(List.of(prod1, prod2));
 
         List<Inventario> resultado = inventarioService.consultarInventario(
                 authUserId, tiendaId, null, "arroz", "Granos", null);
@@ -158,7 +158,7 @@ class InventarioServiceTest {
         when(tiendaRepositoryPort.obtenerPorId(tiendaId)).thenReturn(Optional.of(tienda));
         when(usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)).thenReturn(Optional.of(usuario));
         when(inventarioRepositoryPort.findByTiendaIdAndProductoId(tiendaId, productoId)).thenReturn(Optional.of(inv1));
-        when(productoRepositoryPort.findAllById(Set.of(productoId))).thenReturn(List.of(prod1));
+        when(productoRepositoryPort.findAllById(List.of(productoId))).thenReturn(List.of(prod1));
 
         List<Inventario> resultado = inventarioService.consultarInventario(
                 authUserId, tiendaId, null, null, null, productoId);
@@ -222,7 +222,7 @@ class InventarioServiceTest {
         when(centroDistribucionRepositoryPort.obtenerPorId(cdId)).thenReturn(Optional.of(cd));
         when(usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)).thenReturn(Optional.of(usuario));
         when(inventarioRepositoryPort.findByCentroDistribucionId(cdId)).thenReturn(List.of(invCD));
-        when(productoRepositoryPort.findAllById(Set.of(3L))).thenReturn(List.of(prod3));
+        when(productoRepositoryPort.findAllById(List.of(3L))).thenReturn(List.of(prod3));
 
         List<Inventario> resultado = inventarioService.consultarInventario(
                 authUserId, null, cdId, null, null, null);

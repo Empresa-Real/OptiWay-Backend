@@ -144,6 +144,10 @@ public class Usuario {
         return esAdministrador() || esPlanificador();
     }
 
+    private boolean tieneAccesoLogisticoOEncargado(boolean esEncargado) {
+        return puedeVerTodoElCatalogoLogistico() || esEncargado;
+    }
+
     /**
      * Verifica si este usuario puede consultar el inventario de una tienda.
      * Puede hacerlo si tiene visión logística global o es el Encargado asignado a esa tienda.
@@ -152,10 +156,7 @@ public class Usuario {
      * @return true si tiene permisos para consultar
      */
     public boolean puedeConsultarTienda(Tienda tienda) {
-        if (tienda == null) {
-            return false;
-        }
-        return puedeVerTodoElCatalogoLogistico() || esEncargadoDe(tienda);
+        return tienda != null && tieneAccesoLogisticoOEncargado(esEncargadoDe(tienda));
     }
 
     /**
@@ -166,9 +167,6 @@ public class Usuario {
      * @return true si tiene permisos
      */
     public boolean puedeOperarCentroDistribucion(CentroDistribucion centroDistribucion) {
-        if (centroDistribucion == null) {
-            return false;
-        }
-        return puedeVerTodoElCatalogoLogistico() || esEncargadoDe(centroDistribucion);
+        return centroDistribucion != null && tieneAccesoLogisticoOEncargado(esEncargadoDe(centroDistribucion));
     }
 }

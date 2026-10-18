@@ -60,17 +60,11 @@ public class CentroDistribucionRepositoryAdapter implements CentroDistribucionRe
         entity.setDireccion(domain.getDireccion());
         entity.setCapacidad(domain.getCapacidad());
         entity.setEncargadoId(domain.getEncargadoId());
-        if (domain.getTiendasAbastecidasIds() != null && !domain.getTiendasAbastecidasIds().isEmpty()) {
-            entity.setTiendasAbastecidas(tiendaJpaRepository.findAllById(domain.getTiendasAbastecidasIds()));
-        }
+        entity.setTiendasAbastecidasIds(domain.getTiendasAbastecidasIds());
         return entity;
     }
 
     private CentroDistribucion toDomain(CentroDistribucionJpaEntity entity) {
-        List<Long> tiendaIds = entity.getTiendasAbastecidas() != null
-                ? entity.getTiendasAbastecidas().stream().map(TiendaJpaEntity::getId).collect(Collectors.toList())
-                : List.of();
-
         return new CentroDistribucion(
                 entity.getId(),
                 entity.getCodigo(),
@@ -78,7 +72,7 @@ public class CentroDistribucionRepositoryAdapter implements CentroDistribucionRe
                 entity.getDireccion(),
                 entity.getCapacidad(),
                 entity.getEncargadoId(),
-                tiendaIds
+                entity.getTiendasAbastecidasIds()
         );
     }
 }

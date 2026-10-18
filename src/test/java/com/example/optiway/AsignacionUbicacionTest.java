@@ -59,7 +59,7 @@ class AsignacionUbicacionTest {
 
         when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(adminUsuario));
         when(tiendaRepositoryPort.obtenerPorId(10L)).thenReturn(Optional.of(tienda));
-        when(usuarioRepositoryPort.obtenerPorID(2L)).thenReturn(Optional.of(encargado));
+        when(usuarioRepositoryPort.obtenerPorId(2L)).thenReturn(Optional.of(encargado));
         when(tiendaRepositoryPort.save(any(Tienda.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Tienda resultado = tiendaService.asignarEncargado(10L, 2L, adminAuthId);
@@ -75,7 +75,7 @@ class AsignacionUbicacionTest {
 
         when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(adminUsuario));
         when(tiendaRepositoryPort.obtenerPorId(10L)).thenReturn(Optional.of(tienda));
-        when(usuarioRepositoryPort.obtenerPorID(3L)).thenReturn(Optional.of(encargadoCd));
+        when(usuarioRepositoryPort.obtenerPorId(3L)).thenReturn(Optional.of(encargadoCd));
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
                 tiendaService.asignarEncargado(10L, 3L, adminAuthId));
@@ -90,7 +90,7 @@ class AsignacionUbicacionTest {
 
         when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(adminUsuario));
         when(centroDistribucionRepositoryPort.obtenerPorId(20L)).thenReturn(Optional.of(cd));
-        when(usuarioRepositoryPort.obtenerPorID(3L)).thenReturn(Optional.of(encargadoCd));
+        when(usuarioRepositoryPort.obtenerPorId(3L)).thenReturn(Optional.of(encargadoCd));
         when(centroDistribucionRepositoryPort.guardar(any(CentroDistribucion.class))).thenAnswer(inv -> inv.getArgument(0));
 
         CentroDistribucion resultado = centroDistribucionService.asignarEncargado(20L, 3L, adminAuthId);
@@ -106,7 +106,7 @@ class AsignacionUbicacionTest {
 
         when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(adminUsuario));
         when(centroDistribucionRepositoryPort.obtenerPorId(20L)).thenReturn(Optional.of(cd));
-        when(usuarioRepositoryPort.obtenerPorID(2L)).thenReturn(Optional.of(encargadoTnd));
+        when(usuarioRepositoryPort.obtenerPorId(2L)).thenReturn(Optional.of(encargadoTnd));
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
                 centroDistribucionService.asignarEncargado(20L, 2L, adminAuthId));
