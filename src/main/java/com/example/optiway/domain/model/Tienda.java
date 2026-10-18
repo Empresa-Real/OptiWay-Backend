@@ -20,10 +20,6 @@ public class Tienda {
         this.activo = activo != null ? activo : true;
     }
 
-    public Tienda(Long id, String codigo, String nombre, String direccion, String ciudad, String estado) {
-        this(id, codigo, nombre, direccion, ciudad, !"Inactiva".equalsIgnoreCase(estado));
-    }
-
     public Tienda(Long id, String codigo, String nombre, String direccion, String ciudad, Boolean activo, Long encargadoId) {
         this.id = id;
         this.codigo = codigo;
@@ -32,10 +28,6 @@ public class Tienda {
         this.ciudad = ciudad;
         this.activo = activo != null ? activo : true;
         this.encargadoId = encargadoId;
-    }
-
-    public Tienda(Long id, String codigo, String nombre, String direccion, String ciudad, String estado, Long encargadoId) {
-        this(id, codigo, nombre, direccion, ciudad, !"Inactiva".equalsIgnoreCase(estado), encargadoId);
     }
 
     public Long getId() { return id; }
@@ -55,9 +47,6 @@ public class Tienda {
 
     public Boolean getActivo() { return activo != null ? activo : true; }
     public void setActivo(Boolean activo) { this.activo = activo != null ? activo : true; }
-
-    public String getEstado() { return activo != null && activo ? "Activa" : "Inactiva"; }
-    public void setEstado(String estado) { this.activo = "Activa".equalsIgnoreCase(estado); }
 
     public Long getEncargadoId() { return encargadoId; }
     public void setEncargadoId(Long encargadoId) { this.encargadoId = encargadoId; }

@@ -40,14 +40,6 @@ public class Producto {
     public String getUnidadMedida() { return unidadMedida; }
     public void setUnidadMedida(String unidadMedida) { this.unidadMedida = unidadMedida; }
 
-    /**
-     * Estado derivado (solo lectura). Se mantiene como String por compatibilidad
-     * con la capa de persistencia, pero la fuente de verdad es {@link #activo}.
-     */
-    public String getEstado() {
-        return isActivo() ? "activo" : "inactivo";
-    }
-
     public Boolean isActivo() { return activo != null ? activo : true; }
     public Boolean getActivo() { return isActivo(); }
     public void setActivo(Boolean activo) {

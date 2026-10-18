@@ -55,9 +55,6 @@ public class TiendaJpaEntity {
     public String getCiudad() { return ciudad;}
     public void setCiudad(String ciudad) { this.ciudad = ciudad;}
 
-    public String getEstado() { return estado;}
-    public void setEstado(String estado) { this.estado = estado;}
-
     public Boolean getActivo() { return "Activa".equalsIgnoreCase(estado); }
     public void setActivo(Boolean activo) { this.estado = activo != null ? (activo ? "Activa" : "Inactiva") : "Activa"; }
 
