@@ -1,6 +1,5 @@
 package com.example.optiway.application.service;
 
-import com.example.optiway.application.port.in.ConsultarInventarioCDUseCase;
 import com.example.optiway.application.port.in.ConsultarInventarioUseCase;
 import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
 import com.example.optiway.application.port.out.InventarioRepositoryPort;
@@ -20,13 +19,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-/**
- * Servicio unificado de gestión y consulta de inventarios.
- * Consolida las operaciones de inventario tanto para Tiendas como para Centros de Distribución,
- * eliminando duplicación de lógica de batch querying, filtrado y enriquecimiento de productos.
- */
 @Service
-public class InventarioService implements ConsultarInventarioUseCase, ConsultarInventarioCDUseCase {
+public class InventarioService implements ConsultarInventarioUseCase {
 
     private final InventarioRepositoryPort inventarioRepositoryPort;
     private final ProductoRepositoryPort productoRepositoryPort;
@@ -52,36 +46,20 @@ public class InventarioService implements ConsultarInventarioUseCase, ConsultarI
     public List<Inventario> consultarInventario(
             UUID authUserId,
             Long tiendaId,
-            String nombre,
-            String categoria,
-            Long productoId) {
-
-        validarAccesoATienda(authUserId, tiendaId);
-        List<Inventario> inventarios = obtenerInventariosTienda(tiendaId, productoId);
-        return procesarConsultaInventario(inventarios, nombre, categoria);
-    }
-
-    @Override
-    public List<Inventario> consultarInventarioCD(
-            UUID authUserId,
             Long centroDistribucionId,
             String nombre,
             String categoria,
             Long productoId) {
 
-        validarAccesoACentro(authUserId, centroDistribucionId);
-        List<Inventario> inventarios = obtenerInventariosCD(centroDistribucionId, productoId);
-        return procesarConsultaInventario(inventarios, nombre, categoria);
-    }
+        validarAcceso(authUserId, tiendaId, centroDistribucionId);
 
-    private List<Inventario> procesarConsultaInventario(
-            List<Inventario> inventarios, String nombre, String categoria) {
-
+        List<Inventario> inventarios = obtenerInventarios(tiendaId, centroDistribucionId, productoId);
         if (inventarios.isEmpty()) {
             return List.of();
         }
 
         Map<Long, Producto> productosMap = cargarProductosEnBatch(inventarios);
+
         String nombreFiltro = normalizar(nombre);
         String catFiltro = normalizar(categoria);
 
@@ -91,38 +69,36 @@ public class InventarioService implements ConsultarInventarioUseCase, ConsultarI
                 .toList();
     }
 
-    private void validarAccesoATienda(UUID authUserId, Long tiendaId) {
-        Tienda tienda = tiendaRepositoryPort.obtenerPorId(tiendaId)
-                .orElseThrow(() -> new AccesoDenegadoException("La tienda no existe"));
-
-        authorizationService.requirePermisoConsultarTienda(authUserId, tienda, "consultar esta tienda");
-    }
-
-    private void validarAccesoACentro(UUID authUserId, Long centroDistribucionId) {
-        CentroDistribucion centro = centroDistribucionRepositoryPort.obtenerPorId(centroDistribucionId)
-                .orElseThrow(() -> new IllegalArgumentException("El centro de distribución no existe"));
-
-        authorizationService.requirePermisoCentroDistribucion(
-                authUserId, centro, "consultar el inventario de este centro de distribución");
-    }
-
-    private List<Inventario> obtenerInventariosTienda(Long tiendaId, Long productoId) {
-        if (productoId != null) {
-            return inventarioRepositoryPort.findByTiendaIdAndProductoId(tiendaId, productoId)
-                    .map(List::of)
-                    .orElseGet(List::of);
+    private void validarAcceso(UUID authUserId, Long tiendaId, Long centroDistribucionId) {
+        if (tiendaId != null) {
+            Tienda tienda = tiendaRepositoryPort.obtenerPorId(tiendaId)
+                    .orElseThrow(() -> new IllegalArgumentException("La tienda no existe."));
+            authorizationService.requirePermisoConsultarTienda(authUserId, tienda, "consultar esta tienda");
+        } else if (centroDistribucionId != null) {
+            CentroDistribucion centro = centroDistribucionRepositoryPort.obtenerPorId(centroDistribucionId)
+                    .orElseThrow(() -> new IllegalArgumentException("El centro de distribución no existe"));
+            authorizationService.requirePermisoCentroDistribucion(
+                    authUserId, centro, "consultar el inventario de este centro de distribución");
         }
-        return inventarioRepositoryPort.findByTiendaId(tiendaId);
     }
 
-    private List<Inventario> obtenerInventariosCD(Long centroDistribucionId, Long productoId) {
-        if (productoId != null) {
-            return inventarioRepositoryPort
-                    .findByCentroDistribucionIdAndProductoId(centroDistribucionId, productoId)
-                    .map(List::of)
-                    .orElseGet(List::of);
+    private List<Inventario> obtenerInventarios(Long tiendaId, Long centroDistribucionId, Long productoId) {
+        if (tiendaId != null) {
+            if (productoId != null) {
+                return inventarioRepositoryPort.findByTiendaIdAndProductoId(tiendaId, productoId)
+                        .map(List::of)
+                        .orElseGet(List::of);
+            }
+            return inventarioRepositoryPort.findByTiendaId(tiendaId);
+        } else if (centroDistribucionId != null) {
+            if (productoId != null) {
+                return inventarioRepositoryPort.findByCentroDistribucionIdAndProductoId(centroDistribucionId, productoId)
+                        .map(List::of)
+                        .orElseGet(List::of);
+            }
+            return inventarioRepositoryPort.findByCentroDistribucionId(centroDistribucionId);
         }
-        return inventarioRepositoryPort.findByCentroDistribucionId(centroDistribucionId);
+        return List.of();
     }
 
     private Map<Long, Producto> cargarProductosEnBatch(List<Inventario> inventarios) {

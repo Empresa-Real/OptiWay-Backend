@@ -1,6 +1,6 @@
 package com.example.optiway.infrastructure.adapter.in.rest;
 
-import com.example.optiway.application.port.in.ConsultarInventarioCDUseCase;
+import com.example.optiway.application.port.in.ConsultarInventarioUseCase;
 import com.example.optiway.domain.model.Inventario;
 import com.example.optiway.infrastructure.security.AuthUserId;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,11 +15,11 @@ import java.util.UUID;
 @RequestMapping({"/api/inventario/centro-distribucion", "/api/inventario/cd"})
 public class InventarioCentroDistribucionController {
 
-    private final ConsultarInventarioCDUseCase consultarInventarioCDUseCase;
+    private final ConsultarInventarioUseCase consultarInventarioUseCase;
 
     public InventarioCentroDistribucionController(
-            ConsultarInventarioCDUseCase consultarInventarioCDUseCase) {
-        this.consultarInventarioCDUseCase = consultarInventarioCDUseCase;
+            ConsultarInventarioUseCase consultarInventarioUseCase) {
+        this.consultarInventarioUseCase = consultarInventarioUseCase;
     }
 
     @GetMapping
@@ -30,12 +30,12 @@ public class InventarioCentroDistribucionController {
             @RequestParam(required = false) String categoria,
             @RequestParam(required = false) Long productoId) {
 
-        return consultarInventarioCDUseCase.consultarInventarioCD(
+        return consultarInventarioUseCase.consultarInventario(
                 authUserId,
+                null,
                 centroDistribucionId,
                 nombre,
                 categoria,
-                productoId
-        );
+                productoId);
     }
 }

@@ -125,4 +125,44 @@ public class Inventario {
         this.stockBajo = calcularStockBajo();
         return this;
     }
+
+    /**
+     * Incrementa la cantidad de existencias en el inventario y actualiza el estado de stock bajo.
+     *
+     * @param cantidad cantidad a ingresar (debe ser mayor que cero)
+     */
+    public void agregarStock(int cantidad) {
+        if (cantidad <= 0) {
+            throw new IllegalArgumentException("La cantidad debe ser mayor que cero");
+        }
+        int actual = this.cantidadActual != null ? this.cantidadActual : 0;
+        this.cantidadActual = actual + cantidad;
+        this.stockBajo = calcularStockBajo();
+    }
+
+    /**
+     * Verifica si el inventario cuenta con suficiente stock disponible para la cantidad solicitada.
+     *
+     * @param cantidad cantidad requerida
+     * @return true si el stock actual es mayor o igual a la cantidad
+     */
+    public boolean tieneStockDisponible(int cantidad) {
+        int actual = this.cantidadActual != null ? this.cantidadActual : 0;
+        return actual >= cantidad;
+    }
+
+    /**
+     * Descuenta existencias del inventario tras validar que la cantidad sea positiva.
+     * Actualiza automáticamente el estado de stock bajo.
+     *
+     * @param cantidad cantidad a descontar (debe ser mayor que cero)
+     */
+    public void descontarStock(int cantidad) {
+        if (cantidad <= 0) {
+            throw new IllegalArgumentException("La cantidad de venta debe ser mayor a cero.");
+        }
+        int actual = this.cantidadActual != null ? this.cantidadActual : 0;
+        this.cantidadActual = actual - cantidad;
+        this.stockBajo = calcularStockBajo();
+    }
 }

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.optiway.application.port.in.AsignarEncargadoCDUseCase;
 import com.example.optiway.application.port.in.CrearCentroDistribucionUseCase;
+import com.example.optiway.application.port.in.ListarCentrosDistribucionUseCase;
 import com.example.optiway.domain.model.CentroDistribucion;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.CrearCentroDistribucionRequest;
 
@@ -25,12 +26,15 @@ import com.example.optiway.infrastructure.adapter.in.rest.dto.CrearCentroDistrib
 public class CentroDistribucionController {
 
     private final CrearCentroDistribucionUseCase crearCentroDistribucionUseCase;
+    private final ListarCentrosDistribucionUseCase listarCentrosDistribucionUseCase;
     private final AsignarEncargadoCDUseCase asignarEncargadoCDUseCase;
 
     public CentroDistribucionController(
             CrearCentroDistribucionUseCase crearCentroDistribucionUseCase,
+            ListarCentrosDistribucionUseCase listarCentrosDistribucionUseCase,
             AsignarEncargadoCDUseCase asignarEncargadoCDUseCase) {
         this.crearCentroDistribucionUseCase = crearCentroDistribucionUseCase;
+        this.listarCentrosDistribucionUseCase = listarCentrosDistribucionUseCase;
         this.asignarEncargadoCDUseCase = asignarEncargadoCDUseCase;
     }
 
@@ -53,7 +57,7 @@ public class CentroDistribucionController {
 
     @GetMapping
     public List<CentroDistribucion> listar(@AuthUserId UUID authUserId) {
-        return crearCentroDistribucionUseCase.listarCentrosDistribucion(authUserId);
+        return listarCentrosDistribucionUseCase.listarCentrosDistribucion(authUserId);
     }
 
     @PutMapping("/{id}/encargado")

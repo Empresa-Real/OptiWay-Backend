@@ -28,8 +28,8 @@ public class IngresoMercanciaController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public void registrarIngreso(
-            @AuthUserId UUID authUserId,
-            @RequestBody RegistrarIngresoMercanciaRequest request) {
+            @RequestBody RegistrarIngresoMercanciaRequest request,
+            @AuthUserId UUID authUserId) {
 
         RegistrarIngresoCommand command = new RegistrarIngresoCommand(
                 request.getCentroDistribucionId(),

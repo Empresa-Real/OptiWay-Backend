@@ -7,15 +7,15 @@ import org.springframework.stereotype.Service;
 
 import com.example.optiway.application.port.in.AsignarEncargadoCDUseCase;
 import com.example.optiway.application.port.in.CrearCentroDistribucionUseCase;
+import com.example.optiway.application.port.in.ListarCentrosDistribucionUseCase;
 import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.domain.model.CentroDistribucion;
-import com.example.optiway.domain.model.Rol;
 import com.example.optiway.domain.model.Usuario;
 import com.example.optiway.infrastructure.security.AuthorizationService;
 
 @Service
-public class CentroDistribucionService implements CrearCentroDistribucionUseCase, AsignarEncargadoCDUseCase {
+public class CentroDistribucionService implements CrearCentroDistribucionUseCase, ListarCentrosDistribucionUseCase, AsignarEncargadoCDUseCase {
 
     private final CentroDistribucionRepositoryPort centroDistribucionRepositoryPort;
     private final UsuarioRepositoryPort usuarioRepositoryPort;

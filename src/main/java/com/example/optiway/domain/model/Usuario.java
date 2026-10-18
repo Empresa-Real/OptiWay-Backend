@@ -115,7 +115,7 @@ public class Usuario {
      * @return true si es Encargado de Tienda y su ID coincide con el encargado de la tienda
      */
     public boolean esEncargadoDe(Tienda tienda) {
-        if (tienda == null || this.id == null || this.rol != Rol.ENCARGADO_TIENDA) {
+        if (tienda == null || this.id == null || !esEncargadoTienda()) {
             return false;
         }
         return this.id.equals(tienda.getEncargadoId());
@@ -128,7 +128,7 @@ public class Usuario {
      * @return true si es Encargado de CD y su ID coincide con el encargado del CD
      */
     public boolean esEncargadoDe(CentroDistribucion centroDistribucion) {
-        if (centroDistribucion == null || this.id == null || this.rol != Rol.ENCARGADO_CD) {
+        if (centroDistribucion == null || this.id == null || !esEncargadoCD()) {
             return false;
         }
         return this.id.equals(centroDistribucion.getEncargadoId());

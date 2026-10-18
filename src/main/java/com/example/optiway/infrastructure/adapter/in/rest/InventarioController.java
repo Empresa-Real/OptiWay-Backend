@@ -34,6 +34,7 @@ public class InventarioController {
         return consultarInventarioUseCase.consultarInventario(
                 authUserId,
                 tiendaId,
+                null,
                 nombre,
                 categoria,
                 productoId);

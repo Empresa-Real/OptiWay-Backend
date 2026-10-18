@@ -10,7 +10,6 @@ import com.example.optiway.application.port.in.CrearTiendaUseCase;
 import com.example.optiway.application.port.in.ObtenerTiendasUseCase;
 import com.example.optiway.application.port.out.TiendaRepositoryPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
-import com.example.optiway.domain.model.Rol;
 import com.example.optiway.domain.model.Tienda;
 import com.example.optiway.domain.model.Usuario;
 import com.example.optiway.infrastructure.security.AuthorizationService;

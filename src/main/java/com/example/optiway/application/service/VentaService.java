@@ -81,14 +81,14 @@ public class VentaService implements RegistrarVentaUseCase {
                         "El producto con ID " + command.productoId() + " no está registrado en el inventario de la tienda."));
 
         // 5. Validar disponibilidad de existencias
-        int stockActual = inventario.getCantidadActual() != null ? inventario.getCantidadActual() : 0;
-        if (command.cantidad() > stockActual) {
+        if (!inventario.tieneStockDisponible(command.cantidad())) {
+            int stockActual = inventario.getCantidadActual() != null ? inventario.getCantidadActual() : 0;
             throw new StockInsuficienteException(
                     "Stock insuficiente. Stock disponible: " + stockActual + ", solicitado: " + command.cantidad());
         }
 
         // 6. Descontar stock y persistir actualización en inventario
-        inventario.setCantidadActual(stockActual - command.cantidad());
+        inventario.descontarStock(command.cantidad());
         inventarioRepositoryPort.save(inventario);
 
         // 7. Registrar transacción histórica de la venta

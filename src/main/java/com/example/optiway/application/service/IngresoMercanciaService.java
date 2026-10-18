@@ -86,8 +86,7 @@ public class IngresoMercanciaService implements RegistrarIngresoMercanciaUseCase
                 });
 
         // 5. Sumar stock y persistir actualización en inventario
-        int stockActual = inventario.getCantidadActual() != null ? inventario.getCantidadActual() : 0;
-        inventario.setCantidadActual(stockActual + command.cantidad());
+        inventario.agregarStock(command.cantidad());
         inventarioRepositoryPort.save(inventario);
 
         // 6. Registrar la transacción histórica de ingreso
