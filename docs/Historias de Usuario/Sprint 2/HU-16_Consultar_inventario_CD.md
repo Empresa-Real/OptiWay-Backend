@@ -10,7 +10,7 @@
 
 ## Criterios de Aceptación
 
-1. **Consulta autorizada:** El usuario solo puede consultar el inventario del/los centro(s) de distribución donde esté asignado como encargado (`encargadoId == usuario.id` sobre una asignación `ACTIVA` de tipo `CENTRO_DISTRIBUCION`). Si intenta consultar un CD distinto al suyo, el sistema bloquea el acceso con mensaje de permisos (`403 Forbidden`). El usuario con rol `ADMINISTRADOR` tiene acceso para auditar cualquier CD.
+1. **Consulta autorizada:** El usuario solo puede consultar el inventario del/los centro(s) de distribución donde esté asignado como encargado (`encargadoId == usuario.id` sobre una asignación `ACTIVA` de tipo `CENTRO_DISTRIBUCION`). Si intenta consultar un CD distinto al suyo, el sistema bloquea el acceso con mensaje de permisos (`403 Forbidden`). Los usuarios con rol `ADMINISTRADOR` y `PLANIFICADOR` tienen acceso global para auditar y planificar sobre cualquier CD.
 2. **Identificación de stock crítico:** El sistema calcula y expone la bandera `stockBajo: true` cuando la `cantidadActual < stockMinimo`, facilitando el resaltado visual en el frontend.
 3. **Filtros de búsqueda disponibles:**
    * Por identificador de producto (`productoId`).
@@ -23,7 +23,7 @@
 ## Especificación del Endpoint
 
 * **Método:** `GET`
-* **Ruta:** `/api/inventario/cd`
+* **Rutas soportadas:** `/api/inventario/cd` y `/api/inventario/centro-distribucion`
 * **Headers requeridos:**
   ```http
   Authorization: Bearer <token_jwt_supabase>
