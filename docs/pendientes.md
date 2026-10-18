@@ -11,6 +11,11 @@ Este documento resume los puntos pendientes y el estado de la deuda técnica en 
   - Validación con tests unitarios en `InventarioExclusividadTest` e `IngresoMercanciaServiceTest`.
 - [x] **Control de Roles en Ingreso de Mercancía (HU-18 / Fix 4):**
   - Implementada la validación en `IngresoMercanciaService` para permitir operaciones únicamente a administradores, planificadores y al encargado asignado del CD.
+- [x] **Gestión de Productos en Catálogo (HU-04, HU-05, Fix 6):**
+  - Casos de uso `CrearProductoUseCase`, `ObtenerProductosUseCase` y `EditarProductoUseCase`.
+  - Endpoints `POST /api/productos`, `GET /api/productos` y `PATCH /api/productos/{id}` con DTOs desacoplados y tabla de auditoría `producto_ediciones`.
+- [x] **Estandarización de Inyección de Identidad (Fix 7):**
+  - Implementación de `@AuthUserId` con `AuthUserIdArgumentResolver` y `WebMvcConfig`, eliminando 15 duplicaciones de extracción de JWT en los controladores.
 
 ---
 
@@ -26,8 +31,8 @@ Este documento resume los puntos pendientes y el estado de la deuda técnica en 
 ---
 
 ### 3. Persistencia de Productos y Stock en Tiendas (HU-12 / Extensión)
-- [ ] **Crear producto / inventario en BD (Backend):**
-  - Implementar caso de uso y endpoint `POST /api/inventario` (o `POST /api/productos`) para guardar productos en PostgreSQL y vincularlos a la tienda con su stock inicial.
+- [x] **Crear y editar producto en BD (Backend - HU-04 / HU-05):**
+  - Implementado catálogo maestro con endpoints `POST /api/productos`, `PATCH /api/productos/{id}` y `GET /api/productos` en PostgreSQL.
 - [ ] **Ajuste de stock en BD (Backend):**
   - Implementar caso de uso y endpoint `PATCH /api/inventario/{id}/stock` para sumar, restar o fijar existencias reales en BD.
 - [ ] **Conectar vista estática (Frontend):**

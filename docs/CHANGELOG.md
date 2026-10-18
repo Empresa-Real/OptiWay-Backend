@@ -1,5 +1,29 @@
 # Changelog
 
+## 2026-10-17
+
+### Added
+
+- **HU-04 (Crear Producto en Catálogo Maestro):**
+  - Casos de uso `CrearProductoUseCase` y `ObtenerProductosUseCase` con servicio `ProductoService`.
+  - Endpoint `POST /api/productos` para registro de productos con identificador único en mayúsculas, nombre, categoría, precio no negativo, unidad de medida opcional y estado inicial `activo`.
+  - Endpoint `GET /api/productos` para consulta del catálogo de productos autenticado.
+  - Entidad JPA `ProductoJpaEntity` y adaptador `ProductoRepositoryAdapter`.
+- **HU-05 (Editar Producto en Catálogo):**
+  - Caso de uso `EditarProductoUseCase`.
+  - Endpoint `PATCH /api/productos/{id}` para actualización parcial de campos de producto (nombre, categoría, precio y unidad de medida), protegiendo campos inmutables (`id`, `identificador`, `estado`).
+  - Entidad `ProductoEdicionJpaEntity` y tabla de auditoría `producto_ediciones` para registrar qué usuario autenticado (`usuario_auth_id`) realizó la modificación y cuándo (`fecha_edicion`).
+- **Inyección de Identidad Estandarizada (`@AuthUserId` - Fix 7):**
+  - Anotación `@AuthUserId` y resolvedor `AuthUserIdArgumentResolver` para inyectar automáticamente el `UUID` del usuario autenticado sin manipular objetos `Jwt` en controladores.
+  - Registro centralizado en `WebMvcConfig`.
+
+### Changed
+
+- **Desacoplamiento Hexagonal y DTO en Productos (Fix 6):**
+  - Introducción del DTO `CrearProductoRequest` en `POST /api/productos` desacoplando el modelo de dominio interno.
+  - Traslado de la captura y traducción de `DataIntegrityViolationException` a `ProductoRepositoryAdapter`, manteniendo `ProductoService` 100% puro y agnóstico a Spring Data.
+  - Refactorización de los 6 controladores (`ProductoController`, `UsuarioController`, `TiendaController`, `CentroDistribucionController`, `InventarioController`, `IngresoMercanciaController`) para usar `@AuthUserId UUID authUserId`, eliminando 15 duplicaciones de código de extracción de JWT.
+
 ## 2026-09-22
 
 ### Changed
