@@ -2,8 +2,7 @@ package com.example.optiway.infrastructure.adapter.in.rest;
 
 import java.util.UUID;
 
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
+import com.example.optiway.infrastructure.security.AuthUserId;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,10 +25,8 @@ public class IngresoMercanciaController {
 
     @PostMapping
     public void registrarIngreso(
-            @AuthenticationPrincipal Jwt jwt,
+            @AuthUserId UUID authUserId,
             @RequestBody RegistrarIngresoMercanciaRequest request) {
-
-        UUID authUserId = UUID.fromString(jwt.getSubject());
 
         registrarIngresoMercanciaUseCase.registrarIngreso(
                 authUserId,

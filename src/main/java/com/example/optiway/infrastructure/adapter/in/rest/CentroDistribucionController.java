@@ -2,7 +2,9 @@ package com.example.optiway.infrastructure.adapter.in.rest;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
+import com.example.optiway.infrastructure.security.AuthUserId;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,8 +37,7 @@ public class CentroDistribucionController {
     @PostMapping
     public ResponseEntity<CentroDistribucion> crear(
             @RequestBody CrearCentroDistribucionRequest request,
-            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.oauth2.jwt.Jwt jwt) {
-        java.util.UUID authUserId = jwt != null ? java.util.UUID.fromString(jwt.getSubject()) : null;
+            @AuthUserId UUID authUserId) {
         CentroDistribucion domain = new CentroDistribucion(
                 null,
                 null,
@@ -51,9 +52,7 @@ public class CentroDistribucionController {
     }
 
     @GetMapping
-    public ResponseEntity<List<CentroDistribucion>> listar(
-            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.oauth2.jwt.Jwt jwt) {
-        java.util.UUID authUserId = jwt != null ? java.util.UUID.fromString(jwt.getSubject()) : null;
+    public ResponseEntity<List<CentroDistribucion>> listar(@AuthUserId UUID authUserId) {
         return ResponseEntity.ok(crearCentroDistribucionUseCase.listarCentrosDistribucion(authUserId));
     }
 
@@ -61,9 +60,8 @@ public class CentroDistribucionController {
     public ResponseEntity<?> asignarEncargado(
             @PathVariable Long id,
             @RequestBody(required = false) Map<String, Object> body,
-            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.oauth2.jwt.Jwt jwt) {
+            @AuthUserId UUID authUserId) {
         try {
-            java.util.UUID authUserId = jwt != null ? java.util.UUID.fromString(jwt.getSubject()) : null;
             Long encargadoId = null;
             if (body != null && body.get("encargadoId") != null) {
                 encargadoId = Long.valueOf(body.get("encargadoId").toString());

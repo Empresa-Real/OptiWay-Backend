@@ -2,8 +2,7 @@ package com.example.optiway.infrastructure.adapter.in.rest;
 
 import com.example.optiway.application.port.in.ConsultarInventarioUseCase;
 import com.example.optiway.domain.model.Inventario;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
+import com.example.optiway.infrastructure.security.AuthUserId;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -26,14 +25,14 @@ public class InventarioController {
 
     @GetMapping
     public List<Inventario> consultarInventario(
-            @AuthenticationPrincipal Jwt jwt,
+            @AuthUserId UUID authUserId,
             @RequestParam Long tiendaId,
             @RequestParam(required = false) String nombre,
             @RequestParam(required = false) String categoria,
             @RequestParam(required = false) Long productoId) {
 
         return consultarInventarioUseCase.consultarInventario(
-                UUID.fromString(jwt.getSubject()),
+                authUserId,
                 tiendaId,
                 nombre,
                 categoria,

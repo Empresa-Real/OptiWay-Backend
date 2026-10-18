@@ -2,7 +2,9 @@ package com.example.optiway.infrastructure.adapter.in.rest;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
+import com.example.optiway.infrastructure.security.AuthUserId;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,9 +40,8 @@ public class TiendaController {
     @PostMapping
     public ResponseEntity<?> crearTienda(
             @RequestBody Tienda tienda,
-            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.oauth2.jwt.Jwt jwt) {
+            @AuthUserId UUID authUserId) {
         try {
-            java.util.UUID authUserId = jwt != null ? java.util.UUID.fromString(jwt.getSubject()) : null;
             Tienda nuevaTienda = crearTiendaUseCase.crearTienda(tienda, authUserId);
             return ResponseEntity.status(HttpStatus.CREATED).body(nuevaTienda);
         } catch (IllegalArgumentException e) {
@@ -49,9 +50,7 @@ public class TiendaController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Tienda>> obtenerTiendas(
-            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.oauth2.jwt.Jwt jwt) {
-        java.util.UUID authUserId = jwt != null ? java.util.UUID.fromString(jwt.getSubject()) : null;
+    public ResponseEntity<List<Tienda>> obtenerTiendas(@AuthUserId UUID authUserId) {
         return ResponseEntity.ok(obtenerTiendasUseCase.obtenerTiendas(authUserId));
     }
 
@@ -59,9 +58,8 @@ public class TiendaController {
     public ResponseEntity<?> asignarEncargado(
             @PathVariable Long id,
             @RequestBody(required = false) Map<String, Object> body,
-            @org.springframework.security.core.annotation.AuthenticationPrincipal org.springframework.security.oauth2.jwt.Jwt jwt) {
+            @AuthUserId UUID authUserId) {
         try {
-            java.util.UUID authUserId = jwt != null ? java.util.UUID.fromString(jwt.getSubject()) : null;
             Long encargadoId = null;
             if (body != null && body.get("encargadoId") != null) {
                 encargadoId = Long.valueOf(body.get("encargadoId").toString());

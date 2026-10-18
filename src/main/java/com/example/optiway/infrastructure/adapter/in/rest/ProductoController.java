@@ -6,9 +6,8 @@ import com.example.optiway.application.port.in.ObtenerProductosUseCase;
 import com.example.optiway.domain.model.Producto;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.CrearProductoRequest;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.EditarProductoRequest;
+import com.example.optiway.infrastructure.security.AuthUserId;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,14 +38,14 @@ public class ProductoController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Producto crearProducto(@RequestBody CrearProductoRequest request, @AuthenticationPrincipal Jwt jwt) {
+    public Producto crearProducto(@RequestBody CrearProductoRequest request, @AuthUserId UUID authUserId) {
         Producto producto = new Producto();
         producto.setIdentificador(request.getIdentificador());
         producto.setNombre(request.getNombre());
         producto.setCategoria(request.getCategoria());
         producto.setPrecio(request.getPrecio());
         producto.setUnidadMedida(request.getUnidadMedida());
-        return crearProductoUseCase.crearProducto(producto, extraerAuthUserId(jwt));
+        return crearProductoUseCase.crearProducto(producto, authUserId);
     }
 
     @GetMapping
@@ -57,23 +56,12 @@ public class ProductoController {
     @PatchMapping("/{id}")
     public Producto editarProducto(@PathVariable Long id,
                                    @RequestBody EditarProductoRequest request,
-                                   @AuthenticationPrincipal Jwt jwt) {
+                                   @AuthUserId UUID authUserId) {
         Producto cambios = new Producto();
         cambios.setNombre(request.getNombre());
         cambios.setCategoria(request.getCategoria());
         cambios.setPrecio(request.getPrecio());
         cambios.setUnidadMedida(request.getUnidadMedida());
-        return editarProductoUseCase.editarProducto(id, cambios, extraerAuthUserId(jwt));
-    }
-
-    private UUID extraerAuthUserId(Jwt jwt) {
-        if (jwt == null || jwt.getSubject() == null) {
-            return null;
-        }
-        try {
-            return UUID.fromString(jwt.getSubject());
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
+        return editarProductoUseCase.editarProducto(id, cambios, authUserId);
     }
 }

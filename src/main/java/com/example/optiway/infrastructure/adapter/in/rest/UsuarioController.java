@@ -5,9 +5,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.example.optiway.infrastructure.security.AuthUserId;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -55,16 +54,14 @@ public class UsuarioController {
     @ResponseStatus(HttpStatus.CREATED)
     public Usuario crearUsuario(
             @RequestBody Usuario usuario,
-            @AuthenticationPrincipal Jwt jwt) {
+            @AuthUserId UUID authUserId) {
 
-        return crearUsuarioUseCase.crearUsuario(
-            usuario,
-            UUID.fromString(jwt.getSubject()));
+        return crearUsuarioUseCase.crearUsuario(usuario, authUserId);
     }
 
     @GetMapping
-    public List<Usuario> obtenerUsuarios(@AuthenticationPrincipal Jwt jwt) {
-        return obtenerUsuariosUseCase.obtenerUsuarios(UUID.fromString(jwt.getSubject()));
+    public List<Usuario> obtenerUsuarios(@AuthUserId UUID authUserId) {
+        return obtenerUsuariosUseCase.obtenerUsuarios(authUserId);
     }
 
     @GetMapping("/{id}")
@@ -75,8 +72,8 @@ public class UsuarioController {
     }
 
     @GetMapping("/me")
-    public Usuario obtenerUsuarioAutenticado(@AuthenticationPrincipal Jwt jwt) {
-        return obtenerUsuarioUseCase.obtenerUsuarioPorAuthId(UUID.fromString(jwt.getSubject()))
+    public Usuario obtenerUsuarioAutenticado(@AuthUserId UUID authUserId) {
+        return obtenerUsuarioUseCase.obtenerUsuarioPorAuthId(authUserId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
@@ -84,16 +81,16 @@ public class UsuarioController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void eliminarUsuario(
             @PathVariable Long id,
-            @AuthenticationPrincipal Jwt jwt) {
+            @AuthUserId UUID authUserId) {
 
-        eliminarUsuarioUseCase.eliminarUsuario(id, UUID.fromString(jwt.getSubject()));
+        eliminarUsuarioUseCase.eliminarUsuario(id, authUserId);
     }
 
     @PatchMapping("/{id}/rol")
     public Usuario actualizarRol(
             @PathVariable Long id,
             @RequestBody Map<String, String> body,
-            @AuthenticationPrincipal Jwt jwt) {
+            @AuthUserId UUID authUserId) {
 
         String nuevoRolStr = body != null ? body.get("rol") : null;
         if (nuevoRolStr == null || nuevoRolStr.isBlank()) {
@@ -105,6 +102,6 @@ public class UsuarioController {
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rol no válido: " + nuevoRolStr);
         }
-        return actualizarRolUsuarioUseCase.actualizarRol(id, nuevoRol, UUID.fromString(jwt.getSubject()));
+        return actualizarRolUsuarioUseCase.actualizarRol(id, nuevoRol, authUserId);
     }
 }
