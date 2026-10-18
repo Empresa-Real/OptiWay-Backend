@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-10-18
+
+### Added
+
+- **HU-11 (Registrar Venta en Tienda):**
+  - Caso de uso `RegistrarVentaUseCase` y comando `RegistrarVentaCommand`.
+  - Servicio de aplicación `VentaService` con descuento automático y transaccional de stock sobre el modelo unificado `Inventario`.
+  - Validaciones de negocio: existencia de tienda, producto activo en catálogo, existencia en inventario de tienda y suficiencia de stock (`StockInsuficienteException` -> `400 Bad Request`).
+  - Control de acceso por roles con `@AuthUserId`: reservado para `ADMINISTRADOR` o `ENCARGADO_TIENDA` asignado a la tienda específica.
+  - Adaptador REST `VentaController` (`POST /api/ventas`) y DTO `RegistrarVentaRequest`.
+  - Persistencia JPA con `VentaJpaEntity`, `VentaJpaRepository` y `VentaRepositoryAdapter`.
+  - Suite de pruebas unitarias en `VentaServiceTest`.
+  - Guía técnica `docs/guias/guia-trabajo-git-ramas-y-forks.md` detallando el diagnóstico del error en la rama remota de HU-11 y mejores prácticas con ramas hijas y forks.
+
 ## 2026-10-17
 
 ### Added

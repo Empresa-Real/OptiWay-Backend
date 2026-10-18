@@ -22,14 +22,16 @@ Este documento resume los puntos pendientes y el estado de la deuda técnica en 
 
 ---
 
-### 2. Operación de Ventas en Tienda (HU-11 - Prioridad Alta Sprint 1/2)
-- [ ] **Registro de Ventas en Backend:**
-  - Implementar caso de uso `RegistrarVentaUseCase` y servicio `VentaService`.
-  - Exponer endpoint `POST /api/ventas` (o `POST /api/tiendas/{id}/ventas`).
-  - Validar disponibilidad de existencias en `Inventario` y descontar la cantidad vendida de forma transaccional.
-  - Registrar la transacción histórica de venta (producto, tienda, cantidad, fecha y usuario).
+### 2. Operación de Ventas en Tienda (HU-11 - Sprint 2)
+- [x] **Registro de Ventas en Backend (HU-11):**
+  - Implementado caso de uso `RegistrarVentaUseCase` y servicio `VentaService`.
+  - Expuesto endpoint `POST /api/ventas` con validación de rol `ENCARGADO_TIENDA` asignado y `ADMINISTRADOR`.
+  - Validación de existencia y estado activo de producto en catálogo y en inventario de tienda.
+  - Validación y descuento transaccional automático de existencias en `Inventario`.
+  - Registro de la transacción histórica de venta en PostgreSQL (tabla `ventas`).
+  - Pruebas unitarias completas en `VentaServiceTest`.
 - [ ] **Conexión de Interfaz:**
-  - Conectar el formulario de `registrar_venta_tienda.html` con el endpoint de ventas.
+  - Conectar el formulario de `registrar_venta_tienda.html` con el endpoint `POST /api/ventas`.
 
 ---
 

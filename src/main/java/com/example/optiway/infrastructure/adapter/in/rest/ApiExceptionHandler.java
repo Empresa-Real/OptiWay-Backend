@@ -12,6 +12,9 @@ import com.example.optiway.application.service.InvitacionAuthException;
 import com.example.optiway.application.service.UsuarioDuplicadoException;
 import com.example.optiway.application.service.ProductoDuplicadoException;
 
+import com.example.optiway.application.service.StockInsuficienteException;
+import com.example.optiway.application.service.RecursoNoEncontradoException;
+
 @RestControllerAdvice
 public class ApiExceptionHandler {
 
@@ -36,6 +39,18 @@ public class ApiExceptionHandler {
     @ExceptionHandler(ProductoDuplicadoException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public Map<String, String> productoDuplicado(ProductoDuplicadoException exception) {
+        return Map.of("error", exception.getMessage());
+    }
+
+    @ExceptionHandler(RecursoNoEncontradoException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Map<String, String> recursoNoEncontrado(RecursoNoEncontradoException exception) {
+        return Map.of("error", exception.getMessage());
+    }
+
+    @ExceptionHandler(StockInsuficienteException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> stockInsuficiente(StockInsuficienteException exception) {
         return Map.of("error", exception.getMessage());
     }
 
