@@ -2,6 +2,8 @@ package com.example.optiway.infrastructure.security;
 
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.application.service.AccesoDenegadoException;
+import com.example.optiway.domain.model.CentroDistribucion;
+import com.example.optiway.domain.model.Tienda;
 import com.example.optiway.domain.model.Usuario;
 import org.springframework.stereotype.Component;
 
@@ -69,5 +71,39 @@ public class AuthorizationService {
         }
         return usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)
                 .orElseThrow(() -> new AccesoDenegadoException("Usuario no encontrado"));
+    }
+
+    /**
+     * Valida que el usuario autenticado tenga permisos para operar en una tienda
+     * (debe ser Administrador o Encargado asignado a esa tienda).
+     *
+     * @param authUserId identificador de autenticación
+     * @param tienda     tienda sobre la que se operará
+     * @param accion     descripción de la acción
+     * @return el Usuario autenticado y autorizado
+     */
+    public Usuario requirePermisoTienda(UUID authUserId, Tienda tienda, String accion) {
+        Usuario usuario = requireAuthenticated(authUserId);
+        if (!usuario.puedeOperarTienda(tienda)) {
+            throw new AccesoDenegadoException("No tiene permisos para " + accion);
+        }
+        return usuario;
+    }
+
+    /**
+     * Valida que el usuario autenticado tenga permisos para operar en un Centro de Distribución
+     * (debe ser Administrador o Encargado asignado a ese CD).
+     *
+     * @param authUserId         identificador de autenticación
+     * @param centroDistribucion centro de distribución sobre el que se operará
+     * @param accion             descripción de la acción
+     * @return el Usuario autenticado y autorizado
+     */
+    public Usuario requirePermisoCentroDistribucion(UUID authUserId, CentroDistribucion centroDistribucion, String accion) {
+        Usuario usuario = requireAuthenticated(authUserId);
+        if (!usuario.esAdministrador() && !usuario.esEncargadoDe(centroDistribucion)) {
+            throw new AccesoDenegadoException("No tiene permisos para " + accion);
+        }
+        return usuario;
     }
 }

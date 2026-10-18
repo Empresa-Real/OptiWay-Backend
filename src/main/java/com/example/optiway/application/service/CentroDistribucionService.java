@@ -64,16 +64,15 @@ public class CentroDistribucionService implements CrearCentroDistribucionUseCase
             return centroDistribucionRepositoryPort.obtenerTodos();
         }
 
-        Usuario usuario = usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)
-                .orElseThrow(() -> new AccesoDenegadoException("Usuario no encontrado"));
+        Usuario usuario = authorizationService.requireAuthenticated(authUserId);
 
-        if (usuario.getRol() == Rol.ADMINISTRADOR || usuario.getRol() == Rol.PLANIFICADOR) {
+        if (usuario.puedeVerTodoElCatalogoLogistico()) {
             return centroDistribucionRepositoryPort.obtenerTodos();
         }
 
         if (usuario.getRol() == Rol.ENCARGADO_CD) {
             return centroDistribucionRepositoryPort.obtenerTodos().stream()
-                    .filter(c -> usuario.getId().equals(c.getEncargadoId()))
+                    .filter(usuario::esEncargadoDe)
                     .toList();
         }
 

@@ -13,6 +13,7 @@ import com.example.optiway.application.service.AccesoDenegadoException;
 import com.example.optiway.application.service.UsuarioService;
 import com.example.optiway.domain.model.Rol;
 import com.example.optiway.domain.model.Usuario;
+import com.example.optiway.infrastructure.security.AuthorizationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -37,7 +38,8 @@ class UsuarioServiceTest {
 
     @BeforeEach
     void setUp() {
-        usuarioService = new UsuarioService(usuarioRepositoryPort, authPort);
+        AuthorizationService authService = new AuthorizationService(usuarioRepositoryPort);
+        usuarioService = new UsuarioService(usuarioRepositoryPort, authPort, authService);
         adminAuthId = UUID.randomUUID();
         adminUsuario = new Usuario(1L, adminAuthId, "Admin User", "admin@optiway.com", Rol.ADMINISTRADOR, null);
     }

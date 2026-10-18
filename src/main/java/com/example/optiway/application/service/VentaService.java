@@ -5,7 +5,6 @@ import com.example.optiway.application.port.in.RegistrarVentaUseCase;
 import com.example.optiway.application.port.out.InventarioRepositoryPort;
 import com.example.optiway.application.port.out.ProductoRepositoryPort;
 import com.example.optiway.application.port.out.TiendaRepositoryPort;
-import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.application.port.out.VentaRepositoryPort;
 import com.example.optiway.domain.model.Inventario;
 import com.example.optiway.domain.model.Producto;
@@ -13,6 +12,7 @@ import com.example.optiway.domain.model.Rol;
 import com.example.optiway.domain.model.Tienda;
 import com.example.optiway.domain.model.Usuario;
 import com.example.optiway.domain.model.Venta;
+import com.example.optiway.infrastructure.security.AuthorizationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,19 +26,19 @@ public class VentaService implements RegistrarVentaUseCase {
     private final InventarioRepositoryPort inventarioRepositoryPort;
     private final TiendaRepositoryPort tiendaRepositoryPort;
     private final ProductoRepositoryPort productoRepositoryPort;
-    private final UsuarioRepositoryPort usuarioRepositoryPort;
+    private final AuthorizationService authorizationService;
 
     public VentaService(
             VentaRepositoryPort ventaRepositoryPort,
             InventarioRepositoryPort inventarioRepositoryPort,
             TiendaRepositoryPort tiendaRepositoryPort,
             ProductoRepositoryPort productoRepositoryPort,
-            UsuarioRepositoryPort usuarioRepositoryPort) {
+            AuthorizationService authorizationService) {
         this.ventaRepositoryPort = ventaRepositoryPort;
         this.inventarioRepositoryPort = inventarioRepositoryPort;
         this.tiendaRepositoryPort = tiendaRepositoryPort;
         this.productoRepositoryPort = productoRepositoryPort;
-        this.usuarioRepositoryPort = usuarioRepositoryPort;
+        this.authorizationService = authorizationService;
     }
 
     @Override
@@ -64,16 +64,7 @@ public class VentaService implements RegistrarVentaUseCase {
 
         // 2. Control de acceso y roles si se proporciona identidad
         if (authUserId != null) {
-            Usuario usuario = usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)
-                    .orElseThrow(() -> new AccesoDenegadoException("Usuario no autenticado o no encontrado."));
-
-            boolean esAdmin = usuario.getRol() == Rol.ADMINISTRADOR;
-            boolean esEncargado = usuario.getRol() == Rol.ENCARGADO_TIENDA
-                    && usuario.getId().equals(tienda.getEncargadoId());
-
-            if (!esAdmin && !esEncargado) {
-                throw new AccesoDenegadoException("No tiene permisos para registrar ventas en la tienda especificada.");
-            }
+            authorizationService.requirePermisoTienda(authUserId, tienda, "registrar ventas en la tienda especificada.");
         }
 
         // 3. Validar existencia y estado del producto

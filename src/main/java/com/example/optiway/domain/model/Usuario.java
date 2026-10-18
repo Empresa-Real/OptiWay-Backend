@@ -2,6 +2,9 @@ package com.example.optiway.domain.model;
 
 import java.util.UUID;
 
+import com.example.optiway.domain.model.CentroDistribucion;
+import com.example.optiway.domain.model.Tienda;
+
 public class Usuario {
     private Long id;
     private UUID authUserId;
@@ -77,5 +80,55 @@ public class Usuario {
 
     public boolean esEncargado() {
         return this.rol == Rol.ENCARGADO_TIENDA || this.rol == Rol.ENCARGADO_CD;
+    }
+
+    /**
+     * Verifica si este usuario puede operar sobre una tienda dada.
+     * Puede hacerlo si es Administrador, o si es Encargado de tienda y está asignado a esa tienda.
+     *
+     * @param tienda la tienda sobre la que se quiere operar
+     * @return true si el usuario tiene permiso para operar la tienda
+     */
+    public boolean puedeOperarTienda(Tienda tienda) {
+        if (tienda == null) {
+            return false;
+        }
+        return esAdministrador() || esEncargadoDe(tienda);
+    }
+
+    /**
+     * Verifica si este usuario es el Encargado de Tienda asignado a la tienda dada.
+     *
+     * @param tienda la tienda a verificar
+     * @return true si es Encargado de Tienda y su ID coincide con el encargado de la tienda
+     */
+    public boolean esEncargadoDe(Tienda tienda) {
+        if (tienda == null || this.id == null || this.rol != Rol.ENCARGADO_TIENDA) {
+            return false;
+        }
+        return this.id.equals(tienda.getEncargadoId());
+    }
+
+    /**
+     * Verifica si este usuario es el Encargado de Centro de Distribución asignado al CD dado.
+     *
+     * @param centroDistribucion el centro de distribución a verificar
+     * @return true si es Encargado de CD y su ID coincide con el encargado del CD
+     */
+    public boolean esEncargadoDe(CentroDistribucion centroDistribucion) {
+        if (centroDistribucion == null || this.id == null || this.rol != Rol.ENCARGADO_CD) {
+            return false;
+        }
+        return this.id.equals(centroDistribucion.getEncargadoId());
+    }
+
+    /**
+     * Verifica si este usuario puede ver todo el catálogo logístico (tiendas, centros, etc.).
+     * Puede hacerlo si es Administrador o Planificador.
+     *
+     * @return true si puede ver todo el catálogo logístico
+     */
+    public boolean puedeVerTodoElCatalogoLogistico() {
+        return esAdministrador() || this.rol == Rol.PLANIFICADOR;
     }
 }

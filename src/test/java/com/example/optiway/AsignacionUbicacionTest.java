@@ -22,6 +22,7 @@ import com.example.optiway.domain.model.CentroDistribucion;
 import com.example.optiway.domain.model.Rol;
 import com.example.optiway.domain.model.Tienda;
 import com.example.optiway.domain.model.Usuario;
+import com.example.optiway.infrastructure.security.AuthorizationService;
 
 @ExtendWith(MockitoExtension.class)
 class AsignacionUbicacionTest {
@@ -43,8 +44,9 @@ class AsignacionUbicacionTest {
 
     @BeforeEach
     void setUp() {
-        tiendaService = new TiendaService(tiendaRepositoryPort, usuarioRepositoryPort);
-        centroDistribucionService = new CentroDistribucionService(centroDistribucionRepositoryPort, usuarioRepositoryPort);
+        AuthorizationService authService = new AuthorizationService(usuarioRepositoryPort);
+        tiendaService = new TiendaService(tiendaRepositoryPort, usuarioRepositoryPort, authService);
+        centroDistribucionService = new CentroDistribucionService(centroDistribucionRepositoryPort, usuarioRepositoryPort, authService);
 
         adminAuthId = UUID.randomUUID();
         adminUsuario = new Usuario(1L, null, "Admin", "admin@optiway.com", Rol.ADMINISTRADOR, null);

@@ -27,6 +27,7 @@ import com.example.optiway.domain.model.Rol;
 import com.example.optiway.domain.model.Tienda;
 import com.example.optiway.domain.model.Usuario;
 import com.example.optiway.domain.model.Venta;
+import com.example.optiway.infrastructure.security.AuthorizationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -56,12 +57,13 @@ class VentaServiceTest {
 
     @BeforeEach
     void setUp() {
+        AuthorizationService authService = new AuthorizationService(usuarioRepositoryPort);
         ventaService = new VentaService(
                 ventaRepositoryPort,
                 inventarioRepositoryPort,
                 tiendaRepositoryPort,
                 productoRepositoryPort,
-                usuarioRepositoryPort
+                authService
         );
     }
 

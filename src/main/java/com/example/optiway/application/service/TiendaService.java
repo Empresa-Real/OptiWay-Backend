@@ -67,17 +67,14 @@ public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase,
             return tiendaRepositoryPort.findAll();
         }
 
-        Usuario usuario = usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)
-                .orElseThrow(() -> new AccesoDenegadoException("Usuario no encontrado"));
+        Usuario usuario = authorizationService.requireAuthenticated(authUserId);
 
-        if (usuario.getRol() == Rol.ADMINISTRADOR || usuario.getRol() == Rol.PLANIFICADOR) {
+        if (usuario.puedeVerTodoElCatalogoLogistico()) {
             return tiendaRepositoryPort.findAll();
         }
 
         if (usuario.getRol() == Rol.ENCARGADO_TIENDA) {
-            return tiendaRepositoryPort.findAll().stream()
-                    .filter(t -> usuario.getId().equals(t.getEncargadoId()))
-                    .toList();
+            return tiendaRepositoryPort.obtenerPorEncargadoId(usuario.getId());
         }
 
         return List.of();
