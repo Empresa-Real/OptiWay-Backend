@@ -1,0 +1,13 @@
+[
+  {
+    "id": 10,
+    "centroDistribucionId": 2,
+    "tiendaId": null,
+    "productoId": 1,
+    "nombreProducto": "Aceite Vegetal 1L",
+    "categoriaProducto": "Abarrotes",
+    "cantidadActual": 25,
+    "stockMinimo": 30,
+    "stockBajo": true
+  }
+]
