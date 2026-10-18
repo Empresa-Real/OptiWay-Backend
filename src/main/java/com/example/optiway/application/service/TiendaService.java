@@ -53,7 +53,7 @@ public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase,
         }
 
         tienda.setCodigo("TND-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-        tienda.setEstado("Activa");
+        tienda.setActivo(true);
 
         return tiendaRepositoryPort.save(tienda);
     }

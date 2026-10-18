@@ -10,7 +10,6 @@ public class Producto {
     private String identificador;
     private BigDecimal precio;
     private String unidadMedida;
-    private String estado;
     private Boolean activo = true;
 
     public Producto() {
@@ -21,19 +20,6 @@ public class Producto {
         this.nombre = nombre;
         this.categoria = categoria;
         this.activo = true;
-        this.estado = "activo";
-    }
-
-    public Producto(Long id, String identificador, String nombre, String categoria,
-                    BigDecimal precio, String unidadMedida, String estado) {
-        this.id = id;
-        this.identificador = identificador;
-        this.nombre = nombre;
-        this.categoria = categoria;
-        this.precio = precio;
-        this.unidadMedida = unidadMedida;
-        this.estado = estado;
-        this.activo = !"inactivo".equalsIgnoreCase(estado);
     }
 
     public Producto(Long id, String identificador, String nombre, String categoria,
@@ -45,7 +31,6 @@ public class Producto {
         this.precio = precio;
         this.unidadMedida = unidadMedida;
         this.activo = activo != null ? activo : true;
-        this.estado = this.activo ? "activo" : "inactivo";
     }
 
     public String getIdentificador() { return identificador; }
@@ -54,16 +39,19 @@ public class Producto {
     public void setPrecio(BigDecimal precio) { this.precio = precio; }
     public String getUnidadMedida() { return unidadMedida; }
     public void setUnidadMedida(String unidadMedida) { this.unidadMedida = unidadMedida; }
-    public String getEstado() { return estado != null ? estado : (isActivo() ? "activo" : "inactivo"); }
-    public void setEstado(String estado) {
-        this.estado = estado;
-        this.activo = !"inactivo".equalsIgnoreCase(estado);
+
+    /**
+     * Estado derivado (solo lectura). Se mantiene como String por compatibilidad
+     * con la capa de persistencia, pero la fuente de verdad es {@link #activo}.
+     */
+    public String getEstado() {
+        return isActivo() ? "activo" : "inactivo";
     }
+
     public Boolean isActivo() { return activo != null ? activo : true; }
     public Boolean getActivo() { return isActivo(); }
     public void setActivo(Boolean activo) {
         this.activo = activo != null ? activo : true;
-        this.estado = this.activo ? "activo" : "inactivo";
     }
 
     public Long getId() {

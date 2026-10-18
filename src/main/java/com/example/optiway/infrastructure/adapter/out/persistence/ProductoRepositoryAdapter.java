@@ -40,7 +40,6 @@ public class ProductoRepositoryAdapter implements ProductoRepositoryPort {
         entity.setPrecio(producto.getPrecio());
         entity.setUnidadMedida(producto.getUnidadMedida());
         entity.setActivo(producto.isActivo());
-        entity.setEstado(producto.getEstado());
 
         try {
             ProductoJpaEntity savedEntity = productoJpaRepository.save(entity);
@@ -152,6 +151,5 @@ public class ProductoRepositoryAdapter implements ProductoRepositoryPort {
         producto.setPrecio(entity.getPrecio());
         producto.setUnidadMedida(entity.getUnidadMedida());
         producto.setActivo(entity.getActivo());
-        producto.setEstado(entity.getEstado());
     }
 }

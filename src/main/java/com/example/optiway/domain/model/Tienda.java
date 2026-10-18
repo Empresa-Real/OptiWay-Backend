@@ -6,28 +6,36 @@ public class Tienda {
     private String nombre;
     private String direccion;
     private String ciudad;
-    private String estado;
+    private Boolean activo = true;
     private Long encargadoId;
 
     public Tienda() {}
 
-    public Tienda(Long id, String codigo, String nombre, String direccion, String ciudad, String estado) {
+    public Tienda(Long id, String codigo, String nombre, String direccion, String ciudad, Boolean activo) {
         this.id = id;
         this.codigo = codigo;
         this.nombre = nombre;
         this.direccion = direccion;
         this.ciudad = ciudad;
-        this.estado = estado;
+        this.activo = activo != null ? activo : true;
+    }
+
+    public Tienda(Long id, String codigo, String nombre, String direccion, String ciudad, String estado) {
+        this(id, codigo, nombre, direccion, ciudad, !"Inactiva".equalsIgnoreCase(estado));
+    }
+
+    public Tienda(Long id, String codigo, String nombre, String direccion, String ciudad, Boolean activo, Long encargadoId) {
+        this.id = id;
+        this.codigo = codigo;
+        this.nombre = nombre;
+        this.direccion = direccion;
+        this.ciudad = ciudad;
+        this.activo = activo != null ? activo : true;
+        this.encargadoId = encargadoId;
     }
 
     public Tienda(Long id, String codigo, String nombre, String direccion, String ciudad, String estado, Long encargadoId) {
-        this.id = id;
-        this.codigo = codigo;
-        this.nombre = nombre;
-        this.direccion = direccion;
-        this.ciudad = ciudad;
-        this.estado = estado;
-        this.encargadoId = encargadoId;
+        this(id, codigo, nombre, direccion, ciudad, !"Inactiva".equalsIgnoreCase(estado), encargadoId);
     }
 
     public Long getId() { return id; }
@@ -45,8 +53,11 @@ public class Tienda {
     public String getCiudad() { return ciudad; }
     public void setCiudad(String ciudad) { this.ciudad = ciudad; }
 
-    public String getEstado() { return estado; }
-    public void setEstado(String estado) { this.estado = estado; }
+    public Boolean getActivo() { return activo != null ? activo : true; }
+    public void setActivo(Boolean activo) { this.activo = activo != null ? activo : true; }
+
+    public String getEstado() { return activo != null && activo ? "Activa" : "Inactiva"; }
+    public void setEstado(String estado) { this.activo = "Activa".equalsIgnoreCase(estado); }
 
     public Long getEncargadoId() { return encargadoId; }
     public void setEncargadoId(Long encargadoId) { this.encargadoId = encargadoId; }

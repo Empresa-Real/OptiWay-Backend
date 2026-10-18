@@ -63,7 +63,7 @@ public class ProductoService implements CrearProductoUseCase, ObtenerProductosUs
         if (productoRepositoryPort.existsByIdentificador(producto.getIdentificador())) {
             throw new ProductoDuplicadoException("Ya existe un producto con ese identificador.");
         }
-        producto.setEstado("activo");
+        producto.setActivo(true);
         return productoRepositoryPort.save(producto);
     }
 

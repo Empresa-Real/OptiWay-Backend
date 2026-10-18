@@ -26,7 +26,7 @@ public class TiendaRepositoryAdapter implements TiendaRepositoryPort {
         entity.setNombre(tienda.getNombre());
         entity.setDireccion(tienda.getDireccion());
         entity.setCiudad(tienda.getCiudad());
-        entity.setEstado(tienda.getEstado());
+        entity.setActivo(tienda.getActivo());
         entity.setEncargadoId(tienda.getEncargadoId());
 
         TiendaJpaEntity savedEntity = tiendaJpaRepository.save(entity);
@@ -37,7 +37,7 @@ public class TiendaRepositoryAdapter implements TiendaRepositoryPort {
                 savedEntity.getNombre(),
                 savedEntity.getDireccion(),
                 savedEntity.getCiudad(),
-                savedEntity.getEstado(),
+                savedEntity.getActivo(),
                 savedEntity.getEncargadoId()
         );
     }
@@ -56,7 +56,7 @@ public class TiendaRepositoryAdapter implements TiendaRepositoryPort {
                         e.getNombre(),
                         e.getDireccion(),
                         e.getCiudad(),
-                        e.getEstado(),
+                        e.getActivo(),
                         e.getEncargadoId()
                 ))
                 .collect(Collectors.toList());
@@ -71,7 +71,7 @@ public class TiendaRepositoryAdapter implements TiendaRepositoryPort {
                         entity.getNombre(),
                         entity.getDireccion(),
                         entity.getCiudad(),
-                        entity.getEstado(),
+                        entity.getActivo(),
                         entity.getEncargadoId()
                 ))
                 .toList();
@@ -86,7 +86,7 @@ public class TiendaRepositoryAdapter implements TiendaRepositoryPort {
                         entity.getNombre(),
                         entity.getDireccion(),
                         entity.getCiudad(),
-                        entity.getEstado(),
+                        entity.getActivo(),
                         entity.getEncargadoId()
                 ));
     }
