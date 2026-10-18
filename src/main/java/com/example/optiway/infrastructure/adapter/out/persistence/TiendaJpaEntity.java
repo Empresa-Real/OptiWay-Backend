@@ -1,17 +1,22 @@
 package com.example.optiway.infrastructure.adapter.out.persistence;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
-@Entity 
+@Entity
 @Table(name = "tiendas")
 public class TiendaJpaEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @Column(nullable = false, unique = true)
-    private String codigo; 
+    private String codigo;
 
     @Column(nullable = false)
     private String nombre;
@@ -22,21 +27,21 @@ public class TiendaJpaEntity {
     @Column(nullable = false)
     private String ciudad;
 
-    @Column(nullable = false)
-    private String estado;
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private Boolean activo = true;
 
     @Column(name = "encargado_id")
     private Long encargadoId;
 
     public TiendaJpaEntity() {}
 
-    public TiendaJpaEntity(Long id, String codigo, String nombre, String direccion, String ciudad, String estado, Long encargadoId) {
+    public TiendaJpaEntity(Long id, String codigo, String nombre, String direccion, String ciudad, Boolean activo, Long encargadoId) {
         this.id = id;
         this.codigo = codigo;
         this.nombre = nombre;
         this.direccion = direccion;
         this.ciudad = ciudad;
-        this.estado = estado;
+        this.activo = activo != null ? activo : true;
         this.encargadoId = encargadoId;
     }
 
@@ -55,8 +60,8 @@ public class TiendaJpaEntity {
     public String getCiudad() { return ciudad;}
     public void setCiudad(String ciudad) { this.ciudad = ciudad;}
 
-    public Boolean getActivo() { return "Activa".equalsIgnoreCase(estado); }
-    public void setActivo(Boolean activo) { this.estado = activo != null ? (activo ? "Activa" : "Inactiva") : "Activa"; }
+    public Boolean getActivo() { return activo != null ? activo : true; }
+    public void setActivo(Boolean activo) { this.activo = activo != null ? activo : true; }
 
     public Long getEncargadoId() { return encargadoId; }
     public void setEncargadoId(Long encargadoId) { this.encargadoId = encargadoId; }

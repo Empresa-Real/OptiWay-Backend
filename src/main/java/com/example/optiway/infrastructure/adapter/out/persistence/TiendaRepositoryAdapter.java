@@ -1,13 +1,12 @@
 package com.example.optiway.infrastructure.adapter.out.persistence;
 
+import com.example.optiway.application.port.out.TiendaRepositoryPort;
+import com.example.optiway.domain.model.Tienda;
+import org.springframework.stereotype.Component;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import org.springframework.stereotype.Component;
-
-import com.example.optiway.application.port.out.TiendaRepositoryPort;
-import com.example.optiway.domain.model.Tienda;
 
 @Component
 public class TiendaRepositoryAdapter implements TiendaRepositoryPort {
@@ -26,7 +25,7 @@ public class TiendaRepositoryAdapter implements TiendaRepositoryPort {
         entity.setNombre(tienda.getNombre());
         entity.setDireccion(tienda.getDireccion());
         entity.setCiudad(tienda.getCiudad());
-        entity.setActivo(tienda.getActivo());
+        entity.setActivo(tienda.isActivo());
         entity.setEncargadoId(tienda.getEncargadoId());
 
         TiendaJpaEntity savedEntity = tiendaJpaRepository.save(entity);

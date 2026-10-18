@@ -1,9 +1,9 @@
 package com.example.optiway.infrastructure.adapter.in.rest;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
+import com.example.optiway.infrastructure.adapter.in.rest.dto.AsignarEncargadoRequest;
 import com.example.optiway.infrastructure.security.AuthUserId;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -59,12 +59,9 @@ public class CentroDistribucionController {
     @PutMapping("/{id}/encargado")
     public CentroDistribucion asignarEncargado(
             @PathVariable Long id,
-            @RequestBody(required = false) Map<String, Object> body,
+            @RequestBody(required = false) AsignarEncargadoRequest request,
             @AuthUserId UUID authUserId) {
-        Long encargadoId = null;
-        if (body != null && body.get("encargadoId") != null) {
-            encargadoId = Long.valueOf(body.get("encargadoId").toString());
-        }
+        Long encargadoId = request != null ? request.encargadoId() : null;
         return asignarEncargadoCDUseCase.asignarEncargado(id, encargadoId, authUserId);
     }
 }

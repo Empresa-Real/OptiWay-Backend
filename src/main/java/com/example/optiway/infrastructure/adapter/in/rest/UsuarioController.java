@@ -1,10 +1,11 @@
 package com.example.optiway.infrastructure.adapter.in.rest;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.example.optiway.infrastructure.adapter.in.rest.dto.ActualizarRolRequest;
+import com.example.optiway.infrastructure.adapter.in.rest.dto.CrearUsuarioRequest;
 import com.example.optiway.infrastructure.security.AuthUserId;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -53,9 +54,10 @@ public class UsuarioController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Usuario crearUsuario(
-            @RequestBody Usuario usuario,
+            @RequestBody CrearUsuarioRequest request,
             @AuthUserId UUID authUserId) {
 
+        Usuario usuario = request != null ? request.toDomain() : null;
         return crearUsuarioUseCase.crearUsuario(usuario, authUserId);
     }
 
@@ -89,19 +91,12 @@ public class UsuarioController {
     @PatchMapping("/{id}/rol")
     public Usuario actualizarRol(
             @PathVariable Long id,
-            @RequestBody Map<String, String> body,
+            @RequestBody(required = false) ActualizarRolRequest request,
             @AuthUserId UUID authUserId) {
 
-        String nuevoRolStr = body != null ? body.get("rol") : null;
-        if (nuevoRolStr == null || nuevoRolStr.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El nuevo rol es obligatorio.");
+        if (request == null || request.rol() == null) {
+            throw new IllegalArgumentException("El nuevo rol es obligatorio.");
         }
-        Rol nuevoRol;
-        try {
-            nuevoRol = Rol.valueOf(nuevoRolStr);
-        } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rol no válido: " + nuevoRolStr);
-        }
-        return actualizarRolUsuarioUseCase.actualizarRol(id, nuevoRol, authUserId);
+        return actualizarRolUsuarioUseCase.actualizarRol(id, request.rol(), authUserId);
     }
 }

@@ -52,7 +52,7 @@ class AsignacionUbicacionTest {
 
     @Test
     void asignarTienda_conEncargadoTienda_exitoso() {
-        Tienda tienda = new Tienda(10L, "TND-001", "Tienda Central", "Calle 1", "Medellin", "Activa", null);
+        Tienda tienda = new Tienda(10L, "TND-001", "Tienda Central", "Calle 1", "Medellin", true, null);
         Usuario encargado = new Usuario(2L, "Encargado TND", "tnd@optiway.com", Rol.ENCARGADO_TIENDA, null);
 
         when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(adminUsuario));
@@ -68,7 +68,7 @@ class AsignacionUbicacionTest {
 
     @Test
     void asignarTienda_conEncargadoCD_lanzaErrorRolInvalido() {
-        Tienda tienda = new Tienda(10L, "TND-001", "Tienda Central", "Calle 1", "Medellin", "Activa", null);
+        Tienda tienda = new Tienda(10L, "TND-001", "Tienda Central", "Calle 1", "Medellin", true, null);
         Usuario encargadoCd = new Usuario(3L, "Encargado CD", "cd@optiway.com", Rol.ENCARGADO_CD, null);
 
         when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(adminUsuario));

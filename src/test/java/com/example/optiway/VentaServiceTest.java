@@ -72,7 +72,7 @@ class VentaServiceTest {
         UUID authUserId = UUID.randomUUID();
         Long encargadoId = 100L;
 
-        Tienda tienda = new Tienda(tiendaId, "TND-001", "Tienda Norte", "Calle 10", "Medellin", "123456", encargadoId);
+        Tienda tienda = new Tienda(tiendaId, "TND-001", "Tienda Norte", "Calle 10", "Medellin", true, encargadoId);
         Usuario usuario = new Usuario(encargadoId, "Carlos", "carlos@optiway.com", Rol.ENCARGADO_TIENDA, null);
         usuario.setAuthUserId(authUserId);
 
@@ -105,7 +105,7 @@ class VentaServiceTest {
         Long tiendaId = 1L;
         Long productoId = 10L;
 
-        Tienda tienda = new Tienda(tiendaId, "TND-001", "Tienda Norte", "Calle 10", "Medellin", "123456", 100L);
+        Tienda tienda = new Tienda(tiendaId, "TND-001", "Tienda Norte", "Calle 10", "Medellin", true, 100L);
         Producto producto = new Producto(productoId, "PROD-001", "Camisa", "Ropa", BigDecimal.valueOf(50.0), "Unidad", true);
         Inventario inventario = new Inventario(1L, tiendaId, null, productoId, 2, 5);
 
@@ -125,7 +125,7 @@ class VentaServiceTest {
         Long tiendaId = 1L;
         Long productoId = 10L;
 
-        Tienda tienda = new Tienda(tiendaId, "TND-001", "Tienda Norte", "Calle 10", "Medellin", "123456", 100L);
+        Tienda tienda = new Tienda(tiendaId, "TND-001", "Tienda Norte", "Calle 10", "Medellin", true, 100L);
         Producto producto = new Producto(productoId, "PROD-001", "Camisa", "Ropa", BigDecimal.valueOf(50.0), "Unidad", false); // Inactivo
 
         when(tiendaRepositoryPort.obtenerPorId(tiendaId)).thenReturn(Optional.of(tienda));
@@ -143,7 +143,7 @@ class VentaServiceTest {
         Long productoId = 10L;
         UUID authUserId = UUID.randomUUID();
 
-        Tienda tienda = new Tienda(tiendaId, "TND-001", "Tienda Norte", "Calle 10", "Medellin", "123456", 100L);
+        Tienda tienda = new Tienda(tiendaId, "TND-001", "Tienda Norte", "Calle 10", "Medellin", true, 100L);
         Usuario usuarioAjeno = new Usuario(200L, "Pedro", "pedro@optiway.com", Rol.ENCARGADO_TIENDA, null); // Encargado de OTRA tienda
         usuarioAjeno.setAuthUserId(authUserId);
 

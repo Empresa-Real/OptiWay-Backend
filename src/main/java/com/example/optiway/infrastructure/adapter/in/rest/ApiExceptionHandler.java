@@ -59,4 +59,10 @@ public class ApiExceptionHandler {
     public Map<String, String> solicitudInvalida(IllegalArgumentException exception) {
         return Map.of("error", exception.getMessage());
     }
+
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> mensajeNoLegible(org.springframework.http.converter.HttpMessageNotReadableException exception) {
+        return Map.of("error", "Formato de solicitud o valor no válido.");
+    }
 }

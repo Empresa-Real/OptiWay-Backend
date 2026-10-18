@@ -45,7 +45,8 @@ public class Tienda {
     public String getCiudad() { return ciudad; }
     public void setCiudad(String ciudad) { this.ciudad = ciudad; }
 
-    public Boolean getActivo() { return activo != null ? activo : true; }
+    public Boolean isActivo() { return activo != null ? activo : true; }
+    public Boolean getActivo() { return isActivo(); }
     public void setActivo(Boolean activo) { this.activo = activo != null ? activo : true; }
 
     public Long getEncargadoId() { return encargadoId; }
