@@ -7,6 +7,4 @@ import java.util.UUID;
 public interface CambiarEstadoProductoUseCase {
 
     Producto cambiarEstadoProducto(UUID authUserId, Long productoId, boolean activo);
-
-    boolean tieneStockActivo(Long productoId);
 }

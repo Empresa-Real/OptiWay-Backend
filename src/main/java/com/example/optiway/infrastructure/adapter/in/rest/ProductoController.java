@@ -4,6 +4,7 @@ import com.example.optiway.application.port.in.CambiarEstadoProductoUseCase;
 import com.example.optiway.application.port.in.CrearProductoUseCase;
 import com.example.optiway.application.port.in.EditarProductoUseCase;
 import com.example.optiway.application.port.in.ObtenerProductosUseCase;
+import com.example.optiway.application.port.in.VerificarStockProductoUseCase;
 import com.example.optiway.domain.model.Producto;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.CambiarEstadoProductoRequest;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.CrearProductoRequest;
@@ -31,15 +32,18 @@ public class ProductoController {
     private final ObtenerProductosUseCase obtenerProductosUseCase;
     private final EditarProductoUseCase editarProductoUseCase;
     private final CambiarEstadoProductoUseCase cambiarEstadoProductoUseCase;
+    private final VerificarStockProductoUseCase verificarStockProductoUseCase;
 
     public ProductoController(CrearProductoUseCase crearProductoUseCase,
                               ObtenerProductosUseCase obtenerProductosUseCase,
                               EditarProductoUseCase editarProductoUseCase,
-                              CambiarEstadoProductoUseCase cambiarEstadoProductoUseCase) {
+                              CambiarEstadoProductoUseCase cambiarEstadoProductoUseCase,
+                              VerificarStockProductoUseCase verificarStockProductoUseCase) {
         this.crearProductoUseCase = crearProductoUseCase;
         this.obtenerProductosUseCase = obtenerProductosUseCase;
         this.editarProductoUseCase = editarProductoUseCase;
         this.cambiarEstadoProductoUseCase = cambiarEstadoProductoUseCase;
+        this.verificarStockProductoUseCase = verificarStockProductoUseCase;
     }
 
     @PostMapping
@@ -83,6 +87,6 @@ public class ProductoController {
 
     @GetMapping("/{id}/tiene-stock")
     public Map<String, Boolean> tieneStock(@PathVariable Long id) {
-        return Map.of("tieneStock", cambiarEstadoProductoUseCase.tieneStockActivo(id));
+        return Map.of("tieneStock", verificarStockProductoUseCase.tieneStockActivo(id));
     }
 }

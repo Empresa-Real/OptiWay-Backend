@@ -4,6 +4,7 @@ import com.example.optiway.application.port.in.CambiarEstadoProductoUseCase;
 import com.example.optiway.application.port.in.CrearProductoUseCase;
 import com.example.optiway.application.port.in.EditarProductoUseCase;
 import com.example.optiway.application.port.in.ObtenerProductosUseCase;
+import com.example.optiway.application.port.in.VerificarStockProductoUseCase;
 import com.example.optiway.application.port.out.InventarioRepositoryPort;
 import com.example.optiway.application.port.out.ProductoRepositoryPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
@@ -17,7 +18,7 @@ import java.util.Locale;
 import java.util.UUID;
 
 @Service
-public class ProductoService implements CrearProductoUseCase, ObtenerProductosUseCase, EditarProductoUseCase, CambiarEstadoProductoUseCase {
+public class ProductoService implements CrearProductoUseCase, ObtenerProductosUseCase, EditarProductoUseCase, CambiarEstadoProductoUseCase, VerificarStockProductoUseCase {
 
     private final ProductoRepositoryPort productoRepositoryPort;
     private final UsuarioRepositoryPort usuarioRepositoryPort;
