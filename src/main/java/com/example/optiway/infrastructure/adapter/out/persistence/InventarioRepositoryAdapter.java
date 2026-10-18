@@ -5,6 +5,7 @@ import com.example.optiway.domain.model.Inventario;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class InventarioRepositoryAdapter implements InventarioRepositoryPort {
@@ -53,13 +54,13 @@ public class InventarioRepositoryAdapter implements InventarioRepositoryPort {
     }
 
     @Override
-    public java.util.Optional<Inventario> findByTiendaIdAndProductoId(Long tiendaId, Long productoId) {
+    public Optional<Inventario> findByTiendaIdAndProductoId(Long tiendaId, Long productoId) {
         return inventarioJpaRepository.findByTiendaIdAndProductoId(tiendaId, productoId)
                 .map(this::toDomain);
     }
 
     @Override
-    public java.util.Optional<Inventario> findByCentroDistribucionIdAndProductoId(Long centroDistribucionId, Long productoId) {
+    public Optional<Inventario> findByCentroDistribucionIdAndProductoId(Long centroDistribucionId, Long productoId) {
         return inventarioJpaRepository.findByCentroDistribucionIdAndProductoId(centroDistribucionId, productoId)
                 .map(this::toDomain);
     }

@@ -7,7 +7,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 
 import com.example.optiway.application.port.out.AuthPort;
 import com.example.optiway.application.service.InvitacionAuthException;
@@ -53,9 +55,7 @@ public class SupabaseAuthAdapter implements AuthPort {
                 throw new InvitacionAuthException("Supabase no devolvio el usuario invitado");
             }
             return response.id();
-        } catch (InvitacionAuthException exception) {
-            throw exception;
-        } catch (org.springframework.web.client.RestClientResponseException exception) {
+        } catch (RestClientResponseException exception) {
             // Si falló por límite de correos (429) o porque ya estaba registrado (422),
             // verificar si el usuario ya existe en Supabase Auth para reutilizar su UUID
             UUID usuarioExistenteId = buscarUsuarioPorEmailEnSupabase(email);
@@ -76,7 +76,10 @@ public class SupabaseAuthAdapter implements AuthPort {
     private UUID buscarUsuarioPorEmailEnSupabase(String email) {
         try {
             UsersListResponse list = restClient.get()
-                    .uri("/auth/v1/admin/users")
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/auth/v1/admin/users")
+                            .queryParam("email", email)
+                            .build())
                     .header("apikey", serviceRoleKey)
                     .header("Authorization", "Bearer " + serviceRoleKey)
                     .retrieve()
@@ -89,6 +92,8 @@ public class SupabaseAuthAdapter implements AuthPort {
                     }
                 }
             }
+        } catch (HttpClientErrorException.NotFound ignored) {
+            log.warn("Usuario con email {} no encontrado en Supabase Auth", email);
         } catch (Exception e) {
             log.warn("No se pudo consultar listado de usuarios en Supabase Admin: {}", e.getMessage());
         }
@@ -113,9 +118,9 @@ public class SupabaseAuthAdapter implements AuthPort {
                     .retrieve()
                     .toBodilessEntity();
             log.info("Usuario {} eliminado exitosamente de Supabase Auth", authUserId);
-        } catch (org.springframework.web.client.HttpClientErrorException.NotFound ignored) {
+        } catch (HttpClientErrorException.NotFound ignored) {
             log.warn("Usuario {} no existía en Supabase Auth al intentar eliminarlo", authUserId);
-        } catch (org.springframework.web.client.RestClientResponseException exception) {
+        } catch (RestClientResponseException exception) {
             String errorBody = exception.getResponseBodyAsString();
             log.error("Error al eliminar usuario {} en Supabase [HTTP {}]: {}", authUserId, exception.getStatusCode(), errorBody);
             throw new InvitacionAuthException("No se pudo eliminar el usuario de Supabase Auth: " + errorBody);

@@ -13,13 +13,9 @@ import com.example.optiway.domain.model.CentroDistribucion;
 public class CentroDistribucionRepositoryAdapter implements CentroDistribucionRepositoryPort {
 
     private final CentroDistribucionJpaRepository repository;
-    private final TiendaJpaRepository tiendaJpaRepository;
 
-    public CentroDistribucionRepositoryAdapter(
-            CentroDistribucionJpaRepository repository,
-            TiendaJpaRepository tiendaJpaRepository) {
+    public CentroDistribucionRepositoryAdapter(CentroDistribucionJpaRepository repository) {
         this.repository = repository;
-        this.tiendaJpaRepository = tiendaJpaRepository;
     }
 
     @Override

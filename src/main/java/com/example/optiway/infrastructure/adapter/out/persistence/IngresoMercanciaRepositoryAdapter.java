@@ -1,7 +1,11 @@
 package com.example.optiway.infrastructure.adapter.out.persistence;
+
 import com.example.optiway.application.port.out.IngresoMercanciaRepositoryPort;
 import com.example.optiway.domain.model.IngresoMercancia;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.Optional;
 
 @Component
 public class IngresoMercanciaRepositoryAdapter
@@ -10,47 +14,32 @@ public class IngresoMercanciaRepositoryAdapter
     private final IngresoMercanciaJpaRepository repository;
 
     public IngresoMercanciaRepositoryAdapter(
-            com.example.optiway.infrastructure.adapter.out.persistence.IngresoMercanciaJpaRepository repository) {
+            IngresoMercanciaJpaRepository repository) {
         this.repository = repository;
     }
 
     @Override
     public IngresoMercancia guardar(IngresoMercancia ingreso) {
 
-        IngresoMercanciaJpaEntity entity =
-                new IngresoMercanciaJpaEntity();
+        IngresoMercanciaJpaEntity entity = new IngresoMercanciaJpaEntity();
+        entity.setCentroDistribucionId(ingreso.getCentroDistribucionId());
+        entity.setProductoId(ingreso.getProductoId());
+        entity.setCantidad(ingreso.getCantidad());
+        entity.setOrigen(ingreso.getOrigen());
+        entity.setUsuarioId(ingreso.getUsuarioId());
+        entity.setFechaIngreso(ingreso.getFechaIngreso());
 
-        entity.setCentroDistribucionId(
-                ingreso.getCentroDistribucionId());
-
-        entity.setProductoId(
-                ingreso.getProductoId());
-
-        entity.setCantidad(
-                ingreso.getCantidad());
-
-        entity.setOrigen(
-                ingreso.getOrigen());
-
-        entity.setUsuarioId(
-                ingreso.getUsuarioId());
-
-        entity.setFechaIngreso(
-                ingreso.getFechaIngreso());
-
-        com.example.optiway.infrastructure.adapter.out.persistence.IngresoMercanciaJpaEntity saved =
-                repository.save(entity);
-
+        IngresoMercanciaJpaEntity saved = repository.save(entity);
         return toDomain(saved);
     }
 
     @Override
-    public java.util.Optional<IngresoMercancia> findById(Long id) {
+    public Optional<IngresoMercancia> findById(Long id) {
         return repository.findById(id).map(this::toDomain);
     }
 
     @Override
-    public java.util.List<IngresoMercancia> findByCentroDistribucionId(Long centroDistribucionId) {
+    public List<IngresoMercancia> findByCentroDistribucionId(Long centroDistribucionId) {
         return repository.findByCentroDistribucionId(centroDistribucionId)
                 .stream()
                 .map(this::toDomain)
@@ -58,7 +47,7 @@ public class IngresoMercanciaRepositoryAdapter
     }
 
     @Override
-    public java.util.List<IngresoMercancia> findAll() {
+    public List<IngresoMercancia> findAll() {
         return repository.findAll()
                 .stream()
                 .map(this::toDomain)

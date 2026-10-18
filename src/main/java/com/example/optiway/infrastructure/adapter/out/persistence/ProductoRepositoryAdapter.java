@@ -29,7 +29,7 @@ public class ProductoRepositoryAdapter implements ProductoRepositoryPort {
         ProductoJpaEntity entity;
         if (producto.getId() != null) {
             entity = productoJpaRepository.findById(producto.getId())
-                    .orElse(new ProductoJpaEntity());
+                    .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado con ID: " + producto.getId()));
         } else {
             entity = new ProductoJpaEntity();
         }

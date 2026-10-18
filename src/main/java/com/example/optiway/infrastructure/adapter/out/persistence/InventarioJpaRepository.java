@@ -1,9 +1,10 @@
 package com.example.optiway.infrastructure.adapter.out.persistence;
 
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
-import java.util.List;
 
 @Repository
 public interface InventarioJpaRepository
@@ -13,9 +14,9 @@ public interface InventarioJpaRepository
 
     List<InventarioJpaEntity> findByCentroDistribucionId(Long centroDistribucionId);
 
-    java.util.Optional<InventarioJpaEntity> findByTiendaIdAndProductoId(Long tiendaId, Long productoId);
+    Optional<InventarioJpaEntity> findByTiendaIdAndProductoId(Long tiendaId, Long productoId);
 
-    java.util.Optional<InventarioJpaEntity> findByCentroDistribucionIdAndProductoId(Long centroDistribucionId, Long productoId);
+    Optional<InventarioJpaEntity> findByCentroDistribucionIdAndProductoId(Long centroDistribucionId, Long productoId);
 
     boolean existsByProductoIdAndCantidadActualGreaterThan(Long productoId, Integer cantidad);
 }
