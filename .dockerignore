@@ -5,6 +5,9 @@ src/test/
 .vscode/
 docs/
 graphify-out/
+.agents/
+.graphify*
+AGENTS.md
 src/main/resources/static/web/
 *.log
-
+product_backlog.txt
