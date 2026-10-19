@@ -1,25 +1,38 @@
-package com.example.optiway.infrastructure.adapter.in.rest;
+package com.example.optiway.infrastructure.adapter.in.rest.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
+@Schema(description = "Petición para registrar ingreso de mercancía a un centro de distribución")
 public class RegistrarIngresoMercanciaRequest {
 
     @NotNull(message = "El Centro de Distribución es obligatorio")
+    @Schema(description = "Identificador del centro de distribución de destino", example = "1")
     private Long centroDistribucionId;
 
     @NotNull(message = "El producto es obligatorio")
+    @Schema(description = "Identificador del producto a ingresar", example = "5")
     private Long productoId;
 
     @NotNull(message = "La cantidad es obligatoria")
     @Positive(message = "La cantidad debe ser mayor que cero")
+    @Schema(description = "Cantidad de unidades que ingresan", example = "100")
     private Integer cantidad;
 
     @NotBlank(message = "El origen es obligatorio")
+    @Schema(description = "Proveedor o procedencia de la mercancía", example = "Proveedor Central")
     private String origen;
 
     public RegistrarIngresoMercanciaRequest() {
+    }
+
+    public RegistrarIngresoMercanciaRequest(Long centroDistribucionId, Long productoId, Integer cantidad, String origen) {
+        this.centroDistribucionId = centroDistribucionId;
+        this.productoId = productoId;
+        this.cantidad = cantidad;
+        this.origen = origen;
     }
 
     public Long getCentroDistribucionId() {

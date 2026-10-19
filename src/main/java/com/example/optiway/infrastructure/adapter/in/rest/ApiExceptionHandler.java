@@ -1,87 +1,128 @@
 package com.example.optiway.infrastructure.adapter.in.rest;
 
-import java.util.Map;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
+import java.util.Objects;
 
 import com.example.optiway.application.service.AccesoDenegadoException;
 import com.example.optiway.application.service.InvitacionAuthException;
-import com.example.optiway.application.service.UsuarioDuplicadoException;
 import com.example.optiway.application.service.ProductoDuplicadoException;
-
-import com.example.optiway.application.service.StockInsuficienteException;
 import com.example.optiway.application.service.RecursoNoEncontradoException;
+import com.example.optiway.application.service.StockInsuficienteException;
+import com.example.optiway.application.service.UsuarioDuplicadoException;
+import com.example.optiway.infrastructure.adapter.in.rest.dto.ErrorResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(ApiExceptionHandler.class);
+
     @ExceptionHandler(InvitacionAuthException.class)
     @ResponseStatus(HttpStatus.BAD_GATEWAY)
-    public Map<String, Object> invitacionFallida(InvitacionAuthException exception) {
-        Map<String, Object> response = new java.util.LinkedHashMap<>();
-        response.put("error", exception.getMessage());
-        if (exception.getStatusCode() != null) {
-            response.put("status", exception.getStatusCode());
-        }
-        if (exception.getDetalle() != null) {
-            response.put("detalle", exception.getDetalle());
-        }
-        return response;
+    public ErrorResponse invitacionFallida(InvitacionAuthException exception) {
+        return ErrorResponse.of(exception.getMessage(), exception.getStatusCode());
     }
 
     @ExceptionHandler(AccesoDenegadoException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
-    public Map<String, String> accesoDenegado(AccesoDenegadoException exception) {
-        return Map.of("error", exception.getMessage());
+    public ErrorResponse accesoDenegado(AccesoDenegadoException exception) {
+        return ErrorResponse.of(exception.getMessage());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ErrorResponse accesoDenegadoSpring(AccessDeniedException exception) {
+        return ErrorResponse.of("No tienes permisos suficientes para realizar esta acción.");
     }
 
     @ExceptionHandler(UsuarioDuplicadoException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public Map<String, String> usuarioDuplicado(UsuarioDuplicadoException exception) {
-        return Map.of("error", exception.getMessage());
+    public ErrorResponse usuarioDuplicado(UsuarioDuplicadoException exception) {
+        return ErrorResponse.of(exception.getMessage());
     }
 
     @ExceptionHandler(ProductoDuplicadoException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public Map<String, String> productoDuplicado(ProductoDuplicadoException exception) {
-        return Map.of("error", exception.getMessage());
+    public ErrorResponse productoDuplicado(ProductoDuplicadoException exception) {
+        return ErrorResponse.of(exception.getMessage());
     }
 
     @ExceptionHandler(RecursoNoEncontradoException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public Map<String, String> recursoNoEncontrado(RecursoNoEncontradoException exception) {
-        return Map.of("error", exception.getMessage());
+    public ErrorResponse recursoNoEncontrado(RecursoNoEncontradoException exception) {
+        return ErrorResponse.of(exception.getMessage());
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ErrorResponse> responseStatus(ResponseStatusException exception) {
+        String mensaje = exception.getReason() != null ? exception.getReason() : "El recurso solicitado no fue encontrado.";
+        return ResponseEntity.status(exception.getStatusCode()).body(ErrorResponse.of(mensaje));
     }
 
     @ExceptionHandler(StockInsuficienteException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> stockInsuficiente(StockInsuficienteException exception) {
-        return Map.of("error", exception.getMessage());
+    public ErrorResponse stockInsuficiente(StockInsuficienteException exception) {
+        return ErrorResponse.of(exception.getMessage());
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
+    @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> solicitudInvalida(IllegalArgumentException exception) {
-        return Map.of("error", exception.getMessage());
+    public ErrorResponse solicitudInvalida(RuntimeException exception) {
+        return ErrorResponse.of(exception.getMessage());
     }
 
-    @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
+    @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> validacionFallida(org.springframework.web.bind.MethodArgumentNotValidException exception) {
+    public ErrorResponse validacionFallida(MethodArgumentNotValidException exception) {
         String mensaje = exception.getBindingResult().getFieldErrors().stream()
-                .map(org.springframework.validation.FieldError::getDefaultMessage)
-                .filter(java.util.Objects::nonNull)
+                .map(FieldError::getDefaultMessage)
+                .filter(Objects::nonNull)
                 .findFirst()
-                .orElse("Formato de solicitud o valor no válido.");
-        return Map.of("error", mensaje);
+                .orElse("Los datos enviados contienen campos inválidos o incompletos.");
+        return ErrorResponse.of(mensaje);
     }
 
-    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    @ExceptionHandler(HttpMessageNotReadableException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> mensajeNoLegible(org.springframework.http.converter.HttpMessageNotReadableException exception) {
-        return Map.of("error", "Formato de solicitud o valor no válido.");
+    public ErrorResponse mensajeNoLegible(HttpMessageNotReadableException exception) {
+        return ErrorResponse.of("El cuerpo de la solicitud no tiene un formato JSON válido.");
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
+    public ErrorResponse metodoNoPermitido(HttpRequestMethodNotSupportedException exception) {
+        return ErrorResponse.of("El método HTTP utilizado no está permitido para esta ruta.");
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    @ResponseStatus(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+    public ErrorResponse medioNoSoportado(HttpMediaTypeNotSupportedException exception) {
+        return ErrorResponse.of("El tipo de contenido (Content-Type) no es compatible. Use application/json.");
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse rutaNoEncontrada(NoResourceFoundException exception) {
+        return ErrorResponse.of("La ruta solicitada no existe en el servidor.");
+    }
+
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse errorInesperado(Exception exception) {
+        log.error("Error no controlado en el servidor: ", exception);
+        return ErrorResponse.of("Ocurrió un error interno en el servidor. Por favor intente más tarde.");
     }
 }
