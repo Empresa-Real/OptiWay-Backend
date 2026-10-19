@@ -29,6 +29,7 @@ public class SecurityConfig {
                 // por lo que no es vulnerable a ataques CSRF tradicionales de navegador.
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/graph.html").authenticated()
                         .requestMatchers(
                                 "/",
                                 "/*.html",
