@@ -80,13 +80,8 @@ public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase,
     }
 
     @Override
-    public Tienda asignarEncargado(Long tiendaId, Long encargadoId) {
-        return asignarEncargado(tiendaId, encargadoId, null);
-    }
-
-    @Override
     public Tienda asignarEncargado(Long tiendaId, Long encargadoId, UUID authUserId) {
-        authorizationService.requireAdministradorIfPresent(authUserId, "asignar encargados a tiendas");
+        authorizationService.requireAdministrador(authUserId, "asignar encargados a tiendas");
 
         Tienda tienda = tiendaRepositoryPort.obtenerPorId(tiendaId)
                 .orElseThrow(() -> new IllegalArgumentException("La tienda no existe."));

@@ -78,13 +78,8 @@ public class CentroDistribucionService implements CrearCentroDistribucionUseCase
     }
 
     @Override
-    public CentroDistribucion asignarEncargado(Long centroId, Long encargadoId) {
-        return asignarEncargado(centroId, encargadoId, null);
-    }
-
-    @Override
     public CentroDistribucion asignarEncargado(Long centroId, Long encargadoId, UUID authUserId) {
-        authorizationService.requireAdministradorIfPresent(authUserId, "asignar encargados a Centros de Distribución");
+        authorizationService.requireAdministrador(authUserId, "asignar encargados a Centros de Distribución");
 
         CentroDistribucion centro = centroDistribucionRepositoryPort.obtenerPorId(centroId)
                 .orElseThrow(() -> new IllegalArgumentException("El centro de distribución no existe."));
