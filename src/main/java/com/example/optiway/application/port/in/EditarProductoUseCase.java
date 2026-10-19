@@ -5,5 +5,5 @@ import com.example.optiway.domain.model.Producto;
 import java.util.UUID;
 
 public interface EditarProductoUseCase {
-    Producto editarProducto(UUID authUserId, Long id, Producto cambios);
+    Producto editarProducto(UUID authUserId, EditarProductoCommand command);
 }

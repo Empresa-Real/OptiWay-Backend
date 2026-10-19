@@ -4,5 +4,5 @@ import com.example.optiway.domain.model.Producto;
 import java.util.UUID;
 
 public interface CrearProductoUseCase {
-    Producto crearProducto(UUID authUserId, Producto producto);
+    Producto crearProducto(UUID authUserId, CrearProductoCommand command);
 }

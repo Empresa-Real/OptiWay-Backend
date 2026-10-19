@@ -1,14 +1,31 @@
 package com.example.optiway.infrastructure.adapter.in.rest.dto;
 
-import com.example.optiway.domain.model.Producto;
+import com.example.optiway.application.port.in.CrearProductoCommand;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 
+@Schema(description = "Petición para registrar un nuevo producto en el catálogo")
 public class CrearProductoRequest {
 
+    @NotBlank(message = "El identificador es obligatorio")
+    @Schema(description = "Código o identificador único comercial del producto", example = "PROD-001")
     private String identificador;
+
+    @NotBlank(message = "El nombre es obligatorio")
+    @Schema(description = "Nombre comercial del producto", example = "Arroz Diana 1kg")
     private String nombre;
+
+    @NotBlank(message = "La categoría es obligatoria")
+    @Schema(description = "Categoría o clasificación del producto", example = "Granos")
     private String categoria;
+
+    @DecimalMin(value = "0.0", inclusive = true, message = "El precio no puede ser negativo")
+    @Schema(description = "Precio unitario de venta", example = "4500.00")
     private BigDecimal precio;
+
+    @Schema(description = "Unidad de medida (ej: KG, UNIDAD, LITRO)", example = "KG")
     private String unidadMedida;
 
     public CrearProductoRequest() {}
@@ -62,13 +79,7 @@ public class CrearProductoRequest {
         this.unidadMedida = unidadMedida;
     }
 
-    public Producto toDomain() {
-        Producto producto = new Producto();
-        producto.setIdentificador(this.identificador);
-        producto.setNombre(this.nombre);
-        producto.setCategoria(this.categoria);
-        producto.setPrecio(this.precio);
-        producto.setUnidadMedida(this.unidadMedida);
-        return producto;
+    public CrearProductoCommand toCommand() {
+        return new CrearProductoCommand(this.identificador, this.nombre, this.categoria, this.precio, this.unidadMedida);
     }
 }

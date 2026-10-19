@@ -7,7 +7,6 @@ import com.example.optiway.application.port.in.ObtenerProductosUseCase;
 import com.example.optiway.application.port.in.VerificarStockProductoUseCase;
 import com.example.optiway.application.port.in.dto.ProductoResponse;
 import com.example.optiway.application.port.in.dto.ProductoStockResponse;
-import com.example.optiway.domain.model.Producto;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.CambiarEstadoProductoRequest;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.CrearProductoRequest;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.EditarProductoRequest;
@@ -55,8 +54,7 @@ public class ProductoController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Crear nuevo producto", description = "Registra un producto en el catálogo. Requiere rol ADMINISTRADOR.")
     public ProductoResponse crearProducto(@Valid @RequestBody CrearProductoRequest request, @AuthUserId UUID authUserId) {
-        Producto producto = crearProductoUseCase.crearProducto(authUserId, request.toDomain());
-        return ProductoResponse.from(producto);
+        return ProductoResponse.from(crearProductoUseCase.crearProducto(authUserId, request.toCommand()));
     }
 
     @GetMapping
@@ -72,17 +70,15 @@ public class ProductoController {
     public ProductoResponse editarProducto(@PathVariable Long id,
                                            @Valid @RequestBody EditarProductoRequest request,
                                            @AuthUserId UUID authUserId) {
-        Producto producto = editarProductoUseCase.editarProducto(authUserId, id, request.toDomain());
-        return ProductoResponse.from(producto);
+        return ProductoResponse.from(editarProductoUseCase.editarProducto(authUserId, request.toCommand(id)));
     }
 
     @PatchMapping("/{id}/estado")
     @Operation(summary = "Cambiar estado de producto", description = "Activa o desactiva un producto en el catálogo. Requiere rol ADMINISTRADOR.")
     public ProductoResponse cambiarEstado(@PathVariable Long id,
-                                          @Valid @RequestBody CambiarEstadoProductoRequest request,
-                                          @AuthUserId UUID authUserId) {
-        Producto producto = cambiarEstadoProductoUseCase.cambiarEstadoProducto(authUserId, id, request.activo());
-        return ProductoResponse.from(producto);
+                                           @Valid @RequestBody CambiarEstadoProductoRequest request,
+                                           @AuthUserId UUID authUserId) {
+        return ProductoResponse.from(cambiarEstadoProductoUseCase.cambiarEstadoProducto(authUserId, id, request.activo()));
     }
 
     @GetMapping("/{id}/tiene-stock")
