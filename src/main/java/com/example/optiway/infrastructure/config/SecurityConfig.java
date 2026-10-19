@@ -29,16 +29,22 @@ public class SecurityConfig {
                 // por lo que no es vulnerable a ataques CSRF tradicionales de navegador.
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/graph.html").authenticated()
                         .requestMatchers(
                                 "/",
                                 "/*.html",
                                 "/*.js",
+                                "/*.css",
+                                "/*.webp",
+                                "/*.png",
+                                "/*.svg",
+                                "/*.ico",
                                 "/web/**",
                                 "/actuator/**",
+                                "/v3/api-docs",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
-                                "/swagger-ui.html"
+                                "/swagger-ui.html",
+                                "/swagger-ui/index.html"
                         )
                         .permitAll()
                         .anyRequest()

@@ -22,9 +22,9 @@ USER appuser
 # Copiar únicamente el archivo JAR generado
 COPY --from=builder /app/target/*.jar app.jar
 
-# Configurar puerto dinámico, desactivar Swagger en Docker y límite de RAM (256MB) para Render Free Tier (512MB)
+# Configurar puerto dinámico, habilitar Swagger en Docker y límite de RAM (256MB) para Render Free Tier (512MB)
 ENV PORT=8080
-ENV SWAGGER_ENABLED=false
+ENV SWAGGER_ENABLED=true
 EXPOSE 8080
 
 ENTRYPOINT ["java", "-XX:+UseSerialGC", "-Xmx256m", "-Xss512k", "-XX:MaxMetaspaceSize=128m", "-jar", "app.jar"]

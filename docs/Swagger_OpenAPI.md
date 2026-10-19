@@ -104,17 +104,18 @@ Los controladores de OptiWay reciben la identidad del usuario mediante el parám
 
 ## 5. Control de Entornos y Seguridad en Producción
 
-Por razones de seguridad y uso eficiente de memoria en el entorno de despliegue (Render Free Tier con 512 MB de RAM):
-
-1. **Desactivado en Docker / Producción**:
-   En [`Dockerfile`](file:///c:/Users/Fixer/Desktop/Git%20Kraken/OptiWay-Backend/Dockerfile#L28):
+1. **Habilitado en Docker / Despliegue**:
+   En [`Dockerfile`](file:///c:/Users/Fixer/Desktop/Git%20Kraken/OptiWay-Backend/Dockerfile#L27):
    ```dockerfile
-   ENV SWAGGER_ENABLED=false
+   ENV SWAGGER_ENABLED=true
    ```
-   Esto apaga los endpoints de Swagger y Swagger UI en el contenedor de producción, impidiendo la exposición de documentación interna y ahorrando memoria de la JVM.
+   Permite explorar y probar la API directamente en el despliegue de Render (`https://optiway-backend.onrender.com/swagger-ui.html`). Si en algún momento se desea desactivar en producción sin reconstruir la imagen, basta con asignar la variable de entorno `SWAGGER_ENABLED=false` en el panel de Render.
 
 2. **Propiedades configurables en [`application.properties`](file:///c:/Users/Fixer/Desktop/Git%20Kraken/OptiWay-Backend/src/main/resources/application.properties)**:
    ```properties
+   # Soporte para proxy inverso HTTPS (Render, Cloudflare)
+   server.forward-headers-strategy=framework
+
    springdoc.api-docs.enabled=${SWAGGER_ENABLED:true}
    springdoc.swagger-ui.enabled=${SWAGGER_ENABLED:true}
    springdoc.swagger-ui.path=/swagger-ui.html
