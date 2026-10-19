@@ -5,14 +5,17 @@ import com.example.optiway.application.port.in.CrearProductoUseCase;
 import com.example.optiway.application.port.in.EditarProductoUseCase;
 import com.example.optiway.application.port.in.ObtenerProductosUseCase;
 import com.example.optiway.application.port.in.VerificarStockProductoUseCase;
+import com.example.optiway.application.port.in.dto.ProductoResponse;
+import com.example.optiway.application.port.in.dto.ProductoStockResponse;
 import com.example.optiway.domain.model.Producto;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.CambiarEstadoProductoRequest;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.CrearProductoRequest;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.EditarProductoRequest;
-import com.example.optiway.infrastructure.adapter.in.rest.dto.ProductoStockResponse;
 import com.example.optiway.infrastructure.security.AuthUserId;
-import org.springframework.http.HttpStatus;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,6 +30,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/productos")
+@Tag(name = "Productos", description = "Endpoints para creación, edición, consulta y cambio de estado de productos en el catálogo")
 public class ProductoController {
 
     private final CrearProductoUseCase crearProductoUseCase;
@@ -49,33 +53,40 @@ public class ProductoController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Producto crearProducto(@Valid @RequestBody CrearProductoRequest request, @AuthUserId UUID authUserId) {
-        return crearProductoUseCase.crearProducto(request.toDomain(), authUserId);
+    @Operation(summary = "Crear nuevo producto", description = "Registra un producto en el catálogo. Requiere rol ADMINISTRADOR.")
+    public ProductoResponse crearProducto(@Valid @RequestBody CrearProductoRequest request, @AuthUserId UUID authUserId) {
+        Producto producto = crearProductoUseCase.crearProducto(authUserId, request.toDomain());
+        return ProductoResponse.from(producto);
     }
 
     @GetMapping
-    public List<Producto> obtenerProductos() {
-        return obtenerProductosUseCase.obtenerProductos();
+    @Operation(summary = "Listar catálogo de productos", description = "Retorna todos los productos registrados en el sistema.")
+    public List<ProductoResponse> obtenerProductos() {
+        return obtenerProductosUseCase.obtenerProductos().stream()
+                .map(ProductoResponse::from)
+                .toList();
     }
 
     @PatchMapping("/{id}")
-    public Producto editarProducto(@PathVariable Long id,
-                                   @Valid @RequestBody EditarProductoRequest request,
-                                   @AuthUserId UUID authUserId) {
-        return editarProductoUseCase.editarProducto(id, request.toDomain(), authUserId);
+    @Operation(summary = "Editar producto existente", description = "Modifica los atributos comerciales de un producto. Requiere rol ADMINISTRADOR.")
+    public ProductoResponse editarProducto(@PathVariable Long id,
+                                           @Valid @RequestBody EditarProductoRequest request,
+                                           @AuthUserId UUID authUserId) {
+        Producto producto = editarProductoUseCase.editarProducto(authUserId, id, request.toDomain());
+        return ProductoResponse.from(producto);
     }
 
     @PatchMapping("/{id}/estado")
-    public Producto cambiarEstado(@PathVariable Long id,
-                                  @Valid @RequestBody CambiarEstadoProductoRequest request,
-                                  @AuthUserId UUID authUserId) {
-        if (request == null || request.activo() == null) {
-            throw new IllegalArgumentException("Debe indicar si el producto estará activo o inactivo");
-        }
-        return cambiarEstadoProductoUseCase.cambiarEstadoProducto(authUserId, id, request.activo());
+    @Operation(summary = "Cambiar estado de producto", description = "Activa o desactiva un producto en el catálogo. Requiere rol ADMINISTRADOR.")
+    public ProductoResponse cambiarEstado(@PathVariable Long id,
+                                          @Valid @RequestBody CambiarEstadoProductoRequest request,
+                                          @AuthUserId UUID authUserId) {
+        Producto producto = cambiarEstadoProductoUseCase.cambiarEstadoProducto(authUserId, id, request.activo());
+        return ProductoResponse.from(producto);
     }
 
     @GetMapping("/{id}/tiene-stock")
+    @Operation(summary = "Verificar existencias de producto", description = "Consulta si el producto cuenta con existencias activas en alguna tienda o centro de distribución.")
     public ProductoStockResponse tieneStock(@PathVariable Long id) {
         return new ProductoStockResponse(verificarStockProductoUseCase.tieneStockActivo(id));
     }

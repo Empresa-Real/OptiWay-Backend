@@ -36,7 +36,7 @@ public class ProductoService implements CrearProductoUseCase, ObtenerProductosUs
     }
 
     @Override
-    public Producto crearProducto(Producto producto, UUID authUserId) {
+    public Producto crearProducto(UUID authUserId, Producto producto) {
         authorizationService.requireAdministrador(authUserId, "crear productos");
         if (producto == null) {
             throw new IllegalArgumentException("Los datos del producto son obligatorios.");
@@ -69,7 +69,7 @@ public class ProductoService implements CrearProductoUseCase, ObtenerProductosUs
     }
 
     @Override
-    public Producto editarProducto(Long id, Producto cambios, UUID authUserId) {
+    public Producto editarProducto(UUID authUserId, Long id, Producto cambios) {
         authorizationService.requireAdministrador(authUserId, "editar productos");
         if (id == null || id <= 0) {
             throw new IllegalArgumentException("El ID del producto no es válido.");
