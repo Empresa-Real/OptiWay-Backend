@@ -50,7 +50,9 @@ public class SecurityConfig {
                                 "/swagger",
                                 "/docs",
                                 "/graph",
-                                "/graph/"
+                                "/graph/",
+                                "/robots.txt",
+                                "/*.txt"
                         )
                         .permitAll()
                         .anyRequest()
