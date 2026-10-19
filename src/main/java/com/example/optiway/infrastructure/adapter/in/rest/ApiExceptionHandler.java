@@ -20,8 +20,16 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(InvitacionAuthException.class)
     @ResponseStatus(HttpStatus.BAD_GATEWAY)
-    public Map<String, String> invitacionFallida(InvitacionAuthException exception) {
-        return Map.of("error", exception.getMessage());
+    public Map<String, Object> invitacionFallida(InvitacionAuthException exception) {
+        Map<String, Object> response = new java.util.LinkedHashMap<>();
+        response.put("error", exception.getMessage());
+        if (exception.getStatusCode() != null) {
+            response.put("status", exception.getStatusCode());
+        }
+        if (exception.getDetalle() != null) {
+            response.put("detalle", exception.getDetalle());
+        }
+        return response;
     }
 
     @ExceptionHandler(AccesoDenegadoException.class)

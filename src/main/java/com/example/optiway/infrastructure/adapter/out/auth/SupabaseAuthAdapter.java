@@ -22,6 +22,7 @@ public class SupabaseAuthAdapter implements AuthPort {
     private final RestClient restClient;
     private final String serviceRoleKey;
     private final String inviteRedirectUrl;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
 
     public SupabaseAuthAdapter(
             @Value("${supabase.url}") String supabaseUrl,
@@ -66,10 +67,27 @@ public class SupabaseAuthAdapter implements AuthPort {
 
             String errorBody = exception.getResponseBodyAsString();
             log.error("Error al invitar usuario {} en Supabase [HTTP {}]: {}", email, exception.getStatusCode(), errorBody);
-            throw new InvitacionAuthException("Error de Supabase Auth (" + exception.getStatusCode() + "): " + errorBody);
+
+            Object detalle = parseJsonOrRaw(errorBody);
+            throw new InvitacionAuthException(
+                    "Error de respuesta en Supabase Auth",
+                    exception.getStatusCode().value(),
+                    detalle
+            );
         } catch (RuntimeException exception) {
             log.error("Error inesperado al invitar usuario en Supabase: ", exception);
             throw new InvitacionAuthException("No se pudo invitar al usuario por correo: " + exception.getMessage());
+        }
+    }
+
+    private Object parseJsonOrRaw(String errorBody) {
+        if (errorBody == null || errorBody.isBlank()) {
+            return null;
+        }
+        try {
+            return objectMapper.readValue(errorBody, Object.class);
+        } catch (Exception e) {
+            return errorBody;
         }
     }
 
