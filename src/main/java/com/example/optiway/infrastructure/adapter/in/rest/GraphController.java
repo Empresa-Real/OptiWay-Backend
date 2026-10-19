@@ -18,7 +18,7 @@ import java.io.File;
 @Tag(name = "Grafo de Arquitectura", description = "Visualización interactiva de la arquitectura del backend")
 public class GraphController {
 
-    @GetMapping(value = "/graph.html", produces = MediaType.TEXT_HTML_VALUE)
+    @GetMapping(value = {"/graph", "/graph/", "/graph.html"}, produces = MediaType.TEXT_HTML_VALUE)
     @Operation(summary = "Obtener HTML del grafo interactivo", description = "Retorna la visualización interactiva del grafo de arquitectura (acceso público).")
     public ResponseEntity<Resource> verGrafo() {
         Resource resource = new ClassPathResource("static/graph.html");
