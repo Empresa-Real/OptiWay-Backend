@@ -1,8 +1,10 @@
 package com.example.optiway.infrastructure.adapter.in.rest;
 
 import com.example.optiway.application.port.in.ConsultarInventarioUseCase;
-import com.example.optiway.domain.model.Inventario;
+import com.example.optiway.application.port.in.dto.InventarioResponse;
 import com.example.optiway.infrastructure.security.AuthUserId;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -13,6 +15,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/inventario")
+@Tag(name = "Inventario", description = "Endpoints para consulta y gestión de inventario en tiendas y centros de distribución")
 public class InventarioController {
 
     private final ConsultarInventarioUseCase consultarInventarioUseCase;
@@ -24,7 +27,8 @@ public class InventarioController {
     }
 
     @GetMapping
-    public List<Inventario> consultarInventario(
+    @Operation(summary = "Consultar inventario de tienda", description = "Obtiene los productos en inventario de una tienda específica, enriquecidos con datos del producto y filtros opcionales de nombre, categoría y productoId")
+    public List<InventarioResponse> consultarInventario(
             @AuthUserId UUID authUserId,
             @RequestParam Long tiendaId,
             @RequestParam(required = false) String nombre,
@@ -41,7 +45,8 @@ public class InventarioController {
     }
 
     @GetMapping("/centro-distribucion")
-    public List<Inventario> consultarInventarioCD(
+    @Operation(summary = "Consultar inventario de centro de distribución", description = "Obtiene los productos en inventario de un centro de distribución específico, enriquecidos con datos del producto y filtros opcionales de nombre, categoría y productoId")
+    public List<InventarioResponse> consultarInventarioCD(
             @AuthUserId UUID authUserId,
             @RequestParam Long centroDistribucionId,
             @RequestParam(required = false) String nombre,

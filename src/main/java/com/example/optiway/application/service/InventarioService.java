@@ -1,6 +1,7 @@
 package com.example.optiway.application.service;
 
 import com.example.optiway.application.port.in.ConsultarInventarioUseCase;
+import com.example.optiway.application.port.in.dto.InventarioResponse;
 import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
 import com.example.optiway.application.port.out.InventarioRepositoryPort;
 import com.example.optiway.application.port.out.ProductoRepositoryPort;
@@ -15,7 +16,6 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -43,7 +43,7 @@ public class InventarioService implements ConsultarInventarioUseCase {
     }
 
     @Override
-    public List<Inventario> consultarInventario(
+    public List<InventarioResponse> consultarInventario(
             UUID authUserId,
             Long tiendaId,
             Long centroDistribucionId,
@@ -65,7 +65,7 @@ public class InventarioService implements ConsultarInventarioUseCase {
 
         return inventarios.stream()
                 .filter(i -> coincideFiltros(productosMap.get(i.getProductoId()), nombreFiltro, catFiltro))
-                .map(i -> i.enriquecerConProducto(productosMap.get(i.getProductoId())))
+                .map(i -> InventarioResponse.from(i, productosMap.get(i.getProductoId())))
                 .toList();
     }
 

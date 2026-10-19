@@ -9,10 +9,6 @@ public class Inventario {
     private Integer cantidadActual;
     private Integer stockMinimo;
 
-    private String nombreProducto;
-    private String categoriaProducto;
-    private boolean stockBajo;
-
     public Inventario() {}
 
     public Inventario(Long id, Long tiendaId, Long centroDistribucionId, Long productoId, Integer cantidadActual, Integer stockMinimo) {
@@ -39,95 +35,40 @@ public class Inventario {
         }
     }
 
-    public Long getId() {return id;}
-    public void setId(Long id) {this.id = id;}
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public Long getTiendaId() {return tiendaId;}
-    public void setTiendaId(Long tiendaId) {this.tiendaId = tiendaId;}
+    public Long getTiendaId() { return tiendaId; }
+    public void setTiendaId(Long tiendaId) { this.tiendaId = tiendaId; }
 
-    public Long getCentroDistribucionId() {
-        return centroDistribucionId;
-    }
+    public Long getCentroDistribucionId() { return centroDistribucionId; }
+    public void setCentroDistribucionId(Long centroDistribucionId) { this.centroDistribucionId = centroDistribucionId; }
 
-    public void setCentroDistribucionId(Long centroDistribucionId) {
-        this.centroDistribucionId = centroDistribucionId;
-    }
+    public Long getProductoId() { return productoId; }
+    public void setProductoId(Long productoId) { this.productoId = productoId; }
 
-    public Long getProductoId() {
-        return productoId;
-    }
+    public Integer getCantidadActual() { return cantidadActual; }
+    public void setCantidadActual(Integer cantidadActual) { this.cantidadActual = cantidadActual; }
 
-    public void setProductoId(Long productoId) {
-        this.productoId = productoId;
-    }
-
-    public Integer getCantidadActual() {
-        return cantidadActual;
-    }
-
-    public void setCantidadActual(Integer cantidadActual) {
-        this.cantidadActual = cantidadActual;
-    }
-
-    public Integer getStockMinimo() {
-        return stockMinimo;
-    }
-
-    public void setStockMinimo(Integer stockMinimo) {
-        this.stockMinimo = stockMinimo;
-    }
-
-    public String getNombreProducto() {
-        return nombreProducto;
-    }
-
-    public void setNombreProducto(String nombreProducto) {
-        this.nombreProducto = nombreProducto;
-    }
-
-    public String getCategoriaProducto() {
-        return categoriaProducto;
-    }
-
-    public void setCategoriaProducto(String categoriaProducto) {
-        this.categoriaProducto = categoriaProducto;
-    }
-
-    public boolean isStockBajo() {
-        return stockBajo;
-    }
-
-    public void setStockBajo(boolean stockBajo) {
-        this.stockBajo = stockBajo;
-    }
+    public Integer getStockMinimo() { return stockMinimo; }
+    public void setStockMinimo(Integer stockMinimo) { this.stockMinimo = stockMinimo; }
 
     /**
      * Calcula si el nivel de existencias actual está por debajo del umbral mínimo requerido.
+     * Si no hay stock mínimo definido, retorna false. Si la cantidad actual es null, se considera 0.
      *
      * @return true si la cantidad actual es menor que el stock mínimo configurado
      */
     public boolean calcularStockBajo() {
-        return this.cantidadActual != null && this.stockMinimo != null && this.cantidadActual < this.stockMinimo;
-    }
-
-    /**
-     * Enriquece el registro de inventario con los atributos del producto asociado
-     * y recalcula automáticamente el estado de stock bajo.
-     *
-     * @param producto producto del catálogo asociado a este inventario
-     * @return esta misma instancia para encadenamiento fluido
-     */
-    public Inventario enriquecerConProducto(Producto producto) {
-        if (producto != null) {
-            this.nombreProducto = producto.getNombre();
-            this.categoriaProducto = producto.getCategoria();
+        if (this.stockMinimo == null) {
+            return false;
         }
-        this.stockBajo = calcularStockBajo();
-        return this;
+        int actual = this.cantidadActual != null ? this.cantidadActual : 0;
+        return actual < this.stockMinimo;
     }
 
     /**
-     * Incrementa la cantidad de existencias en el inventario y actualiza el estado de stock bajo.
+     * Incrementa la cantidad de existencias en el inventario.
      *
      * @param cantidad cantidad a ingresar (debe ser mayor que cero)
      */
@@ -137,7 +78,6 @@ public class Inventario {
         }
         int actual = this.cantidadActual != null ? this.cantidadActual : 0;
         this.cantidadActual = actual + cantidad;
-        this.stockBajo = calcularStockBajo();
     }
 
     /**
@@ -153,7 +93,6 @@ public class Inventario {
 
     /**
      * Descuenta existencias del inventario tras validar que la cantidad sea positiva.
-     * Actualiza automáticamente el estado de stock bajo.
      *
      * @param cantidad cantidad a descontar (debe ser mayor que cero)
      */
@@ -166,6 +105,5 @@ public class Inventario {
             throw new IllegalStateException("Stock insuficiente para realizar el descuento: disponible " + actual + ", solicitado " + cantidad);
         }
         this.cantidadActual = actual - cantidad;
-        this.stockBajo = calcularStockBajo();
     }
 }

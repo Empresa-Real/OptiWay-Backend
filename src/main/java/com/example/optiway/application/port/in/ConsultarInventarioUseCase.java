@@ -1,6 +1,6 @@
 package com.example.optiway.application.port.in;
 
-import com.example.optiway.domain.model.Inventario;
+import com.example.optiway.application.port.in.dto.InventarioResponse;
 
 import java.util.List;
 import java.util.UUID;
@@ -17,9 +17,9 @@ public interface ConsultarInventarioUseCase {
      * @param nombre               filtro opcional por nombre de producto
      * @param categoria            filtro opcional por categoría de producto
      * @param productoId           filtro opcional por ID de producto
-     * @return lista de inventarios que coinciden con los filtros
+     * @return lista de respuestas de inventario enriquecidas con datos del producto
      */
-    List<Inventario> consultarInventario(
+    List<InventarioResponse> consultarInventario(
             UUID authUserId,
             Long tiendaId,
             Long centroDistribucionId,

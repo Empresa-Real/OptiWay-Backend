@@ -26,6 +26,7 @@ import com.example.optiway.application.port.out.TiendaRepositoryPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.application.service.AccesoDenegadoException;
 import com.example.optiway.application.service.InventarioService;
+import com.example.optiway.application.port.in.dto.InventarioResponse;
 import com.example.optiway.domain.model.CentroDistribucion;
 import com.example.optiway.domain.model.Inventario;
 import com.example.optiway.domain.model.Producto;
@@ -88,15 +89,15 @@ class InventarioServiceTest {
         when(inventarioRepositoryPort.findByTiendaId(tiendaId)).thenReturn(List.of(inv1));
         when(productoRepositoryPort.findAllById(List.of(1L))).thenReturn(List.of(prod1));
 
-        List<Inventario> resultado = inventarioService.consultarInventario(
+        List<InventarioResponse> resultado = inventarioService.consultarInventario(
                 authUserId, tiendaId, null, null, null, null);
 
         assertNotNull(resultado);
         assertEquals(1, resultado.size());
-        Inventario item = resultado.get(0);
-        assertEquals("Arroz Diana 1kg", item.getNombreProducto());
-        assertEquals("Granos", item.getCategoriaProducto());
-        assertTrue(item.isStockBajo(), "El stock bajo debe ser true cuando cantidadActual <= stockMinimo");
+        InventarioResponse item = resultado.get(0);
+        assertEquals("Arroz Diana 1kg", item.nombreProducto());
+        assertEquals("Granos", item.categoriaProducto());
+        assertTrue(item.stockBajo(), "El stock bajo debe ser true cuando cantidadActual <= stockMinimo");
     }
 
     @Test
@@ -129,12 +130,12 @@ class InventarioServiceTest {
         when(inventarioRepositoryPort.findByTiendaId(tiendaId)).thenReturn(List.of(inv1, inv2));
         when(productoRepositoryPort.findAllById(List.of(1L, 2L))).thenReturn(List.of(prod1, prod2));
 
-        List<Inventario> resultado = inventarioService.consultarInventario(
+        List<InventarioResponse> resultado = inventarioService.consultarInventario(
                 authUserId, tiendaId, null, "arroz", "Granos", null);
 
         assertEquals(1, resultado.size());
-        assertEquals("Arroz Diana", resultado.get(0).getNombreProducto());
-        assertFalse(resultado.get(0).isStockBajo());
+        assertEquals("Arroz Diana", resultado.get(0).nombreProducto());
+        assertFalse(resultado.get(0).stockBajo());
     }
 
     @Test
@@ -160,7 +161,7 @@ class InventarioServiceTest {
         when(inventarioRepositoryPort.findByTiendaIdAndProductoId(tiendaId, productoId)).thenReturn(Optional.of(inv1));
         when(productoRepositoryPort.findAllById(List.of(productoId))).thenReturn(List.of(prod1));
 
-        List<Inventario> resultado = inventarioService.consultarInventario(
+        List<InventarioResponse> resultado = inventarioService.consultarInventario(
                 authUserId, tiendaId, null, null, null, productoId);
 
         assertEquals(1, resultado.size());
@@ -224,13 +225,13 @@ class InventarioServiceTest {
         when(inventarioRepositoryPort.findByCentroDistribucionId(cdId)).thenReturn(List.of(invCD));
         when(productoRepositoryPort.findAllById(List.of(3L))).thenReturn(List.of(prod3));
 
-        List<Inventario> resultado = inventarioService.consultarInventario(
+        List<InventarioResponse> resultado = inventarioService.consultarInventario(
                 authUserId, null, cdId, null, null, null);
 
         assertNotNull(resultado);
         assertEquals(1, resultado.size());
-        assertEquals("Azúcar 1kg", resultado.get(0).getNombreProducto());
-        assertEquals(cdId, resultado.get(0).getCentroDistribucionId());
+        assertEquals("Azúcar 1kg", resultado.get(0).nombreProducto());
+        assertEquals(cdId, resultado.get(0).centroDistribucionId());
     }
 
     @Test
@@ -259,7 +260,7 @@ class InventarioServiceTest {
         when(usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)).thenReturn(Optional.of(usuario));
         when(inventarioRepositoryPort.findByTiendaId(tiendaId)).thenReturn(List.of());
 
-        List<Inventario> resultado = inventarioService.consultarInventario(
+        List<InventarioResponse> resultado = inventarioService.consultarInventario(
                 authUserId, tiendaId, null, null, null, null);
 
         assertTrue(resultado.isEmpty());
