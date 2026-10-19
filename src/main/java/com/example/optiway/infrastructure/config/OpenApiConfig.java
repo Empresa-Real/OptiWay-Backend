@@ -12,13 +12,23 @@ import org.springdoc.core.utils.SpringDocUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 @ConditionalOnProperty(name = "springdoc.swagger-ui.enabled", havingValue = "true", matchIfMissing = true)
-public class OpenApiConfig {
+public class OpenApiConfig implements WebMvcConfigurer {
 
     static {
         SpringDocUtils.getConfig().addAnnotationsToIgnore(AuthUserId.class);
+    }
+
+    @Override
+    public void addViewControllers(ViewControllerRegistry registry) {
+        registry.addRedirectViewController("/swagger-ui", "/swagger-ui/index.html");
+        registry.addRedirectViewController("/swagger-ui/", "/swagger-ui/index.html");
+        registry.addRedirectViewController("/swagger", "/swagger-ui/index.html");
+        registry.addRedirectViewController("/docs", "/swagger-ui/index.html");
     }
 
     private static final String SECURITY_SCHEME_NAME = "bearerAuth";

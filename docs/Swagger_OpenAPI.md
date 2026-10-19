@@ -37,8 +37,10 @@ Cuando el backend se ejecuta localmente (`./mvnw spring-boot:run` en el puerto `
 
 | Recurso | URL | Descripción |
 | :--- | :--- | :--- |
-| **Swagger UI (Interfaz Web)** | `http://localhost:8080/swagger-ui.html` | Interfaz gráfica interactiva para explorar y ejecutar peticiones. |
+| **Swagger UI (Atajo Directo)** | `http://localhost:8080/swagger-ui` o `/swagger` | Redirige automáticamente a la interfaz web de Swagger UI. |
+| **Swagger UI (Estándar)** | `http://localhost:8080/swagger-ui.html` | Ruta web estándar de Swagger UI. |
 | **OpenAPI Docs (JSON)** | `http://localhost:8080/v3/api-docs` | Especificación completa en formato JSON para herramientas cliente o generación de SDKs. |
+| **Grafo de Arquitectura** | `http://localhost:8080/graph.html` | Visualización interactiva pública de dependencias y arquitectura hexagonal. |
 
 ---
 
