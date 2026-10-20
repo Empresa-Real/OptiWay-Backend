@@ -210,7 +210,7 @@ Después de implementar la funcionalidad:
 1. Agregar pruebas del servicio y del controlador.
 2. Compilar con `./mvnw test` o `mvnw.cmd test` en Windows.
 3. Probar el endpoint desde Postman.
-4. Actualizar `CHANGELOG.md` con la fecha y el cambio.
+4. Actualizar `CHANGELOG.md` con el cambio relevante (resumen temático, no diario).
 
 La regla práctica es: el controlador recibe la petición, el servicio decide, el puerto define el contrato y el adaptador se conecta con el sistema externo.
 

@@ -101,6 +101,32 @@ Son justo los servicios que ejecutan reglas de negocio (código único de tienda
 
 ---
 
+## 4. `codigo` de negocio en Tienda y CD: campo decorativo que no se usa
+
+**Estado:** ⚠️ Abierto · **Impacto:** Modelo de datos + contrato de API · **Esfuerzo:** Bajo-medio
+
+### Estado actual
+
+`Tienda` y `CentroDistribucion` tienen un campo `String codigo` **además del `id` numérico** (que es la clave primaria real):
+
+- Se **genera en el servicio** al crear: `TiendaService` → `"TND-" + UUID…substring(0,8)`; `CentroDistribucionService` → `"CD-" + UUID…`.
+- Viaja en las respuestas (`TiendaResponse.codigo`, `CentroDistribucionResponse.codigo`) y en las columnas `codigo` de las tablas `tiendas` / `centros_distribucion` (creadas por `ddl-auto=update`).
+- Aparece en 5 vistas web (`tiendas.html`, `centros-distribucion.html`, `admin.html`, `ingreso-mercancia.html`, `inventario.html`) y en `docs/dto/`.
+
+### El problema
+
+**Nadie lo consume.** No existe ningún endpoint ni consulta que busque por `codigo`; los `existsByCodigo(...)` de `TiendaRepositoryPort` y `CentroDistribucionJpaRepository` **no son invocados por ningún servicio** (API muerta). Es un identificador de negocio generado, guardado y mostrado… pero jamás usado para nada — un UUID acortado con prefijo, ilegible para un humano y sin valor funcional.
+
+### Opciones
+
+- **Opción A — Eliminar `codigo` de Tienda y CD (recomendada):** la PK numérica pasa a ser el único identificador. Tocaría: dominio (`Tienda`, `CentroDistribucion`), servicios (borrar las 2 líneas de generación), adapters y entidades JPA (quitar el mapeo), `*Response`, `existsByCodigo` muerto, 4 clases de test, 5 vistas web y docs. La columna en Supabase hay que borrarla a mano (`ALTER TABLE tiendas DROP COLUMN codigo;` + ídem `centros_distribucion`), porque `ddl-auto=update` **nunca elimina columnas**.
+- **Opción B — Mantener `codigo` pero darle uso real:** exponer `GET /api/tiendas?codigo=…`, validar unicidad en la creación y volverlo la referencia legible de negocio. Implica más trabajo que eliminarlo y hoy no hay requisito que lo pida.
+- **Opción C — Mantenerlo tal cual:** solo aclarar en README/docs que el identificador primario es el `id` y que `codigo` es un valor de negocio decorativo.
+
+Nota: en `Producto` el campo equivalente **sí tiene sentido** (identificador de catálogo con el que filtra el frontend y con restricción `unique`); el caso de Tienda/CD es distinto.
+
+---
+
 
 ## Cómo mantener este documento
 
