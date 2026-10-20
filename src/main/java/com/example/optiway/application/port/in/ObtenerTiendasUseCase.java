@@ -3,9 +3,8 @@ package com.example.optiway.application.port.in;
 import java.util.List;
 import java.util.UUID;
 
-import com.example.optiway.domain.model.Tienda;
+import com.example.optiway.application.port.in.dto.TiendaResponse;
 
 public interface ObtenerTiendasUseCase {
-    List<Tienda> obtenerTiendas();
-    List<Tienda> obtenerTiendas(UUID authUserId);
+    List<TiendaResponse> obtenerTiendas(UUID authUserId);
 }
