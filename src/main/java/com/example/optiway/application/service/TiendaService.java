@@ -6,8 +6,10 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 import com.example.optiway.application.port.in.AsignarEncargadoTiendaUseCase;
+import com.example.optiway.application.port.in.CrearTiendaCommand;
 import com.example.optiway.application.port.in.CrearTiendaUseCase;
 import com.example.optiway.application.port.in.ObtenerTiendasUseCase;
+import com.example.optiway.application.port.in.dto.TiendaResponse;
 import com.example.optiway.application.port.out.TiendaRepositoryPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.domain.model.Tienda;
@@ -31,56 +33,51 @@ public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase,
     }
 
     @Override
-    public Tienda crearTienda(Tienda tienda) {
-        return crearTienda(tienda, null);
-    }
+    public TiendaResponse crearTienda(UUID authUserId, CrearTiendaCommand command) {
+        authorizationService.requireAdministrador(authUserId, "crear tiendas");
 
-    @Override
-    public Tienda crearTienda(Tienda tienda, UUID authUserId) {
-        authorizationService.requireAdministradorIfPresent(authUserId, "crear tiendas");
+        String nombre = command.nombre().trim();
+        String direccion = command.direccion().trim();
+        String ciudad = command.ciudad().trim();
 
-        if (tienda.getNombre() == null || tienda.getNombre().trim().isEmpty()) {
-            throw new IllegalArgumentException("El nombre de la tienda es obligatorio.");
-        }
-        if (tienda.getDireccion() == null || tienda.getDireccion().trim().isEmpty()) {
-            throw new IllegalArgumentException("La dirección es obligatoria.");
-        }
-        if (tienda.getCiudad() == null || tienda.getCiudad().trim().isEmpty()) {
-            throw new IllegalArgumentException("La ciudad es obligatoria.");
-        }
-
+        Tienda tienda = new Tienda();
+        tienda.setNombre(nombre);
+        tienda.setDireccion(direccion);
+        tienda.setCiudad(ciudad);
+        tienda.setEncargadoId(command.encargadoId());
         tienda.setCodigo("TND-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         tienda.setActivo(true);
 
-        return tiendaRepositoryPort.save(tienda);
+        return TiendaResponse.from(tiendaRepositoryPort.save(tienda));
     }
 
     @Override
-    public List<Tienda> obtenerTiendas() {
-        return tiendaRepositoryPort.findAll();
-    }
-
-    @Override
-    public List<Tienda> obtenerTiendas(UUID authUserId) {
+    public List<TiendaResponse> obtenerTiendas(UUID authUserId) {
         if (authUserId == null) {
-            return tiendaRepositoryPort.findAll();
+            return mapearRespuestas(tiendaRepositoryPort.findAll());
         }
 
         Usuario usuario = authorizationService.requireAuthenticated(authUserId);
 
         if (usuario.puedeVerTodoElCatalogoLogistico()) {
-            return tiendaRepositoryPort.findAll();
+            return mapearRespuestas(tiendaRepositoryPort.findAll());
         }
 
         if (usuario.esEncargadoTienda()) {
-            return tiendaRepositoryPort.obtenerPorEncargadoId(usuario.getId());
+            return mapearRespuestas(tiendaRepositoryPort.obtenerPorEncargadoId(usuario.getId()));
         }
 
         return List.of();
     }
 
+    private List<TiendaResponse> mapearRespuestas(List<Tienda> tiendas) {
+        return tiendas.stream()
+                .map(TiendaResponse::from)
+                .toList();
+    }
+
     @Override
-    public Tienda asignarEncargado(Long tiendaId, Long encargadoId, UUID authUserId) {
+    public TiendaResponse asignarEncargado(UUID authUserId, Long tiendaId, Long encargadoId) {
         authorizationService.requireAdministrador(authUserId, "asignar encargados a tiendas");
 
         Tienda tienda = tiendaRepositoryPort.obtenerPorId(tiendaId)
@@ -92,12 +89,12 @@ public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase,
 
             if (!encargado.esEncargadoTienda()) {
                 throw new IllegalArgumentException(
-                        "Solo se puede asignar una tienda a un usuario con rol Encargado de tienda (Rol actual: " 
-                        + encargado.getRol() + ").");
+                        "Solo se puede asignar una tienda a un usuario con rol Encargado de tienda (Rol actual: "
+                                + encargado.getRol() + ").");
             }
         }
 
         tienda.setEncargadoId(encargadoId);
-        return tiendaRepositoryPort.save(tienda);
+        return TiendaResponse.from(tiendaRepositoryPort.save(tienda));
     }
 }

@@ -6,8 +6,10 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 import com.example.optiway.application.port.in.AsignarEncargadoCDUseCase;
+import com.example.optiway.application.port.in.CrearCentroDistribucionCommand;
 import com.example.optiway.application.port.in.CrearCentroDistribucionUseCase;
-import com.example.optiway.application.port.in.ListarCentrosDistribucionUseCase;
+import com.example.optiway.application.port.in.ObtenerCentrosDistribucionUseCase;
+import com.example.optiway.application.port.in.dto.CentroDistribucionResponse;
 import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.domain.model.CentroDistribucion;
@@ -15,7 +17,7 @@ import com.example.optiway.domain.model.Usuario;
 import com.example.optiway.infrastructure.security.AuthorizationService;
 
 @Service
-public class CentroDistribucionService implements CrearCentroDistribucionUseCase, ListarCentrosDistribucionUseCase, AsignarEncargadoCDUseCase {
+public class CentroDistribucionService implements CrearCentroDistribucionUseCase, ObtenerCentrosDistribucionUseCase, AsignarEncargadoCDUseCase {
 
     private final CentroDistribucionRepositoryPort centroDistribucionRepositoryPort;
     private final UsuarioRepositoryPort usuarioRepositoryPort;
@@ -31,54 +33,58 @@ public class CentroDistribucionService implements CrearCentroDistribucionUseCase
     }
 
     @Override
-    public CentroDistribucion crearCentroDistribucion(CentroDistribucion centroDistribucion) {
-        return crearCentroDistribucion(centroDistribucion, null);
-    }
+    public CentroDistribucionResponse crearCentroDistribucion(UUID authUserId, CrearCentroDistribucionCommand command) {
+        authorizationService.requireAdministrador(authUserId, "crear Centros de Distribución");
 
-    @Override
-    public CentroDistribucion crearCentroDistribucion(CentroDistribucion centroDistribucion, UUID authUserId) {
-        authorizationService.requireAdministradorIfPresent(authUserId, "crear Centros de Distribución");
+        String nombre = command.nombre().trim();
+        String direccion = command.direccion().trim();
 
-        if (centroDistribucion.getDireccion() == null || centroDistribucion.getDireccion().trim().isEmpty()) {
-            throw new IllegalArgumentException("La dirección del centro de distribución es obligatoria.");
-        }
-
-        if (centroDistribucion.getNombre() == null || centroDistribucion.getNombre().trim().isEmpty()) {
-            throw new IllegalArgumentException("El nombre del centro de distribución es obligatorio.");
-        }
+        CentroDistribucion centro = new CentroDistribucion();
+        centro.setNombre(nombre);
+        centro.setDireccion(direccion);
+        centro.setCapacidad(command.capacidad());
+        centro.setEncargadoId(command.encargadoId());
+        centrosAbastecidos(command, centro);
 
         String codigoUnico = "CD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-        centroDistribucion.setCodigo(codigoUnico);
+        centro.setCodigo(codigoUnico);
 
-        return centroDistribucionRepositoryPort.guardar(centroDistribucion);
+        return CentroDistribucionResponse.from(centroDistribucionRepositoryPort.guardar(centro));
+    }
+
+    private void centrosAbastecidos(CrearCentroDistribucionCommand command, CentroDistribucion centro) {
+        if (command.tiendasAbastecidasIds() != null) {
+            centro.setTiendasAbastecidasIds(command.tiendasAbastecidasIds());
+        }
     }
 
     @Override
-    public List<CentroDistribucion> listarCentrosDistribucion() {
-        return centroDistribucionRepositoryPort.obtenerTodos();
-    }
-
-    @Override
-    public List<CentroDistribucion> listarCentrosDistribucion(UUID authUserId) {
+    public List<CentroDistribucionResponse> obtenerCentrosDistribucion(UUID authUserId) {
         if (authUserId == null) {
-            return centroDistribucionRepositoryPort.obtenerTodos();
+            return mapearRespuestas(centroDistribucionRepositoryPort.obtenerTodos());
         }
 
         Usuario usuario = authorizationService.requireAuthenticated(authUserId);
 
         if (usuario.puedeVerTodoElCatalogoLogistico()) {
-            return centroDistribucionRepositoryPort.obtenerTodos();
+            return mapearRespuestas(centroDistribucionRepositoryPort.obtenerTodos());
         }
 
         if (usuario.esEncargadoCD()) {
-            return centroDistribucionRepositoryPort.obtenerPorEncargadoId(usuario.getId());
+            return mapearRespuestas(centroDistribucionRepositoryPort.obtenerPorEncargadoId(usuario.getId()));
         }
 
         return List.of();
     }
 
+    private List<CentroDistribucionResponse> mapearRespuestas(List<CentroDistribucion> centros) {
+        return centros.stream()
+                .map(CentroDistribucionResponse::from)
+                .toList();
+    }
+
     @Override
-    public CentroDistribucion asignarEncargado(Long centroId, Long encargadoId, UUID authUserId) {
+    public CentroDistribucionResponse asignarEncargado(UUID authUserId, Long centroId, Long encargadoId) {
         authorizationService.requireAdministrador(authUserId, "asignar encargados a Centros de Distribución");
 
         CentroDistribucion centro = centroDistribucionRepositoryPort.obtenerPorId(centroId)
@@ -90,12 +96,12 @@ public class CentroDistribucionService implements CrearCentroDistribucionUseCase
 
             if (!encargado.esEncargadoCD()) {
                 throw new IllegalArgumentException(
-                        "Solo se puede asignar un centro de distribución a un usuario con rol Encargado de CD (Rol actual: " 
-                        + encargado.getRol() + ").");
+                        "Solo se puede asignar un centro de distribución a un usuario con rol Encargado de CD (Rol actual: "
+                                + encargado.getRol() + ").");
             }
         }
 
         centro.setEncargadoId(encargadoId);
-        return centroDistribucionRepositoryPort.guardar(centro);
+        return CentroDistribucionResponse.from(centroDistribucionRepositoryPort.guardar(centro));
     }
 }
