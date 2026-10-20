@@ -11,7 +11,7 @@
 ## Criterios de Aceptación
 
 1. **Actualización automática del inventario del CD:**
-   * Al registrar el ingreso indicando `centroDistribucionId`, `productoId`, `cantidad` y `origen`, el sistema busca el inventario actual en ese CD.
+   * Al registrar el ingreso en el centro de distribución indicado en la URL (`productoId`, `cantidad` y `origen` en el body), el sistema busca el inventario actual en ese CD.
    * Si no existía inventario previo del producto en dicho CD, crea el registro con la cantidad indicada.
    * Si ya existía inventario, suma la nueva cantidad a la existente (`cantidadActual = cantidadActual + cantidad`).
 2. **Trazabilidad y auditoría:**
@@ -30,7 +30,9 @@
 ## Especificación del Endpoint
 
 * **Método:** `POST`
-* **Ruta:** `/api/ingresos-mercancia`
+* **Ruta:** `/api/centros-distribucion/{id}/ingresos`
+* **Alias corto:** `/api/cd/{id}/ingresos` (misma operación y respuesta)
+* **Parámetro de ruta:** `id` — identificador del centro de distribución receptor (ya no viaja en el body).
 * **Headers requeridos:**
   ```http
   Authorization: Bearer <token_jwt_supabase>
@@ -40,7 +42,6 @@
 
 | Campo | Tipo | Requerido | Descripción |
 | :--- | :--- | :--- | :--- |
-| `centroDistribucionId` | `Long` | **Sí** | ID del centro de distribución receptor. |
 | `productoId` | `Long` | **Sí** | ID del producto que ingresa. |
 | `cantidad` | `Integer` | **Sí** | Cantidad de unidades a ingresar (debe ser > 0). |
 | `origen` | `String` | **Sí** | Proveedor o CD emisor (ej. "Distribuidora Nacional S.A."). |
@@ -48,13 +49,12 @@
 ### Ejemplo de petición
 
 ```http
-POST /api/ingresos-mercancia HTTP/1.1
+POST /api/centros-distribucion/1/ingresos HTTP/1.1
 Host: localhost:8080
 Authorization: Bearer eyJhbGciOi...
 Content-Type: application/json
 
 {
-  "centroDistribucionId": 1,
   "productoId": 15,
   "cantidad": 500,
   "origen": "Proveedor AgroIndustrias del Norte"
@@ -79,11 +79,11 @@ Content-Type: application/json
 
 ```text
 Cliente (Encargado de CD / Frontend)
-  ↓ [POST /api/ingresos-mercancia] + JWT Bearer
+  ↓ [POST /api/centros-distribucion/{id}/ingresos] + JWT Bearer
 SecurityFilterChain (Spring Security valida el JWT de Supabase)
   ↓
-IngresoMercanciaController (infrastructure/adapter/in/rest/)
-  ↓ authUserId (del claim sub del JWT) + RegistrarIngresoMercanciaRequest
+CentroDistribucionController (infrastructure/adapter/in/rest/)
+  ↓ authUserId (del claim sub del JWT) + id del CD (URL) + RegistrarIngresoMercanciaRequest
 RegistrarIngresoMercanciaUseCase (application/port/in/)
   ↓
 IngresoMercanciaService (application/service/ - @Transactional)

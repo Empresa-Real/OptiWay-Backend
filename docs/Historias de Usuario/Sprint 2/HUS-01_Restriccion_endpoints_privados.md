@@ -77,8 +77,8 @@ Solicitud HTTP
 | **Gestión Catálogo Productos** | `POST/PATCH /api/productos` | ✅ Sí | ❌ No (`403`) | ❌ No (`403`) | ❌ No (`403`) |
 | **Inventario de Tienda** | `GET /api/inventario?tiendaId=X` | ✅ Todas | ✅ Todas | 🔒 Solo tienda asignada | ❌ No (`403`) |
 | **Inventario de CD** | `GET /api/inventario/centro-distribucion` | ✅ Todos | ✅ Todos | ❌ No (`403`) | 🔒 Solo CD asignado |
-| **Ingreso de Mercancía CD** | `POST /api/ingresos-mercancia` | ✅ Sí | ✅ Sí | ❌ No (`403`) | 🔒 Solo CD asignado |
-| **Registrar Ventas Tienda** | `POST /api/ventas` | ✅ Sí | ❌ No (`403`) | 🔒 Solo tienda asignada | ❌ No (`403`) |
+| **Ingreso de Mercancía CD** | `POST /api/centros-distribucion/{id}/ingresos` | ✅ Sí | ✅ Sí | ❌ No (`403`) | 🔒 Solo CD asignado |
+| **Registrar Ventas Tienda** | `POST /api/tiendas/{id}/ventas` | ✅ Sí | ❌ No (`403`) | 🔒 Solo tienda asignada | ❌ No (`403`) |
 
 ---
 
@@ -88,7 +88,7 @@ Solicitud HTTP
 | :--- | :---: | :--- | :---: | :--- |
 | `/api/**` (Cualquier endpoint privado) | `Cualquiera` | Sin cabecera `Authorization` | **`401 Unauthorized`** | `SecurityFilterChain` |
 | `/api/usuarios` | `POST` | Autenticado con rol `PLANIFICADOR` | **`403 Forbidden`** | `UsuarioService` |
-| `/api/ventas` | `POST` | Autenticado con `ENCARGADO_TIENDA` ajeno | **`403 Forbidden`** | `VentaService` |
+| `/api/tiendas/{id}/ventas` | `POST` | Autenticado con `ENCARGADO_TIENDA` ajeno | **`403 Forbidden`** | `VentaService` |
 | `/api/inventario/cd` | `GET` | Autenticado con `ENCARGADO_CD` ajeno | **`403 Forbidden`** | `ConsultarInventarioCDService` |
 | `/api/productos` | `GET` | Autenticado con rol válido | **`200 OK`** | `ProductoController` |
 | `/index.html` | `GET` | Sin cabecera (Público) | **`200 OK`** | Lista blanca `permitAll()` |

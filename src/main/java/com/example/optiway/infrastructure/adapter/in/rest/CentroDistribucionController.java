@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/centros-distribucion")
+@RequestMapping({"/api/centros-distribucion", "/api/cd"})
 @Tag(name = "Centros de Distribución", description = "Endpoints para registro, consulta, asignación de encargados e ingreso de mercancía en centros de distribución")
 public class CentroDistribucionController {
 
@@ -74,12 +74,11 @@ public class CentroDistribucionController {
 
     @PostMapping("/{id}/ingresos")
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Registrar ingreso de mercancía", description = "Registra una entrada de stock de producto en el centro de distribución indicado.")
+    @Operation(summary = "Registrar ingreso de mercancía", description = "Registra una entrada de stock en el centro de distribución indicado en la URL. Alias corto: POST /api/cd/{id}/ingresos.")
     public IngresoMercanciaResponse registrarIngreso(
             @AuthUserId UUID authUserId,
             @PathVariable("id") Long centroDistribucionId,
             @Valid @RequestBody RegistrarIngresoMercanciaRequest request) {
-
         return registrarIngresoMercanciaUseCase.registrarIngreso(authUserId, request.toCommand(centroDistribucionId));
     }
 }

@@ -147,10 +147,8 @@ Los controladores de OptiWay reciben la identidad del usuario mediante el parám
 | Controlador | Ruta Base | Operaciones Principales |
 | :--- | :--- | :--- |
 | **`inventario-controller`** | `/api/inventario` | `GET /api/inventario` (Inventario de Tienda), `GET /api/inventario/centro-distribucion` (Inventario de CD). |
-| **`ingreso-mercancia-controller`** | `/api/ingresos-mercancia` | `POST /api/ingresos-mercancia` (Registro de ingresos con validación de capacidad). |
-| **`venta-controller`** | `/api/ventas` | `POST /api/ventas` (Registro de venta con deducción atómica de stock). |
 | **`producto-controller`** | `/api/productos` | `GET /api/productos`, `POST /api/productos`, `PUT /api/productos/{id}`, `PATCH /api/productos/{id}/estado`. |
-| **`tienda-controller`** | `/api/tiendas` | `GET /api/tiendas`, `POST /api/tiendas`, `PUT /api/tiendas/{id}/encargado`. |
-| **`centro-distribucion-controller`** | `/api/centros-distribucion` | `GET /api/centros-distribucion`, `POST /api/centros-distribucion`, `PUT /api/centros-distribucion/{id}/encargado`. |
+| **`tienda-controller`** | `/api/tiendas` | `GET /api/tiendas`, `POST /api/tiendas`, `PUT /api/tiendas/{id}/encargado`, `POST /api/tiendas/{id}/ventas` (Registro de venta con deducción atómica de stock). |
+| **`centro-distribucion-controller`** | `/api/centros-distribucion` (alias `/api/cd`) | `GET /api/centros-distribucion`, `POST /api/centros-distribucion`, `PUT /api/centros-distribucion/{id}/encargado`, `POST /api/centros-distribucion/{id}/ingresos` (Registro de ingresos con validación de capacidad). |
 | **`usuario-controller`** | `/api/usuarios` | `GET /api/usuarios`, `POST /api/usuarios`, `GET /api/usuarios/me`, `PATCH /api/usuarios/{id}/rol`, `DELETE /api/usuarios/{id}`. |
 | **`root-controller`** | `/` | `GET /` (Estado general del servicio). |

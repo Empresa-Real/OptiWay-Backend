@@ -47,7 +47,7 @@ El backend debe aplicar este filtro en cada consulta. No es suficiente ocultar b
   - Backend: `GET /api/tiendas` filtra por `encargadoId == usuario.id`. Si intenta consultar inventario ajeno (`GET /api/inventario`), el backend responde `403 Forbidden`.
   - Frontend: Selectores en `inventario.html` y tabla en `tiendas.html` limitados exclusivamente a sus tiendas asignadas.
 - **`ENCARGADO_CD`**:
-  - Backend: `GET /api/centros-distribucion` filtra por `encargadoId == usuario.id`. Si intenta registrar ingresos en un CD ajeno (`POST /api/ingresos-mercancia`), el backend responde `403 Forbidden`.
+  - Backend: `GET /api/centros-distribucion` filtra por `encargadoId == usuario.id`. Si intenta registrar ingresos en un CD ajeno (`POST /api/centros-distribucion/{id}/ingresos`), el backend responde `403 Forbidden`.
   - Frontend: Selectores en `ingreso-mercancia.html` y tabla en `centros-distribucion.html` limitados a su CD asignado.
 
 ### 3. Restricciones y Capacidades del Planificador

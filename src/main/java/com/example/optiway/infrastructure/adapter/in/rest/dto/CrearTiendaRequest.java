@@ -1,63 +1,27 @@
 package com.example.optiway.infrastructure.adapter.in.rest.dto;
 
 import com.example.optiway.application.port.in.CrearTiendaCommand;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 
-public class CrearTiendaRequest {
+@Schema(description = "Petición para registrar una nueva tienda en la red")
+public record CrearTiendaRequest(
+        @NotBlank(message = "El nombre es obligatorio")
+        @Schema(description = "Nombre comercial de la tienda", example = "OptiWay Centro")
+        String nombre,
 
-    @NotBlank(message = "El nombre es obligatorio")
-    private String nombre;
+        @NotBlank(message = "La dirección es obligatoria")
+        @Schema(description = "Dirección física de la tienda", example = "Av. Principal 123")
+        String direccion,
 
-    @NotBlank(message = "La dirección es obligatoria")
-    private String direccion;
+        @NotBlank(message = "La ciudad es obligatoria")
+        @Schema(description = "Ciudad donde se ubica la tienda", example = "Bogotá")
+        String ciudad,
 
-    @NotBlank(message = "La ciudad es obligatoria")
-    private String ciudad;
-
-    private Long encargadoId;
-
-    public CrearTiendaRequest() {}
-
-    public CrearTiendaRequest(String nombre, String direccion, String ciudad, Long encargadoId) {
-        this.nombre = nombre;
-        this.direccion = direccion;
-        this.ciudad = ciudad;
-        this.encargadoId = encargadoId;
-    }
-
-    public String getNombre() {
-        return nombre;
-    }
-
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
-
-    public String getDireccion() {
-        return direccion;
-    }
-
-    public void setDireccion(String direccion) {
-        this.direccion = direccion;
-    }
-
-    public String getCiudad() {
-        return ciudad;
-    }
-
-    public void setCiudad(String ciudad) {
-        this.ciudad = ciudad;
-    }
-
-    public Long getEncargadoId() {
-        return encargadoId;
-    }
-
-    public void setEncargadoId(Long encargadoId) {
-        this.encargadoId = encargadoId;
-    }
-
+        @Schema(description = "Identificador del encargado de la tienda (opcional)", example = "7")
+        Long encargadoId
+) {
     public CrearTiendaCommand toCommand() {
-        return new CrearTiendaCommand(this.nombre, this.direccion, this.ciudad, this.encargadoId);
+        return new CrearTiendaCommand(nombre, direccion, ciudad, encargadoId);
     }
 }

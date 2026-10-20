@@ -257,15 +257,16 @@ export interface ConsultarInventarioParams {
 
 ---
 
-## 5. HU-18: Ingreso de Mercancía a CD (`/api/ingresos-mercancia`)
+## 5. HU-18: Ingreso de Mercancía a CD (`/api/centros-distribucion/{id}/ingresos`)
 
-### Request Registrar Ingreso (`POST /api/ingresos-mercancia`)
+### Request Registrar Ingreso (`POST /api/centros-distribucion/{id}/ingresos`)
+* **Alias corto:** `POST /api/cd/{id}/ingresos` (misma operación y respuesta)
+* **Parámetro de ruta:** `id` — centro de distribución receptor (no viaja en el body)
 * **Archivo:** [`docs/dto/request/registrar-ingreso-mercancia.json`](./request/registrar-ingreso-mercancia.json)
 * **Headers:** `Authorization: Bearer <jwt_token>` (Encargado de CD o Administrador)
 
 ```json
 {
-  "centroDistribucionId": 1,
   "productoId": 10,
   "cantidad": 250,
   "origen": "Proveedor Alimentos del Valle S.A."
@@ -288,7 +289,6 @@ export interface ConsultarInventarioParams {
 ### TypeScript Interfaces:
 ```typescript
 export interface RegistrarIngresoMercanciaRequest {
-  centroDistribucionId: number;
   productoId: number;
   cantidad: number;
   origen: string;
