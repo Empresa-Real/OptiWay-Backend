@@ -1,6 +1,7 @@
 package com.example.optiway.infrastructure.adapter.in.rest;
 
-import com.example.optiway.application.port.in.ConsultarInventarioUseCase;
+import com.example.optiway.application.port.in.ObtenerInventarioCommand;
+import com.example.optiway.application.port.in.ObtenerInventarioUseCase;
 import com.example.optiway.application.port.in.dto.InventarioResponse;
 import com.example.optiway.infrastructure.security.AuthUserId;
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,12 +19,12 @@ import java.util.UUID;
 @Tag(name = "Inventario", description = "Endpoints para consulta y gestión de inventario en tiendas y centros de distribución")
 public class InventarioController {
 
-    private final ConsultarInventarioUseCase consultarInventarioUseCase;
+    private final ObtenerInventarioUseCase obtenerInventarioUseCase;
 
     public InventarioController(
-            ConsultarInventarioUseCase consultarInventarioUseCase) {
+            ObtenerInventarioUseCase obtenerInventarioUseCase) {
 
-        this.consultarInventarioUseCase = consultarInventarioUseCase;
+        this.obtenerInventarioUseCase = obtenerInventarioUseCase;
     }
 
     @GetMapping
@@ -35,13 +36,9 @@ public class InventarioController {
             @RequestParam(required = false) String categoria,
             @RequestParam(required = false) Long productoId) {
 
-        return consultarInventarioUseCase.consultarInventario(
+        return obtenerInventarioUseCase.obtenerInventario(
                 authUserId,
-                tiendaId,
-                null,
-                nombre,
-                categoria,
-                productoId);
+                new ObtenerInventarioCommand(tiendaId, null, nombre, categoria, productoId));
     }
 
     @GetMapping("/centro-distribucion")
@@ -53,12 +50,8 @@ public class InventarioController {
             @RequestParam(required = false) String categoria,
             @RequestParam(required = false) Long productoId) {
 
-        return consultarInventarioUseCase.consultarInventario(
+        return obtenerInventarioUseCase.obtenerInventario(
                 authUserId,
-                null,
-                centroDistribucionId,
-                nombre,
-                categoria,
-                productoId);
+                new ObtenerInventarioCommand(null, centroDistribucionId, nombre, categoria, productoId));
     }
 }

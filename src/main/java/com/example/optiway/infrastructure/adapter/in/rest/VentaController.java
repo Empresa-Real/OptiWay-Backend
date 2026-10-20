@@ -6,7 +6,6 @@ import java.util.UUID;
 import com.example.optiway.application.port.in.RegistrarVentaCommand;
 import com.example.optiway.application.port.in.RegistrarVentaUseCase;
 import com.example.optiway.application.port.in.dto.VentaResponse;
-import com.example.optiway.domain.model.Venta;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.RegistrarVentaRequest;
 import com.example.optiway.infrastructure.security.AuthUserId;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,17 +33,9 @@ public class VentaController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Registrar venta", description = "Registra una transacción de venta en una tienda física, descontando inmediatamente las existencias del inventario local.")
     public VentaResponse registrarVenta(
-            @Valid @RequestBody RegistrarVentaRequest request,
-            @AuthUserId UUID authUserId) {
-        RegistrarVentaCommand command = new RegistrarVentaCommand(
-                request.tiendaId(),
-                request.productoId(),
-                request.cantidad(),
-                request.fechaHora() != null ? request.fechaHora() : LocalDateTime.now()
-        );
-
-        Venta venta = registrarVentaUseCase.registrarVenta(command, authUserId);
-        return VentaResponse.from(venta);
+            @AuthUserId UUID authUserId,
+            @Valid @RequestBody RegistrarVentaRequest request) {
+        RegistrarVentaCommand command = request.toCommand();
+        return registrarVentaUseCase.registrarVenta(authUserId, command);
     }
 }
-

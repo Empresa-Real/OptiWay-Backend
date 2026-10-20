@@ -25,7 +25,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/usuarios")
@@ -55,54 +54,46 @@ public class UsuarioController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Crear nuevo usuario", description = "Registra un usuario en la plataforma asignándole un rol inicial. Requiere rol ADMINISTRADOR.")
     public UsuarioResponse crearUsuario(
-            @Valid @RequestBody CrearUsuarioRequest request,
-            @AuthUserId UUID authUserId) {
-        return UsuarioResponse.from(crearUsuarioUseCase.crearUsuario(request.toDomain(), authUserId));
+            @AuthUserId UUID authUserId,
+            @Valid @RequestBody CrearUsuarioRequest request) {
+        return crearUsuarioUseCase.crearUsuario(authUserId, request.toCommand());
     }
 
     @GetMapping
     @Operation(summary = "Listar usuarios", description = "Retorna el listado de todos los usuarios registrados. Requiere rol ADMINISTRADOR.")
     public List<UsuarioResponse> obtenerUsuarios(@AuthUserId UUID authUserId) {
-        return obtenerUsuariosUseCase.obtenerUsuarios(authUserId).stream()
-                .map(UsuarioResponse::from)
-                .toList();
+        return obtenerUsuariosUseCase.obtenerUsuarios(authUserId);
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Obtener usuario por ID", description = "Consulta un usuario específico por su ID interno.")
-    public UsuarioResponse obtenerUsuario(@PathVariable Long id) {
-        return obtenerUsuarioUseCase.obtenerUsuario(id)
-                .map(UsuarioResponse::from)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+    @Operation(summary = "Obtener usuario por ID", description = "Consulta un usuario específico por su ID interno. Requiere autenticación.")
+    public UsuarioResponse obtenerUsuario(@AuthUserId UUID authUserId, @PathVariable Long id) {
+        return obtenerUsuarioUseCase.obtenerUsuarioPorId(authUserId, id)
+                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con ID: " + id));
     }
 
     @GetMapping("/me")
     @Operation(summary = "Obtener perfil autenticado", description = "Consulta los datos y rol del usuario correspondiente al token JWT actual.")
     public UsuarioResponse obtenerUsuarioAutenticado(@AuthUserId UUID authUserId) {
         return obtenerUsuarioUseCase.obtenerUsuarioPorAuthId(authUserId)
-                .map(UsuarioResponse::from)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Perfil no encontrado"));
+                .orElseThrow(() -> new IllegalArgumentException("Perfil no encontrado"));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Eliminar usuario", description = "Elimina lógicamente o físicamente un usuario del sistema. Requiere rol ADMINISTRADOR.")
     public void eliminarUsuario(
-            @PathVariable Long id,
-            @AuthUserId UUID authUserId) {
-        eliminarUsuarioUseCase.eliminarUsuario(id, authUserId);
+            @AuthUserId UUID authUserId,
+            @PathVariable Long id) {
+        eliminarUsuarioUseCase.eliminarUsuario(authUserId, id);
     }
 
     @PatchMapping("/{id}/rol")
     @Operation(summary = "Actualizar rol de usuario", description = "Modifica el rol de un usuario existente. Requiere rol ADMINISTRADOR.")
     public UsuarioResponse actualizarRol(
+            @AuthUserId UUID authUserId,
             @PathVariable Long id,
-            @Valid @RequestBody(required = false) ActualizarRolRequest request,
-            @AuthUserId UUID authUserId) {
-
-        if (request == null || request.rol() == null) {
-            throw new IllegalArgumentException("El nuevo rol es obligatorio.");
-        }
-        return UsuarioResponse.from(actualizarRolUsuarioUseCase.actualizarRol(id, request.rol(), authUserId));
+            @Valid @RequestBody ActualizarRolRequest request) {
+        return actualizarRolUsuarioUseCase.actualizarRol(authUserId, request.toCommand(id));
     }
-}
+}

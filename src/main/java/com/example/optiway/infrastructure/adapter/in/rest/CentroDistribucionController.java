@@ -5,16 +5,13 @@ import java.util.UUID;
 
 import com.example.optiway.application.port.in.AsignarEncargadoCDUseCase;
 import com.example.optiway.application.port.in.CrearCentroDistribucionUseCase;
-import com.example.optiway.application.port.in.ListarCentrosDistribucionUseCase;
-import com.example.optiway.application.port.in.RegistrarIngresoCommand;
+import com.example.optiway.application.port.in.ObtenerCentrosDistribucionUseCase;
 import com.example.optiway.application.port.in.RegistrarIngresoMercanciaUseCase;
 import com.example.optiway.application.port.in.dto.CentroDistribucionResponse;
 import com.example.optiway.application.port.in.dto.IngresoMercanciaResponse;
-import com.example.optiway.domain.model.CentroDistribucion;
-import com.example.optiway.domain.model.IngresoMercancia;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.AsignarEncargadoRequest;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.CrearCentroDistribucionRequest;
-import com.example.optiway.infrastructure.adapter.in.rest.dto.RegistrarIngresoRequest;
+import com.example.optiway.infrastructure.adapter.in.rest.dto.RegistrarIngresoMercanciaRequest;
 import com.example.optiway.infrastructure.security.AuthUserId;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,22 +27,22 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping({"/api/centros-distribucion", "/api/cd"})
+@RequestMapping("/api/centros-distribucion")
 @Tag(name = "Centros de Distribución", description = "Endpoints para registro, consulta, asignación de encargados e ingreso de mercancía en centros de distribución")
 public class CentroDistribucionController {
 
     private final CrearCentroDistribucionUseCase crearCentroDistribucionUseCase;
-    private final ListarCentrosDistribucionUseCase listarCentrosDistribucionUseCase;
+    private final ObtenerCentrosDistribucionUseCase obtenerCentrosDistribucionUseCase;
     private final AsignarEncargadoCDUseCase asignarEncargadoCDUseCase;
     private final RegistrarIngresoMercanciaUseCase registrarIngresoMercanciaUseCase;
 
     public CentroDistribucionController(
             CrearCentroDistribucionUseCase crearCentroDistribucionUseCase,
-            ListarCentrosDistribucionUseCase listarCentrosDistribucionUseCase,
+            ObtenerCentrosDistribucionUseCase obtenerCentrosDistribucionUseCase,
             AsignarEncargadoCDUseCase asignarEncargadoCDUseCase,
             RegistrarIngresoMercanciaUseCase registrarIngresoMercanciaUseCase) {
         this.crearCentroDistribucionUseCase = crearCentroDistribucionUseCase;
-        this.listarCentrosDistribucionUseCase = listarCentrosDistribucionUseCase;
+        this.obtenerCentrosDistribucionUseCase = obtenerCentrosDistribucionUseCase;
         this.asignarEncargadoCDUseCase = asignarEncargadoCDUseCase;
         this.registrarIngresoMercanciaUseCase = registrarIngresoMercanciaUseCase;
     }
@@ -54,48 +51,35 @@ public class CentroDistribucionController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Crear centro de distribución", description = "Registra un nuevo centro de distribución con su capacidad y tiendas asignadas. Requiere rol ADMINISTRADOR.")
     public CentroDistribucionResponse crear(
-            @Valid @RequestBody CrearCentroDistribucionRequest request,
-            @AuthUserId UUID authUserId) {
-        CentroDistribucion cd = crearCentroDistribucionUseCase.crearCentroDistribucion(request.toDomain(), authUserId);
-        return CentroDistribucionResponse.from(cd);
+            @AuthUserId UUID authUserId,
+            @Valid @RequestBody CrearCentroDistribucionRequest request) {
+        return crearCentroDistribucionUseCase.crearCentroDistribucion(authUserId, request.toCommand());
     }
 
     @GetMapping
     @Operation(summary = "Listar centros de distribución", description = "Retorna los centros de distribución disponibles para el usuario según su rol.")
     public List<CentroDistribucionResponse> listar(@AuthUserId UUID authUserId) {
-        return listarCentrosDistribucionUseCase.listarCentrosDistribucion(authUserId).stream()
-                .map(CentroDistribucionResponse::from)
-                .toList();
+        return obtenerCentrosDistribucionUseCase.obtenerCentrosDistribucion(authUserId);
     }
 
     @PutMapping("/{id}/encargado")
     @Operation(summary = "Asignar encargado a centro de distribución", description = "Asigna o desasigna un usuario con rol ENCARGADO_CD como responsable. Requiere rol ADMINISTRADOR.")
     public CentroDistribucionResponse asignarEncargado(
+            @AuthUserId UUID authUserId,
             @PathVariable Long id,
-            @Valid @RequestBody(required = false) AsignarEncargadoRequest request,
-            @AuthUserId UUID authUserId) {
+            @Valid @RequestBody(required = false) AsignarEncargadoRequest request) {
         Long encargadoId = request != null ? request.encargadoId() : null;
-        CentroDistribucion cd = asignarEncargadoCDUseCase.asignarEncargado(id, encargadoId, authUserId);
-        return CentroDistribucionResponse.from(cd);
+        return asignarEncargadoCDUseCase.asignarEncargado(authUserId, id, encargadoId);
     }
 
     @PostMapping("/{id}/ingresos")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Registrar ingreso de mercancía", description = "Registra una entrada de stock de producto en el centro de distribución indicado.")
     public IngresoMercanciaResponse registrarIngreso(
+            @AuthUserId UUID authUserId,
             @PathVariable("id") Long centroDistribucionId,
-            @Valid @RequestBody RegistrarIngresoRequest request,
-            @AuthUserId UUID authUserId) {
+            @Valid @RequestBody RegistrarIngresoMercanciaRequest request) {
 
-        RegistrarIngresoCommand command = new RegistrarIngresoCommand(
-                centroDistribucionId,
-                request.getProductoId(),
-                request.getCantidad(),
-                request.getOrigen()
-        );
-
-        IngresoMercancia ingreso = registrarIngresoMercanciaUseCase.registrarIngreso(command, authUserId);
-        return IngresoMercanciaResponse.from(ingreso);
+        return registrarIngresoMercanciaUseCase.registrarIngreso(authUserId, request.toCommand(centroDistribucionId));
     }
 }
-

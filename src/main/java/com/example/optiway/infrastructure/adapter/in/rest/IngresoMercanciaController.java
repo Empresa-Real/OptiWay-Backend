@@ -33,8 +33,8 @@ public class IngresoMercanciaController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Registrar ingreso de mercancía", description = "Registra una entrada de inventario a un CD indicando producto, cantidad y procedencia.")
     public IngresoMercanciaResponse registrarIngreso(
-            @Valid @RequestBody RegistrarIngresoMercanciaRequest request,
-            @AuthUserId UUID authUserId) {
+            @AuthUserId UUID authUserId,
+            @Valid @RequestBody RegistrarIngresoMercanciaRequest request) {
 
         RegistrarIngresoCommand command = new RegistrarIngresoCommand(
                 request.getCentroDistribucionId(),
@@ -43,6 +43,6 @@ public class IngresoMercanciaController {
                 request.getOrigen()
         );
 
-        return IngresoMercanciaResponse.from(registrarIngresoMercanciaUseCase.registrarIngreso(command, authUserId));
+        return registrarIngresoMercanciaUseCase.registrarIngreso(authUserId, command);
     }
 }

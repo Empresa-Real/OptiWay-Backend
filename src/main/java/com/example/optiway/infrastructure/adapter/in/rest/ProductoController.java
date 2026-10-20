@@ -53,37 +53,35 @@ public class ProductoController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Crear nuevo producto", description = "Registra un producto en el catálogo. Requiere rol ADMINISTRADOR.")
-    public ProductoResponse crearProducto(@Valid @RequestBody CrearProductoRequest request, @AuthUserId UUID authUserId) {
-        return ProductoResponse.from(crearProductoUseCase.crearProducto(authUserId, request.toCommand()));
+    public ProductoResponse crearProducto(@AuthUserId UUID authUserId, @Valid @RequestBody CrearProductoRequest request) {
+        return crearProductoUseCase.crearProducto(authUserId, request.toCommand());
     }
 
     @GetMapping
-    @Operation(summary = "Listar catálogo de productos", description = "Retorna todos los productos registrados en el sistema.")
-    public List<ProductoResponse> obtenerProductos() {
-        return obtenerProductosUseCase.obtenerProductos().stream()
-                .map(ProductoResponse::from)
-                .toList();
+    @Operation(summary = "Listar catálogo de productos", description = "Retorna todos los productos registrados en el sistema. Requiere autenticación.")
+    public List<ProductoResponse> obtenerProductos(@AuthUserId UUID authUserId) {
+        return obtenerProductosUseCase.obtenerProductos(authUserId);
     }
 
     @PatchMapping("/{id}")
     @Operation(summary = "Editar producto existente", description = "Modifica los atributos comerciales de un producto. Requiere rol ADMINISTRADOR.")
-    public ProductoResponse editarProducto(@PathVariable Long id,
-                                           @Valid @RequestBody EditarProductoRequest request,
-                                           @AuthUserId UUID authUserId) {
-        return ProductoResponse.from(editarProductoUseCase.editarProducto(authUserId, request.toCommand(id)));
+    public ProductoResponse editarProducto(@AuthUserId UUID authUserId,
+                                           @PathVariable Long id,
+                                           @Valid @RequestBody EditarProductoRequest request) {
+        return editarProductoUseCase.editarProducto(authUserId, request.toCommand(id));
     }
 
     @PatchMapping("/{id}/estado")
     @Operation(summary = "Cambiar estado de producto", description = "Activa o desactiva un producto en el catálogo. Requiere rol ADMINISTRADOR.")
-    public ProductoResponse cambiarEstado(@PathVariable Long id,
-                                           @Valid @RequestBody CambiarEstadoProductoRequest request,
-                                           @AuthUserId UUID authUserId) {
-        return ProductoResponse.from(cambiarEstadoProductoUseCase.cambiarEstadoProducto(authUserId, id, request.activo()));
+    public ProductoResponse cambiarEstado(@AuthUserId UUID authUserId,
+                                          @PathVariable Long id,
+                                          @Valid @RequestBody CambiarEstadoProductoRequest request) {
+        return cambiarEstadoProductoUseCase.cambiarEstadoProducto(authUserId, request.toCommand(id));
     }
 
     @GetMapping("/{id}/tiene-stock")
-    @Operation(summary = "Verificar existencias de producto", description = "Consulta si el producto cuenta con existencias activas en alguna tienda o centro de distribución.")
-    public ProductoStockResponse tieneStock(@PathVariable Long id) {
-        return new ProductoStockResponse(verificarStockProductoUseCase.tieneStockActivo(id));
+    @Operation(summary = "Verificar existencias de producto", description = "Consulta si el producto cuenta con existencias activas en alguna tienda o centro de distribución. Requiere autenticación.")
+    public ProductoStockResponse tieneStock(@AuthUserId UUID authUserId, @PathVariable Long id) {
+        return new ProductoStockResponse(verificarStockProductoUseCase.tieneStockActivo(authUserId, id));
     }
 }
