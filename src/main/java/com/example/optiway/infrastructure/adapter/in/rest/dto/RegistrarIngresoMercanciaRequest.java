@@ -1,5 +1,6 @@
 package com.example.optiway.infrastructure.adapter.in.rest.dto;
 
+import com.example.optiway.application.port.in.RegistrarIngresoCommand;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -65,5 +66,9 @@ public class RegistrarIngresoMercanciaRequest {
 
     public void setOrigen(String origen) {
         this.origen = origen;
+    }
+
+    public RegistrarIngresoCommand toCommand(Long centroDistribucionId) {
+        return new RegistrarIngresoCommand(centroDistribucionId, this.productoId, this.cantidad, this.origen);
     }
 }

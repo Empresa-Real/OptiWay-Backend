@@ -1,16 +1,24 @@
 package com.example.optiway.infrastructure.adapter.in.rest.dto;
 
-import com.example.optiway.domain.model.Rol;
-import com.example.optiway.domain.model.Usuario;
+import com.example.optiway.application.port.in.CrearUsuarioCommand;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 
 public class CrearUsuarioRequest {
+
+    @NotBlank(message = "El nombre es obligatorio")
     private String nombre;
+
+    @NotBlank(message = "El email es obligatorio")
+    @Email(message = "El email debe tener un formato válido")
     private String email;
-    private Rol rol;
+
+    @NotBlank(message = "El rol es obligatorio")
+    private String rol;
 
     public CrearUsuarioRequest() {}
 
-    public CrearUsuarioRequest(String nombre, String email, Rol rol) {
+    public CrearUsuarioRequest(String nombre, String email, String rol) {
         this.nombre = nombre;
         this.email = email;
         this.rol = rol;
@@ -32,19 +40,15 @@ public class CrearUsuarioRequest {
         this.email = email;
     }
 
-    public Rol getRol() {
+    public String getRol() {
         return rol;
     }
 
-    public void setRol(Rol rol) {
+    public void setRol(String rol) {
         this.rol = rol;
     }
 
-    public Usuario toDomain() {
-        Usuario usuario = new Usuario();
-        usuario.setNombre(this.nombre);
-        usuario.setEmail(this.email);
-        usuario.setRol(this.rol);
-        return usuario;
+    public CrearUsuarioCommand toCommand() {
+        return new CrearUsuarioCommand(this.nombre, this.email, this.rol);
     }
 }

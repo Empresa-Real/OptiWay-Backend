@@ -1,5 +1,6 @@
 package com.example.optiway.infrastructure.adapter.in.rest.dto;
 
+import com.example.optiway.application.port.in.RegistrarIngresoCommand;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -47,5 +48,9 @@ public class RegistrarIngresoRequest {
 
     public void setOrigen(String origen) {
         this.origen = origen;
+    }
+
+    public RegistrarIngresoCommand toCommand(Long centroDistribucionId) {
+        return new RegistrarIngresoCommand(centroDistribucionId, this.productoId, this.cantidad, this.origen);
     }
 }

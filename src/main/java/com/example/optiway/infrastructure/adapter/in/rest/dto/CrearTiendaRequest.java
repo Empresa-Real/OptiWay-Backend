@@ -1,11 +1,19 @@
 package com.example.optiway.infrastructure.adapter.in.rest.dto;
 
-import com.example.optiway.domain.model.Tienda;
+import com.example.optiway.application.port.in.CrearTiendaCommand;
+import jakarta.validation.constraints.NotBlank;
 
 public class CrearTiendaRequest {
+
+    @NotBlank(message = "El nombre es obligatorio")
     private String nombre;
+
+    @NotBlank(message = "La dirección es obligatoria")
     private String direccion;
+
+    @NotBlank(message = "La ciudad es obligatoria")
     private String ciudad;
+
     private Long encargadoId;
 
     public CrearTiendaRequest() {}
@@ -49,12 +57,7 @@ public class CrearTiendaRequest {
         this.encargadoId = encargadoId;
     }
 
-    public Tienda toDomain() {
-        Tienda tienda = new Tienda();
-        tienda.setNombre(this.nombre);
-        tienda.setDireccion(this.direccion);
-        tienda.setCiudad(this.ciudad);
-        tienda.setEncargadoId(this.encargadoId);
-        return tienda;
+    public CrearTiendaCommand toCommand() {
+        return new CrearTiendaCommand(this.nombre, this.direccion, this.ciudad, this.encargadoId);
     }
 }

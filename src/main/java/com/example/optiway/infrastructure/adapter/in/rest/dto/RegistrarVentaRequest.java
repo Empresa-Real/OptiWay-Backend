@@ -1,5 +1,6 @@
 package com.example.optiway.infrastructure.adapter.in.rest.dto;
 
+import com.example.optiway.application.port.in.RegistrarVentaCommand;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
@@ -24,8 +25,28 @@ public record RegistrarVentaRequest(
         this(tiendaId, productoId, cantidad, LocalDateTime.now());
     }
 
-    public Long getTiendaId() { return tiendaId; }
-    public Long getProductoId() { return productoId; }
-    public Integer getCantidad() { return cantidad; }
-    public LocalDateTime getFechaHora() { return fechaHora != null ? fechaHora : LocalDateTime.now(); }
+    public Long getTiendaId() {
+        return tiendaId;
+    }
+
+    public Long getProductoId() {
+        return productoId;
+    }
+
+    public Integer getCantidad() {
+        return cantidad;
+    }
+
+    public LocalDateTime getFechaHora() {
+        return fechaHora != null ? fechaHora : LocalDateTime.now();
+    }
+
+    public RegistrarVentaCommand toCommand() {
+        return new RegistrarVentaCommand(
+                this.tiendaId,
+                this.productoId,
+                this.cantidad,
+                this.getFechaHora()
+        );
+    }
 }
