@@ -1,10 +1,10 @@
 package com.example.optiway.application.port.in;
 
-import com.example.optiway.domain.model.Venta;
+import com.example.optiway.application.port.in.dto.VentaResponse;
 
 import java.util.UUID;
 
 public interface RegistrarVentaUseCase {
 
-    Venta registrarVenta(RegistrarVentaCommand command, UUID authUserId);
+    VentaResponse registrarVenta(UUID authUserId, RegistrarVentaCommand command);
 }

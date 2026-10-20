@@ -1,12 +1,10 @@
 package com.example.optiway.application.port.in;
 
-import java.util.UUID;
+import com.example.optiway.application.port.in.dto.CentroDistribucionResponse;
 
-import com.example.optiway.domain.model.CentroDistribucion;
+import java.util.UUID;
 
 public interface CrearCentroDistribucionUseCase {
 
-    CentroDistribucion crearCentroDistribucion(CentroDistribucion centroDistribucion);
-
-    CentroDistribucion crearCentroDistribucion(CentroDistribucion centroDistribucion, UUID authUserId);
+    CentroDistribucionResponse crearCentroDistribucion(UUID authUserId, CrearCentroDistribucionCommand command);
 }

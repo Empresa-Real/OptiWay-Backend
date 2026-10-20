@@ -1,10 +1,10 @@
 package com.example.optiway.application.port.in;
 
-import com.example.optiway.domain.model.Producto;
+import com.example.optiway.application.port.in.dto.ProductoResponse;
 
 import java.util.UUID;
 
 public interface CambiarEstadoProductoUseCase {
 
-    Producto cambiarEstadoProducto(UUID authUserId, Long productoId, boolean activo);
+    ProductoResponse cambiarEstadoProducto(UUID authUserId, CambiarEstadoProductoCommand command);
 }
