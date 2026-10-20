@@ -134,14 +134,13 @@
             resultado.textContent = 'Enviando registro...';
 
             try {
-                const response = await fetch('/api/ingresos-mercancia', {
+                const response = await fetch('/api/centros-distribucion/' + centroDistribucionId + '/ingresos', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         Authorization: 'Bearer ' + token
                     },
                     body: JSON.stringify({
-                        centroDistribucionId,
                         productoId,
                         cantidad,
                         origen

@@ -15,6 +15,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.example.optiway.application.port.in.dto.CentroDistribucionResponse;
+import com.example.optiway.application.port.in.dto.TiendaResponse;
 import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
 import com.example.optiway.application.port.out.TiendaRepositoryPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
@@ -62,9 +64,9 @@ class AsignacionUbicacionTest {
         when(usuarioRepositoryPort.obtenerPorId(2L)).thenReturn(Optional.of(encargado));
         when(tiendaRepositoryPort.save(any(Tienda.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Tienda resultado = tiendaService.asignarEncargado(10L, 2L, adminAuthId);
+        TiendaResponse resultado = tiendaService.asignarEncargado(adminAuthId, 10L, 2L);
 
-        assertEquals(2L, resultado.getEncargadoId());
+        assertEquals(2L, resultado.encargadoId());
         verify(tiendaRepositoryPort).save(tienda);
     }
 
@@ -78,7 +80,7 @@ class AsignacionUbicacionTest {
         when(usuarioRepositoryPort.obtenerPorId(3L)).thenReturn(Optional.of(encargadoCd));
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
-                tiendaService.asignarEncargado(10L, 3L, adminAuthId));
+                tiendaService.asignarEncargado(adminAuthId, 10L, 3L));
 
         assertEquals("Solo se puede asignar una tienda a un usuario con rol Encargado de tienda (Rol actual: ENCARGADO_CD).", ex.getMessage());
     }
@@ -93,9 +95,9 @@ class AsignacionUbicacionTest {
         when(usuarioRepositoryPort.obtenerPorId(3L)).thenReturn(Optional.of(encargadoCd));
         when(centroDistribucionRepositoryPort.guardar(any(CentroDistribucion.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        CentroDistribucion resultado = centroDistribucionService.asignarEncargado(20L, 3L, adminAuthId);
+        CentroDistribucionResponse resultado = centroDistribucionService.asignarEncargado(adminAuthId, 20L, 3L);
 
-        assertEquals(3L, resultado.getEncargadoId());
+        assertEquals(3L, resultado.encargadoId());
         verify(centroDistribucionRepositoryPort).guardar(cd);
     }
 
@@ -109,7 +111,7 @@ class AsignacionUbicacionTest {
         when(usuarioRepositoryPort.obtenerPorId(2L)).thenReturn(Optional.of(encargadoTnd));
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
-                centroDistribucionService.asignarEncargado(20L, 2L, adminAuthId));
+                centroDistribucionService.asignarEncargado(adminAuthId, 20L, 2L));
 
         assertEquals("Solo se puede asignar un centro de distribución a un usuario con rol Encargado de CD (Rol actual: ENCARGADO_TIENDA).", ex.getMessage());
     }

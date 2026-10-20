@@ -1,6 +1,7 @@
 package com.example.optiway.application.service;
 
-import com.example.optiway.application.port.in.ConsultarInventarioUseCase;
+import com.example.optiway.application.port.in.ObtenerInventarioCommand;
+import com.example.optiway.application.port.in.ObtenerInventarioUseCase;
 import com.example.optiway.application.port.in.dto.InventarioResponse;
 import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
 import com.example.optiway.application.port.out.InventarioRepositoryPort;
@@ -20,7 +21,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
-public class InventarioService implements ConsultarInventarioUseCase {
+public class InventarioService implements ObtenerInventarioUseCase {
 
     private final InventarioRepositoryPort inventarioRepositoryPort;
     private final ProductoRepositoryPort productoRepositoryPort;
@@ -43,13 +44,10 @@ public class InventarioService implements ConsultarInventarioUseCase {
     }
 
     @Override
-    public List<InventarioResponse> consultarInventario(
-            UUID authUserId,
-            Long tiendaId,
-            Long centroDistribucionId,
-            String nombre,
-            String categoria,
-            Long productoId) {
+    public List<InventarioResponse> obtenerInventario(UUID authUserId, ObtenerInventarioCommand command) {
+        Long tiendaId = command.tiendaId();
+        Long centroDistribucionId = command.centroDistribucionId();
+        Long productoId = command.productoId();
 
         validarAcceso(authUserId, tiendaId, centroDistribucionId);
 
@@ -60,8 +58,8 @@ public class InventarioService implements ConsultarInventarioUseCase {
 
         Map<Long, Producto> productosMap = cargarProductosEnBatch(inventarios);
 
-        String nombreFiltro = normalizar(nombre);
-        String catFiltro = normalizar(categoria);
+        String nombreFiltro = normalizar(command.nombre());
+        String catFiltro = normalizar(command.categoria());
 
         return inventarios.stream()
                 .filter(i -> coincideFiltros(productosMap.get(i.getProductoId()), nombreFiltro, catFiltro))

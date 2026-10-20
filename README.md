@@ -25,8 +25,8 @@ Desarrollado bajo los principios de **Arquitectura Hexagonal (Puertos y Adaptado
 ## Tecnologías / Stack
 
 * **Lenguaje:** Java 17
-* **Framework Principal:** Spring Boot 3.4.3
-* **Seguridad & Autenticación:** Spring Security 6 (OAuth2 Resource Server con validación JWT) y Supabase Admin Auth
+* **Framework Principal:** Spring Boot 4.1.1
+* **Seguridad & Autenticación:** Spring Security 7 (OAuth2 Resource Server con validación JWT) y Supabase Admin Auth
 * **Persistencia & ORM:** Spring Data JPA / Hibernate
 * **Base de Datos:** PostgreSQL en la nube (Supabase)
 * **Gestor de Construcción y Dependencias:** Apache Maven (con Maven Wrapper `mvnw`)
@@ -112,22 +112,32 @@ Para una explicación a fondo del flujo de capas, consulta [`docs/Hexagonal-Arqu
 * `POST /api/usuarios`: Invitación y creación de usuarios (restringido a rol `ADMINISTRADOR`).
 * `GET /api/usuarios`: Listado de todos los usuarios registrados.
 * `GET /api/usuarios/{id}`: Consulta de usuario por identificador.
-* `DELETE /api/usuarios/{id}`: Eliminación de usuario.
 * `GET /api/usuarios/me`: Consulta de perfil y rol del usuario autenticado a partir del JWT.
+* `DELETE /api/usuarios/{id}`: Eliminación de usuario.
+* `PATCH /api/usuarios/{id}/rol`: Cambio de rol (restringido a `ADMINISTRADOR`).
 
-#### Tiendas (`HU-07`)
+#### Tiendas (`HU-07` & `HU-11`)
 * `POST /api/tiendas`: Registro de nueva tienda (generación automática de código `TND-XXXXXXXX`).
-* `GET /api/tiendas`: Consulta y listado de todas las tiendas disponibles.
+* `GET /api/tiendas`: Listado de tiendas (filtrado por su sede para encargados de tienda).
+* `PUT /api/tiendas/{id}/encargado`: Asignación de encargado a una tienda (restringido a `ADMINISTRADOR`).
+* `POST /api/tiendas/{id}/ventas`: Registro de venta con descuento transaccional de stock (`HU-11`).
 
-#### Centros de Distribución (`HU-09`)
+#### Centros de Distribución (`HU-09` & `HU-18`)
 * `POST /api/centros-distribucion`: Registro de nuevo CD (código `CD-XXXXXXXX`) y asignación de tiendas abastecidas.
-* `GET /api/centros-distribucion`: Consulta y listado de todos los CDs con su información de cobertura.
+* `GET /api/centros-distribucion`: Listado de CDs con su información de cobertura (filtrado por su sede para encargados de CD).
+* `PUT /api/centros-distribucion/{id}/encargado`: Asignación de encargado a un CD (restringido a `ADMINISTRADOR`).
+* `POST /api/centros-distribucion/{id}/ingresos`: Registro de ingreso de mercancía (alias corto: `POST /api/cd/{id}/ingresos`).
 
-#### Inventario (`HU-11`)
-* `GET /api/inventario`: Consulta de inventario por tienda (`tiendaId`) con filtros opcionales por `nombre`, `categoria` y `productoId`.
+#### Productos (`HU-04`, `HU-05` & `HU-06`)
+* `POST /api/productos`: Registro en el catálogo maestro de productos.
+* `GET /api/productos`: Listado del catálogo de productos.
+* `PATCH /api/productos/{id}`: Edición parcial de campos con auditoría del editor.
+* `PATCH /api/productos/{id}/estado`: Activación / desactivación de productos.
+* `GET /api/productos/{id}/tiene-stock`: Verificación de existencias antes de desactivar.
 
-#### Ingreso de Mercancía
-* `POST /api/ingresos-mercancia`: Registro de ingreso de mercancía a un centro de distribución.
+#### Inventario (`HU-12` & `HU-16`)
+* `GET /api/inventario`: Consulta de inventario por tienda (`tiendaId` requerido) con filtros opcionales por `nombre`, `categoria` y `productoId`.
+* `GET /api/inventario/centro-distribucion`: Consulta de inventario por CD (`centroDistribucionId` requerido) con los mismos filtros y cálculo dinámico de `stockBajo`.
 
 
 ## Instalación y Ejecución
@@ -158,3 +168,24 @@ En Linux / macOS:
 ```
 
 La aplicación iniciará por defecto en `http://localhost:8080`.
+
+> La conexión a PostgreSQL (Supabase) requiere definir las variables de entorno `DB_PASSWORD` y `SUPABASE_SERVICE_ROLE_KEY` antes de arrancar.
+
+### Pruebas
+
+La suite de pruebas unitarias (JUnit 5 + Mockito) corre sobre **H2 en memoria** (`MODE=PostgreSQL`) para no depender de Supabase:
+
+```powershell
+.\mvnw.cmd test
+```
+
+La aplicación en ejecución siempre usa PostgreSQL (Supabase).
+
+
+## Documentación complementaria
+
+* [Swagger / OpenAPI](docs/Swagger_OpenAPI.md): catálogo completo de operaciones, códigos de estado y ejemplos.
+* [DTOs y contratos de API](docs/dto/README.md): esquemas JSON y tipos TypeScript para el frontend.
+* [Historias de Usuario](docs/Historias%20de%20Usuario/): especificación funcional por HU.
+* [Pendientes](docs/pendientes.md) y [Deuda técnica](docs/deudaTecnica.md): trabajo abierto y decisiones de diseño pendientes.
+* [Changelog](docs/CHANGELOG.md): resumen de los cambios relevantes por tema.

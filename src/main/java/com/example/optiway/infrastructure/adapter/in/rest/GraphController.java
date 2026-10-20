@@ -1,5 +1,6 @@
 package com.example.optiway.infrastructure.adapter.in.rest;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.core.io.ClassPathResource;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.File;
 
 @RestController
+@Hidden
 @Tag(name = "Grafo de Arquitectura", description = "Visualización interactiva de la arquitectura del backend")
 public class GraphController {
 

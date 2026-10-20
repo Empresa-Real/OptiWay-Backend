@@ -1,9 +1,9 @@
 package com.example.optiway.application.port.in;
 
-import com.example.optiway.domain.model.Producto;
+import com.example.optiway.application.port.in.dto.ProductoResponse;
 
 import java.util.UUID;
 
 public interface EditarProductoUseCase {
-    Producto editarProducto(UUID authUserId, Long id, Producto cambios);
+    ProductoResponse editarProducto(UUID authUserId, EditarProductoCommand command);
 }

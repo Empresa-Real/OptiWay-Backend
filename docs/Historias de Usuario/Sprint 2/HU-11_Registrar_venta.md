@@ -28,13 +28,13 @@
 ## Especificación del Endpoint
 
 * **Método:** `POST`
-* **Ruta:** `/api/ventas`
+* **Ruta:** `/api/tiendas/{id}/ventas`
+* **Parámetro de ruta:** `id` — tienda donde se realiza la venta (ya no viaja en el body).
 * **Seguridad:** Requiere header `Authorization: Bearer <token_jwt_supabase>` con rol `ENCARGADO_TIENDA` asignado a la tienda o `ADMINISTRADOR`.
 * **Cuerpo de la petición (JSON):**
 
 ```json
 {
-  "tiendaId": 1,
   "productoId": 5,
   "cantidad": 3,
   "fechaHora": "2026-10-18T10:30:00"
@@ -62,7 +62,7 @@
 * **Puerto de Entrada:** [RegistrarVentaUseCase.java](file:///c:/Users/Fixer/Desktop/Git%20Kraken/OptiWay-Backend/src/main/java/com/example/optiway/application/port/in/RegistrarVentaUseCase.java)
 * **Comando DTO:** [RegistrarVentaCommand.java](file:///c:/Users/Fixer/Desktop/Git%20Kraken/OptiWay-Backend/src/main/java/com/example/optiway/application/port/in/RegistrarVentaCommand.java)
 * **Servicio de Aplicación:** [VentaService.java](file:///c:/Users/Fixer/Desktop/Git%20Kraken/OptiWay-Backend/src/main/java/com/example/optiway/application/service/VentaService.java)
-* **Adaptador REST:** [VentaController.java](file:///c:/Users/Fixer/Desktop/Git%20Kraken/OptiWay-Backend/src/main/java/com/example/optiway/infrastructure/adapter/in/rest/VentaController.java)
+* **Adaptador REST:** [TiendaController.java](file:///c:/Users/Fixer/Desktop/Git%20Kraken/OptiWay-Backend/src/main/java/com/example/optiway/infrastructure/adapter/in/rest/TiendaController.java) — endpoint `POST /api/tiendas/{id}/ventas`
 * **DTO:** [RegistrarVentaRequest.java](file:///c:/Users/Fixer/Desktop/Git%20Kraken/OptiWay-Backend/src/main/java/com/example/optiway/infrastructure/adapter/in/rest/dto/RegistrarVentaRequest.java)
 * **Puerto de Salida:** [VentaRepositoryPort.java](file:///c:/Users/Fixer/Desktop/Git%20Kraken/OptiWay-Backend/src/main/java/com/example/optiway/application/port/out/VentaRepositoryPort.java)
 * **Adaptador de Persistencia:** [VentaRepositoryAdapter.java](file:///c:/Users/Fixer/Desktop/Git%20Kraken/OptiWay-Backend/src/main/java/com/example/optiway/infrastructure/adapter/out/persistence/VentaRepositoryAdapter.java)

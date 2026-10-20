@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.optiway.application.port.in.RegistrarIngresoCommand;
 import com.example.optiway.application.port.in.RegistrarIngresoMercanciaUseCase;
+import com.example.optiway.application.port.in.dto.IngresoMercanciaResponse;
 import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
 import com.example.optiway.application.port.out.IngresoMercanciaRepositoryPort;
 import com.example.optiway.application.port.out.InventarioRepositoryPort;
@@ -43,7 +44,7 @@ public class IngresoMercanciaService implements RegistrarIngresoMercanciaUseCase
 
     @Override
     @Transactional
-    public IngresoMercancia registrarIngreso(RegistrarIngresoCommand command, UUID authUserId) {
+    public IngresoMercanciaResponse registrarIngreso(UUID authUserId, RegistrarIngresoCommand command) {
         if (command == null) {
             throw new IllegalArgumentException("Los datos de ingreso son obligatorios");
         }
@@ -110,6 +111,6 @@ public class IngresoMercanciaService implements RegistrarIngresoMercanciaUseCase
         ingreso.setUsuarioId(usuario.getId());
         ingreso.setFechaIngreso(LocalDateTime.now());
 
-        return ingresoRepositoryPort.guardar(ingreso);
+        return IngresoMercanciaResponse.from(ingresoRepositoryPort.guardar(ingreso));
     }
 }

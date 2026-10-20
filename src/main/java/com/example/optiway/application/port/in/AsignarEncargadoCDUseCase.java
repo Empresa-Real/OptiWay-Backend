@@ -2,9 +2,8 @@ package com.example.optiway.application.port.in;
 
 import java.util.UUID;
 
-import com.example.optiway.domain.model.CentroDistribucion;
+import com.example.optiway.application.port.in.dto.CentroDistribucionResponse;
 
 public interface AsignarEncargadoCDUseCase {
-    CentroDistribucion asignarEncargado(Long centroId, Long encargadoId);
-    CentroDistribucion asignarEncargado(Long centroId, Long encargadoId, UUID authUserId);
+    CentroDistribucionResponse asignarEncargado(UUID authUserId, Long centroId, Long encargadoId);
 }

@@ -2,6 +2,7 @@ package com.example.optiway.application.service;
 
 import com.example.optiway.application.port.in.RegistrarVentaCommand;
 import com.example.optiway.application.port.in.RegistrarVentaUseCase;
+import com.example.optiway.application.port.in.dto.VentaResponse;
 import com.example.optiway.application.port.out.InventarioRepositoryPort;
 import com.example.optiway.application.port.out.ProductoRepositoryPort;
 import com.example.optiway.application.port.out.TiendaRepositoryPort;
@@ -41,7 +42,7 @@ public class VentaService implements RegistrarVentaUseCase {
 
     @Override
     @Transactional
-    public Venta registrarVenta(RegistrarVentaCommand command, UUID authUserId) {
+    public VentaResponse registrarVenta(UUID authUserId, RegistrarVentaCommand command) {
         if (command == null) {
             throw new IllegalArgumentException("Los datos de la venta son obligatorios.");
         }
@@ -100,6 +101,6 @@ public class VentaService implements RegistrarVentaUseCase {
                 command.fechaHora() != null ? command.fechaHora() : LocalDateTime.now()
         );
 
-        return ventaRepositoryPort.guardar(venta);
+        return VentaResponse.from(ventaRepositoryPort.guardar(venta));
     }
 }

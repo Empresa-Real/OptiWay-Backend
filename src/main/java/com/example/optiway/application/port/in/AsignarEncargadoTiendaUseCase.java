@@ -2,9 +2,8 @@ package com.example.optiway.application.port.in;
 
 import java.util.UUID;
 
-import com.example.optiway.domain.model.Tienda;
+import com.example.optiway.application.port.in.dto.TiendaResponse;
 
 public interface AsignarEncargadoTiendaUseCase {
-    Tienda asignarEncargado(Long tiendaId, Long encargadoId);
-    Tienda asignarEncargado(Long tiendaId, Long encargadoId, UUID authUserId);
+    TiendaResponse asignarEncargado(UUID authUserId, Long tiendaId, Long encargadoId);
 }

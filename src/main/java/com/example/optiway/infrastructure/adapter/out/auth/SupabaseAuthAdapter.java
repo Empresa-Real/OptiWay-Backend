@@ -68,15 +68,20 @@ public class SupabaseAuthAdapter implements AuthPort {
             String errorBody = exception.getResponseBodyAsString();
             log.error("Error al invitar usuario {} en Supabase [HTTP {}]: {}", email, exception.getStatusCode(), errorBody);
 
-            Object detalle = parseJsonOrRaw(errorBody);
-            throw new InvitacionAuthException(
-                    "Error de respuesta en Supabase Auth",
-                    exception.getStatusCode().value(),
-                    detalle
-            );
+            int status = exception.getStatusCode().value();
+            String mensajeEspanol;
+            if (status == 429 || (errorBody != null && errorBody.contains("over_email_send_rate_limit"))) {
+                mensajeEspanol = "Se ha superado el límite de correos de invitación por hora de Supabase Auth. Por favor espera unos minutos antes de registrar otro usuario.";
+            } else if (status == 422 || (errorBody != null && (errorBody.contains("email_address_invalid") || errorBody.contains("invalid email")))) {
+                mensajeEspanol = "El correo electrónico no tiene un formato válido o fue rechazado por el proveedor de autenticación.";
+            } else {
+                mensajeEspanol = "No fue posible conectar con el servicio de autenticación. Intenta nuevamente.";
+            }
+
+            throw new InvitacionAuthException(mensajeEspanol, status, null);
         } catch (RuntimeException exception) {
             log.error("Error inesperado al invitar usuario en Supabase: ", exception);
-            throw new InvitacionAuthException("No se pudo invitar al usuario por correo: " + exception.getMessage());
+            throw new InvitacionAuthException("No se pudo invitar al usuario por correo. Intenta nuevamente.");
         }
     }
 
@@ -141,10 +146,10 @@ public class SupabaseAuthAdapter implements AuthPort {
         } catch (RestClientResponseException exception) {
             String errorBody = exception.getResponseBodyAsString();
             log.error("Error al eliminar usuario {} en Supabase [HTTP {}]: {}", authUserId, exception.getStatusCode(), errorBody);
-            throw new InvitacionAuthException("No se pudo eliminar el usuario de Supabase Auth: " + errorBody);
+            throw new InvitacionAuthException("No se pudo eliminar el usuario del servicio de autenticación.");
         } catch (RuntimeException exception) {
             log.error("Error inesperado al eliminar usuario {} en Supabase: ", authUserId, exception);
-            throw new InvitacionAuthException("No se pudo eliminar el usuario de Supabase Auth: " + exception.getMessage());
+            throw new InvitacionAuthException("No se pudo eliminar el usuario debido a un error inesperado.");
         }
     }
 

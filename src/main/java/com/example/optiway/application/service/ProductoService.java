@@ -1,10 +1,14 @@
 package com.example.optiway.application.service;
 
+import com.example.optiway.application.port.in.CambiarEstadoProductoCommand;
 import com.example.optiway.application.port.in.CambiarEstadoProductoUseCase;
+import com.example.optiway.application.port.in.CrearProductoCommand;
 import com.example.optiway.application.port.in.CrearProductoUseCase;
+import com.example.optiway.application.port.in.EditarProductoCommand;
 import com.example.optiway.application.port.in.EditarProductoUseCase;
 import com.example.optiway.application.port.in.ObtenerProductosUseCase;
 import com.example.optiway.application.port.in.VerificarStockProductoUseCase;
+import com.example.optiway.application.port.in.dto.ProductoResponse;
 import com.example.optiway.application.port.out.InventarioRepositoryPort;
 import com.example.optiway.application.port.out.ProductoRepositoryPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
@@ -36,68 +40,72 @@ public class ProductoService implements CrearProductoUseCase, ObtenerProductosUs
     }
 
     @Override
-    public Producto crearProducto(UUID authUserId, Producto producto) {
+    public ProductoResponse crearProducto(UUID authUserId, CrearProductoCommand command) {
         authorizationService.requireAdministrador(authUserId, "crear productos");
-        if (producto == null) {
-            throw new IllegalArgumentException("Los datos del producto son obligatorios.");
-        }
 
-        producto.setIdentificador(requerido(producto.getIdentificador(), "El identificador es obligatorio.")
-                .toUpperCase(Locale.ROOT));
-        producto.setNombre(requerido(producto.getNombre(), "El nombre es obligatorio."));
-        producto.setCategoria(requerido(producto.getCategoria(), "La categoría es obligatoria."));
+        String identificador = requerido(command.identificador(), "El identificador es obligatorio.")
+                .toUpperCase(Locale.ROOT);
+        String nombre = requerido(command.nombre(), "El nombre es obligatorio.");
+        String categoria = requerido(command.categoria(), "La categoría es obligatoria.");
 
-        if (producto.getPrecio() != null && producto.getPrecio().compareTo(BigDecimal.ZERO) < 0) {
+        if (command.precio() != null && command.precio().compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("El precio no puede ser negativo.");
         }
-        if (producto.getUnidadMedida() != null && producto.getUnidadMedida().isBlank()) {
-            producto.setUnidadMedida(null);
-        } else if (producto.getUnidadMedida() != null) {
-            producto.setUnidadMedida(producto.getUnidadMedida().trim());
+        String unidadMedida = null;
+        if (command.unidadMedida() != null && !command.unidadMedida().isBlank()) {
+            unidadMedida = command.unidadMedida().trim();
         }
 
-        if (productoRepositoryPort.existsByIdentificador(producto.getIdentificador())) {
+        if (productoRepositoryPort.existsByIdentificador(identificador)) {
             throw new ProductoDuplicadoException("Ya existe un producto con ese identificador.");
         }
+
+        Producto producto = new Producto();
+        producto.setIdentificador(identificador);
+        producto.setNombre(nombre);
+        producto.setCategoria(categoria);
+        producto.setPrecio(command.precio());
+        producto.setUnidadMedida(unidadMedida);
         producto.setActivo(true);
-        return productoRepositoryPort.save(producto);
+        return ProductoResponse.from(productoRepositoryPort.save(producto));
     }
 
     @Override
-    public List<Producto> obtenerProductos() {
-        return productoRepositoryPort.findAll();
+    public List<ProductoResponse> obtenerProductos(UUID authUserId) {
+        authorizationService.requireAuthenticated(authUserId);
+        return productoRepositoryPort.findAll().stream()
+                .map(ProductoResponse::from)
+                .toList();
     }
 
     @Override
-    public Producto editarProducto(UUID authUserId, Long id, Producto cambios) {
+    public ProductoResponse editarProducto(UUID authUserId, EditarProductoCommand command) {
         authorizationService.requireAdministrador(authUserId, "editar productos");
-        if (id == null || id <= 0) {
+        if (command.id() == null || command.id() <= 0) {
             throw new IllegalArgumentException("El ID del producto no es válido.");
         }
-        if (cambios == null) {
-            throw new IllegalArgumentException("Los datos de edición son obligatorios.");
-        }
 
-        Producto actual = productoRepositoryPort.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado con ID: " + id));
+        Producto actual = productoRepositoryPort.findById(command.id())
+                .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado con ID: " + command.id()));
+
         boolean hayCambios = false;
-        if (cambios.getNombre() != null) {
-            actual.setNombre(requerido(cambios.getNombre(), "El nombre es obligatorio."));
+        if (command.nombre() != null) {
+            actual.setNombre(requerido(command.nombre(), "El nombre es obligatorio."));
             hayCambios = true;
         }
-        if (cambios.getCategoria() != null) {
-            actual.setCategoria(requerido(cambios.getCategoria(), "La categoría es obligatoria."));
+        if (command.categoria() != null) {
+            actual.setCategoria(requerido(command.categoria(), "La categoría es obligatoria."));
             hayCambios = true;
         }
-        if (cambios.getPrecio() != null) {
-            if (cambios.getPrecio().compareTo(BigDecimal.ZERO) <= 0) {
+        if (command.precio() != null) {
+            if (command.precio().compareTo(BigDecimal.ZERO) <= 0) {
                 throw new IllegalArgumentException("El precio debe ser mayor que cero.");
             }
-            actual.setPrecio(cambios.getPrecio());
+            actual.setPrecio(command.precio());
             hayCambios = true;
         }
-        if (cambios.getUnidadMedida() != null) {
-            actual.setUnidadMedida(requerido(cambios.getUnidadMedida(), "La unidad de medida es obligatoria."));
+        if (command.unidadMedida() != null) {
+            actual.setUnidadMedida(requerido(command.unidadMedida(), "La unidad de medida es obligatoria."));
             hayCambios = true;
         }
         if (!hayCambios) {
@@ -105,25 +113,26 @@ public class ProductoService implements CrearProductoUseCase, ObtenerProductosUs
         }
 
         // ID, identificador y estado se toman del registro actual y nunca del cuerpo de la solicitud.
-        return productoRepositoryPort.update(actual, authUserId);
+        return ProductoResponse.from(productoRepositoryPort.update(actual, authUserId));
     }
 
     @Override
-    public Producto cambiarEstadoProducto(UUID authUserId, Long productoId, boolean activo) {
+    public ProductoResponse cambiarEstadoProducto(UUID authUserId, CambiarEstadoProductoCommand command) {
         authorizationService.requireAdministrador(authUserId, "activar o desactivar productos");
-        if (productoId == null || productoId <= 0) {
+        if (command.id() == null || command.id() <= 0) {
             throw new IllegalArgumentException("El ID del producto no es válido.");
         }
 
-        Producto producto = productoRepositoryPort.findById(productoId)
-                .orElseThrow(() -> new IllegalArgumentException("El producto no existe con ID: " + productoId));
+        Producto producto = productoRepositoryPort.findById(command.id())
+                .orElseThrow(() -> new IllegalArgumentException("El producto no existe con ID: " + command.id()));
 
-        producto.setActivo(activo);
-        return productoRepositoryPort.save(producto);
+        producto.setActivo(command.activo());
+        return ProductoResponse.from(productoRepositoryPort.save(producto));
     }
 
     @Override
-    public boolean tieneStockActivo(Long productoId) {
+    public boolean tieneStockActivo(UUID authUserId, Long productoId) {
+        authorizationService.requireAuthenticated(authUserId);
         if (productoId == null) {
             return false;
         }

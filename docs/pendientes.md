@@ -38,13 +38,13 @@ Este documento resume los puntos pendientes y el estado de la deuda técnica en 
 ### 2. Operación de Ventas en Tienda (HU-11 - Sprint 2)
 - [x] **Registro de Ventas en Backend (HU-11):**
   - Implementado caso de uso `RegistrarVentaUseCase` y servicio `VentaService`.
-  - Expuesto endpoint `POST /api/ventas` con validación de rol `ENCARGADO_TIENDA` asignado y `ADMINISTRADOR`.
+  - Expuesto endpoint `POST /api/tiendas/{id}/ventas` (id de la tienda en la URL) con validación de rol `ENCARGADO_TIENDA` asignado y `ADMINISTRADOR`.
   - Validación de existencia y estado activo de producto en catálogo y en inventario de tienda.
   - Validación y descuento transaccional automático de existencias en `Inventario`.
   - Registro de la transacción histórica de venta en PostgreSQL (tabla `ventas`).
   - Pruebas unitarias completas en `VentaServiceTest`.
 - [ ] **Conexión de Interfaz:**
-  - Conectar el formulario de `registrar_venta_tienda.html` con el endpoint `POST /api/ventas`.
+  - Conectar el formulario de `registrar_venta_tienda.html` con el endpoint `POST /api/tiendas/{id}/ventas`.
 
 ---
 
@@ -68,8 +68,8 @@ Este documento resume los puntos pendientes y el estado de la deuda técnica en 
 ---
 
 ### 5. Validaciones y Mejoras de HU-18 y HU-12 (Sprint 1)
-- [x] **Validación de entrada:** Agregada dependencia `spring-boot-starter-validation`, anotaciones `@NotNull`, `@Positive` (cantidad > 0) y `@NotBlank` (origen obligatorio) con `@Valid` en `IngresoMercanciaController` y manejador en `ApiExceptionHandler` para responder `400 Bad Request`.
-- [x] **Alineación de endpoint y constancia:** Implementado `POST /api/centros-distribucion/{id}/ingresos` (con `RegistrarIngresoRequest`), retornando `201 Created` con `IngresoMercanciaResponse` (con `stockTotalActualizado`), y retorno de constancia también en `POST /api/ingresos-mercancia`.
+- [x] **Validación de entrada:** Agregada dependencia `spring-boot-starter-validation`, anotaciones `@NotNull`, `@Positive` (cantidad > 0) y `@NotBlank` (origen obligatorio) con `@Valid` en `CentroDistribucionController` y manejador en `ApiExceptionHandler` para responder `400 Bad Request`.
+- [x] **Alineación de endpoint y constancia:** Implementado `POST /api/centros-distribucion/{id}/ingresos` (alias corto `POST /api/cd/{id}/ingresos`) con el record `RegistrarIngresoMercanciaRequest` (el id del CD viaja en la URL, no en el body), retornando `201 Created` con `IngresoMercanciaResponse` (con `stockTotalActualizado`). La ruta plana `POST /api/ingresos-mercancia`, el DTO muerto `RegistrarIngresoRequest` y `IngresoMercanciaController` fueron eliminados en la consolidación Fix 38.
 - [x] **Validación de capacidad máxima de CD:** Verificación de aforo disponible en `IngresoMercanciaService` antes de persistir existencias.
 - [x] **Pruebas unitarias completas de Inventario (HU-12 y HU-18):** Implementación de `InventarioServiceTest` (8 casos de prueba) y ampliación de `IngresoMercanciaServiceTest` (7 casos de prueba).
 

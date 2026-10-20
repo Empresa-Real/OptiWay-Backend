@@ -13,7 +13,8 @@ docs/dto/
 │   ├── crear-usuario.json
 │   ├── crear-tienda.json
 │   ├── crear-centro-distribucion.json
-│   └── registrar-ingreso-mercancia.json
+│   ├── registrar-ingreso-mercancia.json
+│   └── registrar-venta.json
 └── response/
     ├── crear-usuario-201.json
     ├── listar-usuarios-200.json
@@ -23,7 +24,8 @@ docs/dto/
     ├── crear-centro-distribucion-201.json
     ├── consultar-inventario-200.json
     ├── consultar-inventario-403.json
-    └── registrar-ingreso-mercancia-200.json
+    ├── registrar-ingreso-mercancia-200.json
+    └── registrar-venta-201.json
 ```
 
 ---
@@ -257,15 +259,16 @@ export interface ConsultarInventarioParams {
 
 ---
 
-## 5. HU-18: Ingreso de Mercancía a CD (`/api/ingresos-mercancia`)
+## 5. HU-18: Ingreso de Mercancía a CD (`/api/centros-distribucion/{id}/ingresos`)
 
-### Request Registrar Ingreso (`POST /api/ingresos-mercancia`)
+### Request Registrar Ingreso (`POST /api/centros-distribucion/{id}/ingresos`)
+* **Alias corto:** `POST /api/cd/{id}/ingresos` (misma operación y respuesta)
+* **Parámetro de ruta:** `id` — centro de distribución receptor (no viaja en el body)
 * **Archivo:** [`docs/dto/request/registrar-ingreso-mercancia.json`](./request/registrar-ingreso-mercancia.json)
 * **Headers:** `Authorization: Bearer <jwt_token>` (Encargado de CD o Administrador)
 
 ```json
 {
-  "centroDistribucionId": 1,
   "productoId": 10,
   "cantidad": 250,
   "origen": "Proveedor Alimentos del Valle S.A."
@@ -288,7 +291,6 @@ export interface ConsultarInventarioParams {
 ### TypeScript Interfaces:
 ```typescript
 export interface RegistrarIngresoMercanciaRequest {
-  centroDistribucionId: number;
   productoId: number;
   cantidad: number;
   origen: string;
@@ -300,6 +302,58 @@ export interface RegistrarIngresoMercanciaResponse {
   productoId: number;
   cantidad: number;
   origen: string;
+}
+```
+
+---
+
+## 6. HU-11: Venta en Tienda (`/api/tiendas/{id}/ventas`)
+
+### Request Registrar Venta (`POST /api/tiendas/{id}/ventas`)
+* **Parámetro de ruta:** `id` — tienda donde ocurre la venta (no viaja en el body)
+* **Archivo:** [`docs/dto/request/registrar-venta.json`](./request/registrar-venta.json)
+* **Headers:** `Authorization: Bearer <jwt_token>` (Encargado de la tienda o Administrador)
+
+```json
+{
+  "productoId": 5,
+  "cantidad": 3
+}
+```
+
+El campo `fechaHora` es opcional; si se omite, la venta se registra con la hora del servidor.
+
+### Response 201 Created
+* **Archivo:** [`docs/dto/response/registrar-venta-201.json`](./response/registrar-venta-201.json)
+
+```json
+{
+  "id": 1,
+  "tiendaId": 1,
+  "productoId": 5,
+  "cantidad": 3,
+  "fechaHora": "2026-10-18T10:30:00"
+}
+```
+
+### Errores frecuentes
+* `403 Forbidden`: el encargado autenticado no está asignado a esa tienda.
+* `400 Bad Request`: producto inactivo, sin existencias en la tienda de la venta o con stock insuficiente (`StockInsuficienteException`).
+
+### TypeScript Interfaces:
+```typescript
+export interface RegistrarVentaRequest {
+  productoId: number;
+  cantidad: number;
+  fechaHora?: string; // ISO-8601; si se omite, usa la hora del servidor
+}
+
+export interface VentaResponse {
+  id: number;
+  tiendaId: number;
+  productoId: number;
+  cantidad: number;
+  fechaHora: string;
 }
 ```
 

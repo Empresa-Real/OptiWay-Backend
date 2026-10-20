@@ -2,9 +2,9 @@ package com.example.optiway.application.port.in;
 
 import java.util.UUID;
 
-import com.example.optiway.domain.model.IngresoMercancia;
+import com.example.optiway.application.port.in.dto.IngresoMercanciaResponse;
 
 public interface RegistrarIngresoMercanciaUseCase {
 
-    IngresoMercancia registrarIngreso(RegistrarIngresoCommand command, UUID authUserId);
+    IngresoMercanciaResponse registrarIngreso(UUID authUserId, RegistrarIngresoCommand command);
 }

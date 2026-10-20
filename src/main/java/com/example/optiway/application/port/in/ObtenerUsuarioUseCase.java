@@ -2,10 +2,10 @@ package com.example.optiway.application.port.in;
 import java.util.Optional;
 import java.util.UUID;
 
-import com.example.optiway.domain.model.Usuario;
+import com.example.optiway.application.port.in.dto.UsuarioResponse;
 
 public interface ObtenerUsuarioUseCase {
-    Optional<Usuario> obtenerUsuario(Long id);
+    Optional<UsuarioResponse> obtenerUsuarioPorId(UUID authUserId, Long id);
 
-    Optional<Usuario> obtenerUsuarioPorAuthId(UUID authUserId);
+    Optional<UsuarioResponse> obtenerUsuarioPorAuthId(UUID authUserId);
 }

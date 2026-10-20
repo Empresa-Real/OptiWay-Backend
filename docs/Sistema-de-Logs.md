@@ -138,7 +138,7 @@ logging.level.org.springframework.web.filter.CommonsRequestLoggingFilter=DEBUG
 
 *Resultado en consola:*
 ```text
-DEBUG [nio-8080-exec-2] o.s.w.f.CommonsRequestLoggingFilter : Before request [POST /api/ingresos-mercancia, client=127.0.0.1, payload={"centroDistribucionId":1,"productoId":3,"cantidad":50}]
+DEBUG [nio-8080-exec-2] o.s.w.f.CommonsRequestLoggingFilter : Before request [POST /api/centros-distribucion/1/ingresos, client=127.0.0.1, payload={"productoId":3,"cantidad":50}]
 ```
 
 ---
