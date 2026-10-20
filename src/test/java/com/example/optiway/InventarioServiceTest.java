@@ -19,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.example.optiway.application.port.in.ObtenerInventarioCommand;
 import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
 import com.example.optiway.application.port.out.InventarioRepositoryPort;
 import com.example.optiway.application.port.out.ProductoRepositoryPort;
@@ -89,8 +90,8 @@ class InventarioServiceTest {
         when(inventarioRepositoryPort.findByTiendaId(tiendaId)).thenReturn(List.of(inv1));
         when(productoRepositoryPort.findAllById(List.of(1L))).thenReturn(List.of(prod1));
 
-        List<InventarioResponse> resultado = inventarioService.consultarInventario(
-                authUserId, tiendaId, null, null, null, null);
+        List<InventarioResponse> resultado = inventarioService.obtenerInventario(
+                authUserId, new ObtenerInventarioCommand(tiendaId, null, null, null, null));
 
         assertNotNull(resultado);
         assertEquals(1, resultado.size());
@@ -130,8 +131,8 @@ class InventarioServiceTest {
         when(inventarioRepositoryPort.findByTiendaId(tiendaId)).thenReturn(List.of(inv1, inv2));
         when(productoRepositoryPort.findAllById(List.of(1L, 2L))).thenReturn(List.of(prod1, prod2));
 
-        List<InventarioResponse> resultado = inventarioService.consultarInventario(
-                authUserId, tiendaId, null, "arroz", "Granos", null);
+        List<InventarioResponse> resultado = inventarioService.obtenerInventario(
+                authUserId, new ObtenerInventarioCommand(tiendaId, null, "arroz", "Granos", null));
 
         assertEquals(1, resultado.size());
         assertEquals("Arroz Diana", resultado.get(0).nombreProducto());
@@ -161,8 +162,8 @@ class InventarioServiceTest {
         when(inventarioRepositoryPort.findByTiendaIdAndProductoId(tiendaId, productoId)).thenReturn(Optional.of(inv1));
         when(productoRepositoryPort.findAllById(List.of(productoId))).thenReturn(List.of(prod1));
 
-        List<InventarioResponse> resultado = inventarioService.consultarInventario(
-                authUserId, tiendaId, null, null, null, productoId);
+        List<InventarioResponse> resultado = inventarioService.obtenerInventario(
+                authUserId, new ObtenerInventarioCommand(tiendaId, null, null, null, productoId));
 
         assertEquals(1, resultado.size());
         verify(inventarioRepositoryPort).findByTiendaIdAndProductoId(tiendaId, productoId);
@@ -176,7 +177,7 @@ class InventarioServiceTest {
 
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
-                () -> inventarioService.consultarInventario(authUserId, 99L, null, null, null, null)
+                () -> inventarioService.obtenerInventario(authUserId, new ObtenerInventarioCommand(99L, null, null, null, null))
         );
 
         assertEquals("La tienda no existe.", ex.getMessage());
@@ -197,7 +198,7 @@ class InventarioServiceTest {
 
         assertThrows(
                 AccesoDenegadoException.class,
-                () -> inventarioService.consultarInventario(authUserId, tiendaId, null, null, null, null)
+                () -> inventarioService.obtenerInventario(authUserId, new ObtenerInventarioCommand(tiendaId, null, null, null, null))
         );
 
         verifyNoInteractions(productoRepositoryPort, inventarioRepositoryPort);
@@ -225,8 +226,8 @@ class InventarioServiceTest {
         when(inventarioRepositoryPort.findByCentroDistribucionId(cdId)).thenReturn(List.of(invCD));
         when(productoRepositoryPort.findAllById(List.of(3L))).thenReturn(List.of(prod3));
 
-        List<InventarioResponse> resultado = inventarioService.consultarInventario(
-                authUserId, null, cdId, null, null, null);
+        List<InventarioResponse> resultado = inventarioService.obtenerInventario(
+                authUserId, new ObtenerInventarioCommand(null, cdId, null, null, null));
 
         assertNotNull(resultado);
         assertEquals(1, resultado.size());
@@ -241,7 +242,7 @@ class InventarioServiceTest {
 
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
-                () -> inventarioService.consultarInventario(authUserId, null, 88L, null, null, null)
+                () -> inventarioService.obtenerInventario(authUserId, new ObtenerInventarioCommand(null, 88L, null, null, null))
         );
 
         assertEquals("El centro de distribución no existe", ex.getMessage());
@@ -260,8 +261,8 @@ class InventarioServiceTest {
         when(usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)).thenReturn(Optional.of(usuario));
         when(inventarioRepositoryPort.findByTiendaId(tiendaId)).thenReturn(List.of());
 
-        List<InventarioResponse> resultado = inventarioService.consultarInventario(
-                authUserId, tiendaId, null, null, null, null);
+        List<InventarioResponse> resultado = inventarioService.obtenerInventario(
+                authUserId, new ObtenerInventarioCommand(tiendaId, null, null, null, null));
 
         assertTrue(resultado.isEmpty());
         verifyNoInteractions(productoRepositoryPort);

@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.example.optiway.application.port.in.RegistrarIngresoCommand;
+import com.example.optiway.application.port.in.dto.IngresoMercanciaResponse;
 import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
 import com.example.optiway.application.port.out.IngresoMercanciaRepositoryPort;
 import com.example.optiway.application.port.out.InventarioRepositoryPort;
@@ -87,8 +88,8 @@ class IngresoMercanciaServiceTest {
         when(ingresoRepositoryPort.guardar(any(IngresoMercancia.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        IngresoMercancia resultado = service.registrarIngreso(
-                new RegistrarIngresoCommand(centroId, productoId, cantidad, origen), authUserId);
+        IngresoMercanciaResponse resultado = service.registrarIngreso(
+                authUserId, new RegistrarIngresoCommand(centroId, productoId, cantidad, origen));
 
         ArgumentCaptor<Inventario> invCaptor = ArgumentCaptor.forClass(Inventario.class);
         verify(inventarioRepositoryPort).save(invCaptor.capture());
@@ -100,7 +101,7 @@ class IngresoMercanciaServiceTest {
         assertEquals(origen, ingCaptor.getValue().getOrigen());
 
         assertNotNull(resultado);
-        assertEquals(cantidad, resultado.getCantidad());
+        assertEquals(cantidad, resultado.cantidad());
     }
 
     @Test
@@ -123,8 +124,8 @@ class IngresoMercanciaServiceTest {
         when(ingresoRepositoryPort.guardar(any(IngresoMercancia.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        IngresoMercancia resultado = service.registrarIngreso(
-                new RegistrarIngresoCommand(centroId, productoId, cantidad, origen), authUserId);
+        IngresoMercanciaResponse resultado = service.registrarIngreso(
+                authUserId, new RegistrarIngresoCommand(centroId, productoId, cantidad, origen));
 
         ArgumentCaptor<Inventario> invCaptor = ArgumentCaptor.forClass(Inventario.class);
         verify(inventarioRepositoryPort).save(invCaptor.capture());
@@ -133,7 +134,7 @@ class IngresoMercanciaServiceTest {
         assertEquals(productoId, invCaptor.getValue().getProductoId());
 
         assertNotNull(resultado);
-        assertEquals(cantidad, resultado.getCantidad());
+        assertEquals(cantidad, resultado.cantidad());
     }
 
     @Test
@@ -160,8 +161,8 @@ class IngresoMercanciaServiceTest {
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
                 () -> service.registrarIngreso(
-                        new RegistrarIngresoCommand(centroId, productoId, 20, "Proveedor"),
-                        authUserId
+                        authUserId,
+                        new RegistrarIngresoCommand(centroId, productoId, 20, "Proveedor")
                 )
         );
 
@@ -178,8 +179,8 @@ class IngresoMercanciaServiceTest {
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
                 () -> service.registrarIngreso(
-                        new RegistrarIngresoCommand(99L, 1L, 10, "Proveedor"),
-                        authUserId
+                        authUserId,
+                        new RegistrarIngresoCommand(99L, 1L, 10, "Proveedor")
                 )
         );
 
@@ -202,8 +203,8 @@ class IngresoMercanciaServiceTest {
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
                 () -> service.registrarIngreso(
-                        new RegistrarIngresoCommand(centroId, 99L, 10, "Proveedor"),
-                        authUserId
+                        authUserId,
+                        new RegistrarIngresoCommand(centroId, 99L, 10, "Proveedor")
                 )
         );
 
@@ -218,8 +219,8 @@ class IngresoMercanciaServiceTest {
         assertThrows(
                 IllegalArgumentException.class,
                 () -> service.registrarIngreso(
-                        new RegistrarIngresoCommand(1L, 1L, 0, "Proveedor"),
-                        authUserId
+                        authUserId,
+                        new RegistrarIngresoCommand(1L, 1L, 0, "Proveedor")
                 )
         );
 
@@ -233,8 +234,8 @@ class IngresoMercanciaServiceTest {
         assertThrows(
                 IllegalArgumentException.class,
                 () -> service.registrarIngreso(
-                        new RegistrarIngresoCommand(1L, 1L, -10, "Proveedor"),
-                        authUserId
+                        authUserId,
+                        new RegistrarIngresoCommand(1L, 1L, -10, "Proveedor")
                 )
         );
 

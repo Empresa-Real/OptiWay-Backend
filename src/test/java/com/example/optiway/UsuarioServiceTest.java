@@ -58,7 +58,7 @@ class UsuarioServiceTest {
             when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(adminUsuario));
             when(usuarioRepositoryPort.obtenerPorId(usuarioId)).thenReturn(Optional.of(usuarioAEliminar));
 
-            usuarioService.eliminarUsuario(usuarioId, adminAuthId);
+            usuarioService.eliminarUsuario(adminAuthId, usuarioId);
 
             // Debe eliminar en Supabase Auth y en el repositorio local
             verify(authPort, times(1)).eliminarUsuarioAuth(targetAuthId);
@@ -74,7 +74,7 @@ class UsuarioServiceTest {
             when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(adminUsuario));
             when(usuarioRepositoryPort.obtenerPorId(usuarioId)).thenReturn(Optional.of(usuarioSinAuth));
 
-            usuarioService.eliminarUsuario(usuarioId, adminAuthId);
+            usuarioService.eliminarUsuario(adminAuthId, usuarioId);
 
             verify(authPort, never()).eliminarUsuarioAuth(any());
             verify(usuarioRepositoryPort, times(1)).eliminar(usuarioId);
@@ -89,7 +89,7 @@ class UsuarioServiceTest {
             when(usuarioRepositoryPort.obtenerPorAuthUserId(planificadorAuthId)).thenReturn(Optional.of(planificador));
 
             AccesoDenegadoException exception = assertThrows(AccesoDenegadoException.class, () ->
-                    usuarioService.eliminarUsuario(2L, planificadorAuthId)
+                    usuarioService.eliminarUsuario(planificadorAuthId, 2L)
             );
 
             assertEquals("Solo un administrador puede eliminar usuarios", exception.getMessage());
@@ -101,7 +101,7 @@ class UsuarioServiceTest {
         @DisplayName("Rechazar eliminación si el token es nulo o usuario no registrado")
         void eliminarUsuario_adminAuthIdNulo_lanzaAccesoDenegado() {
             assertThrows(AccesoDenegadoException.class, () ->
-                    usuarioService.eliminarUsuario(2L, null)
+                    usuarioService.eliminarUsuario(null, 2L)
             );
             verify(usuarioRepositoryPort, never()).eliminar(any());
         }
@@ -113,7 +113,7 @@ class UsuarioServiceTest {
             when(usuarioRepositoryPort.obtenerPorId(1L)).thenReturn(Optional.of(adminUsuario));
 
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-                    usuarioService.eliminarUsuario(1L, adminAuthId)
+                    usuarioService.eliminarUsuario(adminAuthId, 1L)
             );
 
             assertEquals("Un administrador no puede eliminarse a sí mismo", exception.getMessage());
@@ -132,7 +132,7 @@ class UsuarioServiceTest {
             when(usuarioRepositoryPort.obtenerPorId(otroAdminId)).thenReturn(Optional.of(otroAdmin));
 
             AccesoDenegadoException exception = assertThrows(AccesoDenegadoException.class, () ->
-                    usuarioService.eliminarUsuario(otroAdminId, adminAuthId)
+                    usuarioService.eliminarUsuario(adminAuthId, otroAdminId)
             );
 
             assertEquals("No está permitido eliminar a otro usuario con rol ADMINISTRADOR", exception.getMessage());
@@ -148,7 +148,7 @@ class UsuarioServiceTest {
             when(usuarioRepositoryPort.obtenerPorId(idInexistente)).thenReturn(Optional.empty());
 
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-                    usuarioService.eliminarUsuario(idInexistente, adminAuthId)
+                    usuarioService.eliminarUsuario(adminAuthId, idInexistente)
             );
 
             assertEquals("Usuario no encontrado con ID: " + idInexistente, exception.getMessage());

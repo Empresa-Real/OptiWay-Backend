@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import com.example.optiway.application.port.in.RegistrarVentaCommand;
+import com.example.optiway.application.port.in.dto.VentaResponse;
 import com.example.optiway.application.port.out.InventarioRepositoryPort;
 import com.example.optiway.application.port.out.ProductoRepositoryPort;
 import com.example.optiway.application.port.out.TiendaRepositoryPort;
@@ -88,12 +89,12 @@ class VentaServiceTest {
 
         RegistrarVentaCommand command = new RegistrarVentaCommand(tiendaId, productoId, 3, LocalDateTime.now());
 
-        Venta resultado = ventaService.registrarVenta(command, authUserId);
+        VentaResponse resultado = ventaService.registrarVenta(authUserId, command);
 
         assertNotNull(resultado);
-        assertEquals(tiendaId, resultado.getTiendaId());
-        assertEquals(productoId, resultado.getProductoId());
-        assertEquals(3, resultado.getCantidad());
+        assertEquals(tiendaId, resultado.tiendaId());
+        assertEquals(productoId, resultado.productoId());
+        assertEquals(3, resultado.cantidad());
 
         // Verificar que el stock fue descontado (15 - 3 = 12)
         ArgumentCaptor<Inventario> captor = ArgumentCaptor.forClass(Inventario.class);
@@ -116,7 +117,7 @@ class VentaServiceTest {
 
         RegistrarVentaCommand command = new RegistrarVentaCommand(tiendaId, productoId, 5, LocalDateTime.now());
 
-        assertThrows(StockInsuficienteException.class, () -> ventaService.registrarVenta(command, null));
+        assertThrows(StockInsuficienteException.class, () -> ventaService.registrarVenta(null, command));
         verify(inventarioRepositoryPort, never()).save(any());
         verify(ventaRepositoryPort, never()).guardar(any());
     }
@@ -134,7 +135,7 @@ class VentaServiceTest {
 
         RegistrarVentaCommand command = new RegistrarVentaCommand(tiendaId, productoId, 1, LocalDateTime.now());
 
-        assertThrows(IllegalArgumentException.class, () -> ventaService.registrarVenta(command, null));
+        assertThrows(IllegalArgumentException.class, () -> ventaService.registrarVenta(null, command));
         verify(inventarioRepositoryPort, never()).save(any());
     }
 
@@ -152,7 +153,7 @@ class VentaServiceTest {
 
         RegistrarVentaCommand command = new RegistrarVentaCommand(tiendaId, productoId, 1, LocalDateTime.now());
 
-        assertThrows(AccesoDenegadoException.class, () -> ventaService.registrarVenta(command, authUserId));
+        assertThrows(AccesoDenegadoException.class, () -> ventaService.registrarVenta(authUserId, command));
         verify(ventaRepositoryPort, never()).guardar(any());
     }
 }
