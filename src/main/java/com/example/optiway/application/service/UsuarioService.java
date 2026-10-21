@@ -6,6 +6,8 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import com.example.optiway.application.exception.AccesoDenegadoException;
+import com.example.optiway.application.exception.UsuarioDuplicadoException;
 import com.example.optiway.application.port.in.ActualizarRolCommand;
 import com.example.optiway.application.port.in.ActualizarRolUsuarioUseCase;
 import com.example.optiway.application.port.in.CrearUsuarioCommand;
@@ -18,31 +20,36 @@ import com.example.optiway.application.port.out.AuthPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.domain.model.Rol;
 import com.example.optiway.domain.model.Usuario;
-import com.example.optiway.infrastructure.security.AuthorizationService;
+import com.example.optiway.infrastructure.adapter.out.auth.SupabaseAuthException;
+import com.example.optiway.application.port.out.AuthorizationPort;
+import com.example.optiway.infrastructure.security.AccionAutorizada;
 
 @Service
 public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCase,
     ObtenerUsuarioUseCase, EliminarUsuarioUseCase, ActualizarRolUsuarioUseCase {
     private final UsuarioRepositoryPort usuarioRepositoryPort;
     private final AuthPort authPort;
-    private final AuthorizationService authorizationService;
+    private final AuthorizationPort authorizationService;
+    private final AuthErrorMapper authErrorMapper;
 
     public UsuarioService(
             UsuarioRepositoryPort usuarioRepositoryPort,
             AuthPort authPort,
-            AuthorizationService authorizationService) {
+            AuthorizationPort authorizationService,
+            AuthErrorMapper authErrorMapper) {
         this.usuarioRepositoryPort = usuarioRepositoryPort;
         this.authPort = authPort;
         this.authorizationService = authorizationService;
+        this.authErrorMapper = authErrorMapper;
     }
 
     @Override
     public UsuarioResponse crearUsuario(UUID authUserId, CrearUsuarioCommand command) {
-        authorizationService.requireAdministrador(authUserId, "crear usuarios");
+        authorizationService.requireAdministrador(authUserId, AccionAutorizada.CREAR_USUARIO);
 
         String nombre = command.nombre().trim();
         String email = command.email().trim().toLowerCase();
-        Rol rol = Rol.valueOf(command.rol().toUpperCase());
+        Rol rol = command.rol();
 
         if (usuarioRepositoryPort.existePorEmail(email)) {
             throw new UsuarioDuplicadoException("El correo ya está registrado");
@@ -53,13 +60,13 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
         usuario.setEmail(email);
         usuario.setRol(rol);
         usuario.setCreadoPor(authUserId);
-        usuario.setAuthUserId(authPort.invitar(email));
+        usuario.setAuthUserId(invitarEnAuth(email));
         return UsuarioResponse.from(usuarioRepositoryPort.guardar(usuario));
     }
 
     @Override
     public List<UsuarioResponse> obtenerUsuarios(UUID authUserId) {
-        authorizationService.requireAdministrador(authUserId, "consultar la lista de usuarios");
+        authorizationService.requireAdministrador(authUserId, AccionAutorizada.LISTAR_USUARIOS);
         return usuarioRepositoryPort.obtenerTodos().stream()
                 .map(UsuarioResponse::from)
                 .toList();
@@ -67,18 +74,32 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
 
     @Override
     public Optional<UsuarioResponse> obtenerUsuarioPorId(UUID authUserId, Long id) {
-        authorizationService.requireAuthenticated(authUserId);
-        return usuarioRepositoryPort.obtenerPorId(id).map(UsuarioResponse::from);
+        Usuario solicitante = authorizationService.requireAuthenticated(authUserId);
+
+        Usuario objetivo = usuarioRepositoryPort.obtenerPorId(id).orElse(null);
+        if (objetivo == null) {
+            return Optional.empty();
+        }
+
+        // Sólo un administrador puede consultar el detalle de otros usuarios;
+        // cualquier usuario autenticado puede consultar el suyo propio.
+        boolean esPropio = solicitante.getId() != null && solicitante.getId().equals(objetivo.getId());
+        if (!esPropio && !solicitante.esAdministrador()) {
+            throw new AccesoDenegadoException("No tiene permisos para consultar el detalle de otro usuario");
+        }
+
+        return Optional.of(UsuarioResponse.from(objetivo));
     }
 
     @Override
     public Optional<UsuarioResponse> obtenerUsuarioPorAuthId(UUID authUserId) {
-        return usuarioRepositoryPort.obtenerPorAuthUserId(authUserId).map(UsuarioResponse::from);
+        Usuario solicitante = authorizationService.requireAuthenticated(authUserId);
+        return usuarioRepositoryPort.obtenerPorAuthUserId(solicitante.getAuthUserId()).map(UsuarioResponse::from);
     }
 
     @Override
     public void eliminarUsuario(UUID authUserId, Long id) {
-        authorizationService.requireAdministrador(authUserId, "eliminar usuarios");
+        authorizationService.requireAdministrador(authUserId, AccionAutorizada.ELIMINAR_USUARIO);
         Usuario usuarioAEliminar = usuarioRepositoryPort.obtenerPorId(id)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con ID: " + id));
 
@@ -91,20 +112,47 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
         }
 
         if (usuarioAEliminar.getAuthUserId() != null) {
-            authPort.eliminarUsuarioAuth(usuarioAEliminar.getAuthUserId());
+            try {
+                authPort.eliminarUsuarioAuth(usuarioAEliminar.getAuthUserId());
+            } catch (SupabaseAuthException exception) {
+                throw authErrorMapper.mapear(exception);
+            }
         }
 
         usuarioRepositoryPort.eliminar(id);
     }
 
+    /**
+     * Invita al usuario en Supabase Auth traduciendo cualquier fallo técnico del
+     * proveedor a un mensaje de negocio (la traducción vive en la aplicación).
+     */
+    private UUID invitarEnAuth(String email) {
+        try {
+            return authPort.invitar(email);
+        } catch (SupabaseAuthException exception) {
+            throw authErrorMapper.mapear(exception);
+        }
+    }
+
     @Override
     public UsuarioResponse actualizarRol(UUID authUserId, ActualizarRolCommand command) {
-        authorizationService.requireAdministrador(authUserId, "actualizar roles de usuario");
+        authorizationService.requireAdministrador(authUserId, AccionAutorizada.ACTUALIZAR_ROL);
 
         Usuario usuario = usuarioRepositoryPort.obtenerPorId(command.usuarioId())
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con ID: " + command.usuarioId()));
 
-        Rol nuevoRol = Rol.valueOf(command.nuevoRol().toUpperCase());
+        Rol nuevoRol = command.nuevoRol();
+
+        if (usuario.esAdministrador()) {
+            throw new AccesoDenegadoException(
+                    "No está permitido cambiar el rol de un usuario con rol ADMINISTRADOR");
+        }
+
+        if (nuevoRol == Rol.ADMINISTRADOR) {
+            throw new AccesoDenegadoException(
+                    "No está permitido otorgar el rol ADMINISTRADOR");
+        }
+
         usuario.setRol(nuevoRol);
         return UsuarioResponse.from(usuarioRepositoryPort.guardar(usuario));
     }

@@ -1,4 +1,4 @@
-package com.example.optiway.application.service;
+package com.example.optiway.application.exception;
 
 public class UsuarioDuplicadoException extends RuntimeException {
 

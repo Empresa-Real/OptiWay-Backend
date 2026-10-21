@@ -12,7 +12,6 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
 import com.example.optiway.application.port.out.AuthPort;
-import com.example.optiway.application.service.InvitacionAuthException;
 
 @Component
 public class SupabaseAuthAdapter implements AuthPort {
@@ -22,7 +21,6 @@ public class SupabaseAuthAdapter implements AuthPort {
     private final RestClient restClient;
     private final String serviceRoleKey;
     private final String inviteRedirectUrl;
-    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
 
     public SupabaseAuthAdapter(
             @Value("${supabase.url}") String supabaseUrl,
@@ -38,7 +36,8 @@ public class SupabaseAuthAdapter implements AuthPort {
     @Override
     public UUID invitar(String email) {
         if (serviceRoleKey.isBlank()) {
-            throw new InvitacionAuthException("Falta configurar SUPABASE_SERVICE_ROLE_KEY");
+            throw new SupabaseAuthException(
+                    "Falta configurar SUPABASE_SERVICE_ROLE_KEY", null, null);
         }
 
         try {
@@ -53,12 +52,14 @@ public class SupabaseAuthAdapter implements AuthPort {
                     .body(AuthUserResponse.class);
 
             if (response == null || response.id() == null) {
-                throw new InvitacionAuthException("Supabase no devolvio el usuario invitado");
+                throw new SupabaseAuthException(
+                        "Supabase no devolvio el usuario invitado", null, null);
             }
             return response.id();
         } catch (RestClientResponseException exception) {
             // Si falló por límite de correos (429) o porque ya estaba registrado (422),
-            // verificar si el usuario ya existe en Supabase Auth para reutilizar su UUID
+            // verificar si el usuario ya existe en Supabase Auth para reutilizar su UUID.
+            // Este conocimiento del proveedor (qué códigos implican "ya existe") reside aquí.
             UUID usuarioExistenteId = buscarUsuarioPorEmailEnSupabase(email);
             if (usuarioExistenteId != null) {
                 log.info("Usuario {} ya existe en Supabase Auth con ID {}. Reutilizando cuenta sin requerir nuevo correo.", email, usuarioExistenteId);
@@ -67,32 +68,14 @@ public class SupabaseAuthAdapter implements AuthPort {
 
             String errorBody = exception.getResponseBodyAsString();
             log.error("Error al invitar usuario {} en Supabase [HTTP {}]: {}", email, exception.getStatusCode(), errorBody);
-
-            int status = exception.getStatusCode().value();
-            String mensajeEspanol;
-            if (status == 429 || (errorBody != null && errorBody.contains("over_email_send_rate_limit"))) {
-                mensajeEspanol = "Se ha superado el límite de correos de invitación por hora de Supabase Auth. Por favor espera unos minutos antes de registrar otro usuario.";
-            } else if (status == 422 || (errorBody != null && (errorBody.contains("email_address_invalid") || errorBody.contains("invalid email")))) {
-                mensajeEspanol = "El correo electrónico no tiene un formato válido o fue rechazado por el proveedor de autenticación.";
-            } else {
-                mensajeEspanol = "No fue posible conectar con el servicio de autenticación. Intenta nuevamente.";
-            }
-
-            throw new InvitacionAuthException(mensajeEspanol, status, null);
+            throw new SupabaseAuthException(
+                    "Error de Supabase Auth al invitar usuario",
+                    exception.getStatusCode().value(),
+                    errorBody);
         } catch (RuntimeException exception) {
             log.error("Error inesperado al invitar usuario en Supabase: ", exception);
-            throw new InvitacionAuthException("No se pudo invitar al usuario por correo. Intenta nuevamente.");
-        }
-    }
-
-    private Object parseJsonOrRaw(String errorBody) {
-        if (errorBody == null || errorBody.isBlank()) {
-            return null;
-        }
-        try {
-            return objectMapper.readValue(errorBody, Object.class);
-        } catch (Exception e) {
-            return errorBody;
+            throw new SupabaseAuthException(
+                    "Error inesperado al invitar usuario en Supabase Auth", null, null);
         }
     }
 
@@ -129,7 +112,8 @@ public class SupabaseAuthAdapter implements AuthPort {
             return;
         }
         if (serviceRoleKey == null || serviceRoleKey.isBlank()) {
-            throw new InvitacionAuthException("Falta configurar SUPABASE_SERVICE_ROLE_KEY");
+            throw new SupabaseAuthException(
+                    "Falta configurar SUPABASE_SERVICE_ROLE_KEY", null, null);
         }
 
         try {
@@ -146,10 +130,14 @@ public class SupabaseAuthAdapter implements AuthPort {
         } catch (RestClientResponseException exception) {
             String errorBody = exception.getResponseBodyAsString();
             log.error("Error al eliminar usuario {} en Supabase [HTTP {}]: {}", authUserId, exception.getStatusCode(), errorBody);
-            throw new InvitacionAuthException("No se pudo eliminar el usuario del servicio de autenticación.");
+            throw new SupabaseAuthException(
+                    "Error de Supabase Auth al eliminar usuario",
+                    exception.getStatusCode().value(),
+                    errorBody);
         } catch (RuntimeException exception) {
             log.error("Error inesperado al eliminar usuario {} en Supabase: ", authUserId, exception);
-            throw new InvitacionAuthException("No se pudo eliminar el usuario debido a un error inesperado.");
+            throw new SupabaseAuthException(
+                    "Error inesperado al eliminar usuario en Supabase Auth", null, null);
         }
     }
 

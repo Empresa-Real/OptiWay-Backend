@@ -2,17 +2,19 @@ package com.example.optiway.infrastructure.adapter.in.rest;
 
 import java.util.Objects;
 
-import com.example.optiway.application.service.AccesoDenegadoException;
-import com.example.optiway.application.service.InvitacionAuthException;
-import com.example.optiway.application.service.ProductoDuplicadoException;
-import com.example.optiway.application.service.RecursoNoEncontradoException;
-import com.example.optiway.application.service.StockInsuficienteException;
-import com.example.optiway.application.service.UsuarioDuplicadoException;
+import com.example.optiway.application.exception.AccesoDenegadoException;
+import com.example.optiway.application.exception.InvitacionAuthException;
+import com.example.optiway.application.exception.ProductoDuplicadoException;
+import com.example.optiway.application.exception.RecursoNoEncontradoException;
+import com.example.optiway.application.exception.StockInsuficienteException;
+import com.example.optiway.application.exception.UsuarioDuplicadoException;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.ErrorResponse;
+import com.example.optiway.infrastructure.security.AutenticacionRequeridaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
@@ -33,12 +35,18 @@ public class ApiExceptionHandler {
     @ExceptionHandler(InvitacionAuthException.class)
     @ResponseStatus(HttpStatus.BAD_GATEWAY)
     public ErrorResponse invitacionFallida(InvitacionAuthException exception) {
-        return ErrorResponse.of(exception.getMessage(), exception.getStatusCode());
+        return ErrorResponse.of(exception.getError(), exception.getMessage(), null);
     }
 
     @ExceptionHandler(AccesoDenegadoException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     public ErrorResponse accesoDenegado(AccesoDenegadoException exception) {
+        return ErrorResponse.of(exception.getMessage());
+    }
+
+    @ExceptionHandler(AutenticacionRequeridaException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErrorResponse autenticacionRequerida(AutenticacionRequeridaException exception) {
         return ErrorResponse.of(exception.getMessage());
     }
 
@@ -98,6 +106,14 @@ public class ApiExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse mensajeNoLegible(HttpMessageNotReadableException exception) {
+        // Si el fallo es un valor no permitido para un tipo enum (p. ej. un rol
+        // inexistente), se informa con claridad en lugar del genérico de JSON.
+        if (exception.getCause() instanceof InvalidFormatException cause
+                && cause.getTargetType() != null && cause.getTargetType().isEnum()) {
+            return ErrorResponse.of("El valor '" + cause.getValue() + "' no es válido para "
+                    + cause.getPath().stream().map(ref -> ref.getFieldName()).filter(Objects::nonNull).findFirst().orElse("el campo")
+                    + ". Valores permitidos: " + java.util.Arrays.toString(cause.getTargetType().getEnumConstants()));
+        }
         return ErrorResponse.of("El cuerpo de la solicitud no tiene un formato JSON válido.");
     }
 

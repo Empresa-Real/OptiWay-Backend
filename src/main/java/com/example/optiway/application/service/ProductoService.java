@@ -1,5 +1,7 @@
 package com.example.optiway.application.service;
 
+import com.example.optiway.application.exception.ProductoDuplicadoException;
+import com.example.optiway.application.exception.RecursoNoEncontradoException;
 import com.example.optiway.application.port.in.CambiarEstadoProductoCommand;
 import com.example.optiway.application.port.in.CambiarEstadoProductoUseCase;
 import com.example.optiway.application.port.in.CrearProductoCommand;
@@ -13,7 +15,8 @@ import com.example.optiway.application.port.out.InventarioRepositoryPort;
 import com.example.optiway.application.port.out.ProductoRepositoryPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.domain.model.Producto;
-import com.example.optiway.infrastructure.security.AuthorizationService;
+import com.example.optiway.application.port.out.AuthorizationPort;
+import com.example.optiway.infrastructure.security.AccionAutorizada;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -27,12 +30,12 @@ public class ProductoService implements CrearProductoUseCase, ObtenerProductosUs
     private final ProductoRepositoryPort productoRepositoryPort;
     private final UsuarioRepositoryPort usuarioRepositoryPort;
     private final InventarioRepositoryPort inventarioRepositoryPort;
-    private final AuthorizationService authorizationService;
+    private final AuthorizationPort authorizationService;
 
     public ProductoService(ProductoRepositoryPort productoRepositoryPort,
                            UsuarioRepositoryPort usuarioRepositoryPort,
                            InventarioRepositoryPort inventarioRepositoryPort,
-                           AuthorizationService authorizationService) {
+                           AuthorizationPort authorizationService) {
         this.productoRepositoryPort = productoRepositoryPort;
         this.usuarioRepositoryPort = usuarioRepositoryPort;
         this.inventarioRepositoryPort = inventarioRepositoryPort;
@@ -41,7 +44,7 @@ public class ProductoService implements CrearProductoUseCase, ObtenerProductosUs
 
     @Override
     public ProductoResponse crearProducto(UUID authUserId, CrearProductoCommand command) {
-        authorizationService.requireAdministrador(authUserId, "crear productos");
+        authorizationService.requireGestionLogistica(authUserId, AccionAutorizada.CREAR_PRODUCTO);
 
         String identificador = requerido(command.identificador(), "El identificador es obligatorio.")
                 .toUpperCase(Locale.ROOT);
@@ -80,7 +83,7 @@ public class ProductoService implements CrearProductoUseCase, ObtenerProductosUs
 
     @Override
     public ProductoResponse editarProducto(UUID authUserId, EditarProductoCommand command) {
-        authorizationService.requireAdministrador(authUserId, "editar productos");
+        authorizationService.requireGestionLogistica(authUserId, AccionAutorizada.EDITAR_PRODUCTO);
         if (command.id() == null || command.id() <= 0) {
             throw new IllegalArgumentException("El ID del producto no es válido.");
         }
@@ -118,7 +121,7 @@ public class ProductoService implements CrearProductoUseCase, ObtenerProductosUs
 
     @Override
     public ProductoResponse cambiarEstadoProducto(UUID authUserId, CambiarEstadoProductoCommand command) {
-        authorizationService.requireAdministrador(authUserId, "activar o desactivar productos");
+        authorizationService.requireGestionLogistica(authUserId, AccionAutorizada.CAMBIAR_ESTADO_PRODUCTO);
         if (command.id() == null || command.id() <= 0) {
             throw new IllegalArgumentException("El ID del producto no es válido.");
         }

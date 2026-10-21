@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import com.example.optiway.application.exception.RecursoNoEncontradoException;
 import com.example.optiway.application.port.in.AsignarEncargadoCDUseCase;
 import com.example.optiway.application.port.in.CrearCentroDistribucionCommand;
 import com.example.optiway.application.port.in.CrearCentroDistribucionUseCase;
@@ -14,19 +15,20 @@ import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.domain.model.CentroDistribucion;
 import com.example.optiway.domain.model.Usuario;
-import com.example.optiway.infrastructure.security.AuthorizationService;
+import com.example.optiway.application.port.out.AuthorizationPort;
+import com.example.optiway.infrastructure.security.AccionAutorizada;
 
 @Service
 public class CentroDistribucionService implements CrearCentroDistribucionUseCase, ObtenerCentrosDistribucionUseCase, AsignarEncargadoCDUseCase {
 
     private final CentroDistribucionRepositoryPort centroDistribucionRepositoryPort;
     private final UsuarioRepositoryPort usuarioRepositoryPort;
-    private final AuthorizationService authorizationService;
+    private final AuthorizationPort authorizationService;
 
     public CentroDistribucionService(
             CentroDistribucionRepositoryPort centroDistribucionRepositoryPort,
             UsuarioRepositoryPort usuarioRepositoryPort,
-            AuthorizationService authorizationService) {
+            AuthorizationPort authorizationService) {
         this.centroDistribucionRepositoryPort = centroDistribucionRepositoryPort;
         this.usuarioRepositoryPort = usuarioRepositoryPort;
         this.authorizationService = authorizationService;
@@ -34,7 +36,7 @@ public class CentroDistribucionService implements CrearCentroDistribucionUseCase
 
     @Override
     public CentroDistribucionResponse crearCentroDistribucion(UUID authUserId, CrearCentroDistribucionCommand command) {
-        authorizationService.requireAdministrador(authUserId, "crear Centros de Distribución");
+        authorizationService.requireGestionLogistica(authUserId, AccionAutorizada.CREAR_CENTRO_DISTRIBUCION);
 
         String nombre = command.nombre().trim();
         String direccion = command.direccion().trim();
@@ -60,13 +62,9 @@ public class CentroDistribucionService implements CrearCentroDistribucionUseCase
 
     @Override
     public List<CentroDistribucionResponse> obtenerCentrosDistribucion(UUID authUserId) {
-        if (authUserId == null) {
-            return mapearRespuestas(centroDistribucionRepositoryPort.obtenerTodos());
-        }
-
         Usuario usuario = authorizationService.requireAuthenticated(authUserId);
 
-        if (usuario.puedeVerTodoElCatalogoLogistico()) {
+        if (usuario.puedeGestionarTodo()) {
             return mapearRespuestas(centroDistribucionRepositoryPort.obtenerTodos());
         }
 
@@ -85,7 +83,7 @@ public class CentroDistribucionService implements CrearCentroDistribucionUseCase
 
     @Override
     public CentroDistribucionResponse asignarEncargado(UUID authUserId, Long centroId, Long encargadoId) {
-        authorizationService.requireAdministrador(authUserId, "asignar encargados a Centros de Distribución");
+        authorizationService.requireGestionLogistica(authUserId, AccionAutorizada.ASIGNAR_ENCARGADO_CENTRO_DISTRIBUCION);
 
         CentroDistribucion centro = centroDistribucionRepositoryPort.obtenerPorId(centroId)
                 .orElseThrow(() -> new IllegalArgumentException("El centro de distribución no existe."));
@@ -93,6 +91,12 @@ public class CentroDistribucionService implements CrearCentroDistribucionUseCase
         if (encargadoId != null) {
             Usuario encargado = usuarioRepositoryPort.obtenerPorId(encargadoId)
                     .orElseThrow(() -> new IllegalArgumentException("El usuario encargado no existe."));
+
+            if (!encargado.admiteAsignacionDeUbicacion()) {
+                throw new IllegalArgumentException(
+                        "No se puede asignar una ubicación a un usuario Administrador o Planificador (Rol actual: "
+                                + encargado.getRol() + ").");
+            }
 
             if (!encargado.esEncargadoCD()) {
                 throw new IllegalArgumentException(

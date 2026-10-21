@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import com.example.optiway.application.exception.RecursoNoEncontradoException;
 import com.example.optiway.application.port.in.AsignarEncargadoTiendaUseCase;
 import com.example.optiway.application.port.in.CrearTiendaCommand;
 import com.example.optiway.application.port.in.CrearTiendaUseCase;
@@ -14,19 +15,20 @@ import com.example.optiway.application.port.out.TiendaRepositoryPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.domain.model.Tienda;
 import com.example.optiway.domain.model.Usuario;
-import com.example.optiway.infrastructure.security.AuthorizationService;
+import com.example.optiway.application.port.out.AuthorizationPort;
+import com.example.optiway.infrastructure.security.AccionAutorizada;
 
 @Service
 public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase, AsignarEncargadoTiendaUseCase {
 
     private final TiendaRepositoryPort tiendaRepositoryPort;
     private final UsuarioRepositoryPort usuarioRepositoryPort;
-    private final AuthorizationService authorizationService;
+    private final AuthorizationPort authorizationService;
 
     public TiendaService(
             TiendaRepositoryPort tiendaRepositoryPort,
             UsuarioRepositoryPort usuarioRepositoryPort,
-            AuthorizationService authorizationService) {
+            AuthorizationPort authorizationService) {
         this.tiendaRepositoryPort = tiendaRepositoryPort;
         this.usuarioRepositoryPort = usuarioRepositoryPort;
         this.authorizationService = authorizationService;
@@ -34,7 +36,7 @@ public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase,
 
     @Override
     public TiendaResponse crearTienda(UUID authUserId, CrearTiendaCommand command) {
-        authorizationService.requireAdministrador(authUserId, "crear tiendas");
+        authorizationService.requireGestionLogistica(authUserId, AccionAutorizada.CREAR_TIENDA);
 
         String nombre = command.nombre().trim();
         String direccion = command.direccion().trim();
@@ -53,13 +55,9 @@ public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase,
 
     @Override
     public List<TiendaResponse> obtenerTiendas(UUID authUserId) {
-        if (authUserId == null) {
-            return mapearRespuestas(tiendaRepositoryPort.findAll());
-        }
-
         Usuario usuario = authorizationService.requireAuthenticated(authUserId);
 
-        if (usuario.puedeVerTodoElCatalogoLogistico()) {
+        if (usuario.puedeGestionarTodo()) {
             return mapearRespuestas(tiendaRepositoryPort.findAll());
         }
 
@@ -78,7 +76,7 @@ public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase,
 
     @Override
     public TiendaResponse asignarEncargado(UUID authUserId, Long tiendaId, Long encargadoId) {
-        authorizationService.requireAdministrador(authUserId, "asignar encargados a tiendas");
+        authorizationService.requireGestionLogistica(authUserId, AccionAutorizada.ASIGNAR_ENCARGADO_TIENDA);
 
         Tienda tienda = tiendaRepositoryPort.obtenerPorId(tiendaId)
                 .orElseThrow(() -> new IllegalArgumentException("La tienda no existe."));
@@ -86,6 +84,12 @@ public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase,
         if (encargadoId != null) {
             Usuario encargado = usuarioRepositoryPort.obtenerPorId(encargadoId)
                     .orElseThrow(() -> new IllegalArgumentException("El usuario encargado no existe."));
+
+            if (!encargado.admiteAsignacionDeUbicacion()) {
+                throw new IllegalArgumentException(
+                        "No se puede asignar una ubicación a un usuario Administrador o Planificador (Rol actual: "
+                                + encargado.getRol() + ").");
+            }
 
             if (!encargado.esEncargadoTienda()) {
                 throw new IllegalArgumentException(
