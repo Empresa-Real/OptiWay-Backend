@@ -235,3 +235,35 @@ usuarios.auth_user_id y rol  (PostgreSQL - tabla public.usuarios)
 ```
 
 El controlador no autoriza usando el email del body. El claim `sub` del JWT identifica al usuario de `auth.users`; el servicio busca ese UUID en la tabla local y aplica la regla `rol == ADMINISTRADOR` cuando corresponde.
+
+### Modelo de permisos
+
+La identidad es obligatoria en todos los endpoints salvo login y documentación. No existen rutas que se salten la autorización cuando falta identidad: los servicios siempre invocan `AuthorizationService` antes de operar.
+
+La decisión de permisos se concentra en dos métodos de `Usuario` (dominio) y una fachada en infraestructura (`AuthorizationService`):
+
+| Método de `Usuario` | Significado |
+| :--- | :--- |
+| `esAdministrador()` | Único rol que gestiona usuarios y roles. |
+| `puedeGestionarTodo()` | ADMINISTRADOR o PLANIFICADOR: todo el dominio logístico sin restricción de ubicación. |
+| `esEncargadoDe(tienda/cd)` | Rol encargado **y** asignación a esa ubicación concreta. |
+| `admiteAsignacionDeUbicacion()` | Sólo encargados pueden recibir una ubicación asignada. |
+
+`AuthorizationService` traduce eso a guardas: `requireAdministrador` (usuarios), `requireGestionLogistica` (Admin + Planificador), `requireAuthenticated`, `requirePermisoTienda` y `requirePermisoCentroDistribucion` (gestión global o encargado asignado).
+
+La identidad llega a los servicios por el parámetro `@AuthUserId`, resuelto por `AuthUserIdArgumentResolver` a partir del JWT. El resolver es **estricto**: si no hay autenticación válida lanza `AutenticacionRequeridaException` (401) en lugar de devolver `null`, de modo que la ausencia de identidad es un error explícito y no un valor ambiguo que un servicio pueda malinterpretar.
+
+Reglas de negocio asociadas:
+- No se puede cambiar el rol de un usuario ADMINISTRADOR ni otorgar el rol ADMINISTRADOR.
+- No se puede asignar una tienda ni un CD a un ADMINISTRADOR o PLANIFICADOR.
+- Sólo un ADMINISTRADOR puede consultar el detalle de otro usuario; cada usuario puede consultar el suyo.
+
+Matriz de permisos por operación (fijada por `MatrizPermisosTest`):
+
+| Operación | ADMIN | PLANIFICADOR | ENCARGADO_TIENDA | ENCARGADO_CD |
+| :--- | :--- | :--- | :--- | :--- |
+| Gestión de usuarios y roles | ✅ | ❌ | ❌ | ❌ |
+| Crear / editar tiendas, CD, productos | ✅ | ✅ | ❌ | ❌ |
+| Asignar encargado a tienda / CD | ✅ | ✅ | ❌ | ❌ |
+| Consultar inventario de tienda / venta | ✅ | ✅ | ✅ (la suya) | ❌ |
+| Consultar inventario de CD / ingreso | ✅ | ✅ | ❌ | ✅ (el suyo) |

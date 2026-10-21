@@ -110,29 +110,29 @@ Para una explicación a fondo del flujo de capas, consulta [`docs/Hexagonal-Arqu
 
 #### Usuarios & Autenticación (`HU-01` & `HU-29`)
 * `POST /api/usuarios`: Invitación y creación de usuarios (restringido a rol `ADMINISTRADOR`).
-* `GET /api/usuarios`: Listado de todos los usuarios registrados.
-* `GET /api/usuarios/{id}`: Consulta de usuario por identificador.
+* `GET /api/usuarios`: Listado de todos los usuarios registrados (restringido a `ADMINISTRADOR`).
+* `GET /api/usuarios/{id}`: Consulta de usuario por identificador. Sólo un `ADMINISTRADOR` puede consultar el detalle de **otros** usuarios; cualquier usuario autenticado puede consultar el suyo.
 * `GET /api/usuarios/me`: Consulta de perfil y rol del usuario autenticado a partir del JWT.
-* `DELETE /api/usuarios/{id}`: Eliminación de usuario.
-* `PATCH /api/usuarios/{id}/rol`: Cambio de rol (restringido a `ADMINISTRADOR`).
+* `DELETE /api/usuarios/{id}`: Eliminación de usuario. Un administrador no puede eliminarse a sí mismo ni a otro administrador.
+* `PATCH /api/usuarios/{id}/rol`: Cambio de rol (restringido a `ADMINISTRADOR`; no se puede cambiar el rol de un administrador ni otorgar el rol `ADMINISTRADOR`).
 
 #### Tiendas (`HU-07` & `HU-11`)
-* `POST /api/tiendas`: Registro de nueva tienda (generación automática de código `TND-XXXXXXXX`).
+* `POST /api/tiendas`: Registro de nueva tienda (generación automática de código `TND-XXXXXXXX`). Requiere rol `ADMINISTRADOR` o `PLANIFICADOR`.
 * `GET /api/tiendas`: Listado de tiendas (filtrado por su sede para encargados de tienda).
-* `PUT /api/tiendas/{id}/encargado`: Asignación de encargado a una tienda (restringido a `ADMINISTRADOR`).
+* `PUT /api/tiendas/{id}/encargado`: Asignación de encargado a una tienda. Requiere `ADMINISTRADOR` o `PLANIFICADOR`; el usuario asignado debe ser Encargado de Tienda.
 * `POST /api/tiendas/{id}/ventas`: Registro de venta con descuento transaccional de stock (`HU-11`).
 
 #### Centros de Distribución (`HU-09` & `HU-18`)
-* `POST /api/centros-distribucion`: Registro de nuevo CD (código `CD-XXXXXXXX`) y asignación de tiendas abastecidas.
+* `POST /api/centros-distribucion`: Registro de nuevo CD (código `CD-XXXXXXXX`) y asignación de tiendas abastecidas. Requiere `ADMINISTRADOR` o `PLANIFICADOR`.
 * `GET /api/centros-distribucion`: Listado de CDs con su información de cobertura (filtrado por su sede para encargados de CD).
-* `PUT /api/centros-distribucion/{id}/encargado`: Asignación de encargado a un CD (restringido a `ADMINISTRADOR`).
+* `PUT /api/centros-distribucion/{id}/encargado`: Asignación de encargado a un CD. Requiere `ADMINISTRADOR` o `PLANIFICADOR`; el usuario asignado debe ser Encargado de CD.
 * `POST /api/centros-distribucion/{id}/ingresos`: Registro de ingreso de mercancía (alias corto: `POST /api/cd/{id}/ingresos`).
 
 #### Productos (`HU-04`, `HU-05` & `HU-06`)
-* `POST /api/productos`: Registro en el catálogo maestro de productos.
-* `GET /api/productos`: Listado del catálogo de productos.
-* `PATCH /api/productos/{id}`: Edición parcial de campos con auditoría del editor.
-* `PATCH /api/productos/{id}/estado`: Activación / desactivación de productos.
+* `POST /api/productos`: Registro en el catálogo maestro de productos. Requiere `ADMINISTRADOR` o `PLANIFICADOR`.
+* `GET /api/productos`: Listado del catálogo de productos (cualquier usuario autenticado).
+* `PATCH /api/productos/{id}`: Edición parcial de campos con auditoría del editor. Requiere `ADMINISTRADOR` o `PLANIFICADOR`.
+* `PATCH /api/productos/{id}/estado`: Activación / desactivación de productos. Requiere `ADMINISTRADOR` o `PLANIFICADOR`.
 * `GET /api/productos/{id}/tiene-stock`: Verificación de existencias antes de desactivar.
 
 #### Inventario (`HU-12` & `HU-16`)

@@ -55,3 +55,6 @@ product_backlog.txt
 *.mp3
 *.wav
 audio_taller.*
+
+docs/diagramas/
+other/
