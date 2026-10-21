@@ -35,7 +35,7 @@ public class ApiExceptionHandler {
     @ExceptionHandler(InvitacionAuthException.class)
     @ResponseStatus(HttpStatus.BAD_GATEWAY)
     public ErrorResponse invitacionFallida(InvitacionAuthException exception) {
-        return ErrorResponse.of(exception.getError(), exception.getMessage(), null);
+        return ErrorResponse.of(exception.getError(), exception.getMessage(), exception.getStatusCode());
     }
 
     @ExceptionHandler(AccesoDenegadoException.class)

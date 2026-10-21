@@ -78,6 +78,19 @@ class AuthErrorMapperTest {
     }
 
     @Test
+    @DisplayName("El mensaje natural de Supabase se expone en 'error' y su código en statusCode")
+    void mensajeNatural_seExponeComoError() {
+        InvitacionAuthException resultado = mapper.mapear(new SupabaseAuthException(
+                "tecnico", 429,
+                "{\"code\":429,\"error_code\":\"over_email_send_rate_limit\",\"msg\":\"email rate limit exceeded\"}",
+                "email rate limit exceeded"));
+
+        assertEquals("email rate limit exceeded", resultado.getError());
+        assertEquals(429, resultado.getStatusCode());
+        assertTrue(resultado.getMessage().contains("límite de correos"));
+    }
+
+    @Test
     @DisplayName("Un error sin status ni cuerpo se mapea a mensaje de conexión sin status")
     void sinDatos_mensajeDeConexion() {
         InvitacionAuthException resultado = mapper.mapear(

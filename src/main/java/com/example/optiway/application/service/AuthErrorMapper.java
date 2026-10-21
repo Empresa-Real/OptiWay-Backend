@@ -22,7 +22,7 @@ public class AuthErrorMapper {
     public InvitacionAuthException mapear(SupabaseAuthException exception) {
         Integer status = exception.getStatusCode();
         String body = exception.getResponseBody();
-        String errorSupabase = (body != null && !body.isBlank()) ? body : exception.getMessage();
+        String errorSupabase = mensajeDelProveedor(exception);
 
         if (status != null && status == 429
                 || (body != null && body.contains("over_email_send_rate_limit"))) {
@@ -43,5 +43,18 @@ public class AuthErrorMapper {
         return new InvitacionAuthException(
                 "No fue posible conectar con el servicio de autenticación. Intenta nuevamente.",
                 status, errorSupabase);
+    }
+
+    /**
+     * Elige el texto que viajará en el campo {@code error} de la respuesta: el
+     * mensaje natural del proveedor ({@code msg}) si existe; si no, el mensaje
+     * técnico de la excepción. Nunca se devuelve el JSON crudo de Supabase.
+     */
+    private String mensajeDelProveedor(SupabaseAuthException exception) {
+        String providerMessage = exception.getProviderMessage();
+        if (providerMessage != null && !providerMessage.isBlank()) {
+            return providerMessage;
+        }
+        return exception.getMessage();
     }
 }

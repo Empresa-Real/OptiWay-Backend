@@ -6,22 +6,17 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "Estructura estandarizada de respuesta de error de la API")
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record ErrorResponse(
-    @Schema(description = "Código o mensaje del error original (técnico)", example = "METHOD_ARGUMENT_NOT_VALID")
+    @Schema(description = "Mensaje natural del proveedor o descripción técnica del error", example = "email rate limit exceeded")
     String error,
 
     @Schema(description = "Mensaje amigable en español para el cliente", example = "El nombre del producto ya existe.")
     String message,
 
-    @Schema(description = "Código de estado HTTP", example = "400")
-    Integer status
+    @Schema(description = "Código de error del proveedor (null si no lo envía)", example = "429")
+    Integer code
 ) {
-    public static ErrorResponse of(String error, String message, Integer status) {
-        return new ErrorResponse(error, message, status);
-    }
-
-    public static ErrorResponse of(String mensaje, Integer status) {
-        String msgLimpio = limpiarMensaje(mensaje);
-        return new ErrorResponse(msgLimpio, msgLimpio, status);
+    public static ErrorResponse of(String error, String message, Integer code) {
+        return new ErrorResponse(error, message, code);
     }
 
     public static ErrorResponse of(String mensaje) {

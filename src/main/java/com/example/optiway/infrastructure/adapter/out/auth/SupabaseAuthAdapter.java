@@ -2,6 +2,8 @@ package com.example.optiway.infrastructure.adapter.out.auth;
 
 import java.util.UUID;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +19,8 @@ import com.example.optiway.application.port.out.AuthPort;
 public class SupabaseAuthAdapter implements AuthPort {
 
     private static final Logger log = LoggerFactory.getLogger(SupabaseAuthAdapter.class);
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final RestClient restClient;
     private final String serviceRoleKey;
@@ -71,12 +75,35 @@ public class SupabaseAuthAdapter implements AuthPort {
             throw new SupabaseAuthException(
                     "Error de Supabase Auth al invitar usuario",
                     exception.getStatusCode().value(),
-                    errorBody);
+                    errorBody,
+                    mensajeDelProveedor(errorBody));
         } catch (RuntimeException exception) {
             log.error("Error inesperado al invitar usuario en Supabase: ", exception);
             throw new SupabaseAuthException(
                     "Error inesperado al invitar usuario en Supabase Auth", null, null);
         }
+    }
+
+    /**
+     * Extrae el mensaje natural que envía Supabase en el campo {@code msg} de su
+     * respuesta de error. El cuerpo crudo se conserva sólo para logs: no se expone
+     * al cliente porque es JSON técnico del proveedor.
+     *
+     * @return el mensaje legible del proveedor, o {@code null} si no viene
+     */
+    static String mensajeDelProveedor(String errorBody) {
+        if (errorBody == null || errorBody.isBlank()) {
+            return null;
+        }
+        try {
+            JsonNode msg = OBJECT_MAPPER.readTree(errorBody).get("msg");
+            if (msg != null && !msg.isNull() && !msg.asText().isBlank()) {
+                return msg.asText();
+            }
+        } catch (Exception exception) {
+            log.debug("El cuerpo de error de Supabase no es JSON: {}", errorBody);
+        }
+        return null;
     }
 
     private UUID buscarUsuarioPorEmailEnSupabase(String email) {
@@ -133,7 +160,8 @@ public class SupabaseAuthAdapter implements AuthPort {
             throw new SupabaseAuthException(
                     "Error de Supabase Auth al eliminar usuario",
                     exception.getStatusCode().value(),
-                    errorBody);
+                    errorBody,
+                    mensajeDelProveedor(errorBody));
         } catch (RuntimeException exception) {
             log.error("Error inesperado al eliminar usuario {} en Supabase: ", authUserId, exception);
             throw new SupabaseAuthException(
