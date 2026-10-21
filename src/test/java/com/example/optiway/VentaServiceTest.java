@@ -18,9 +18,9 @@ import com.example.optiway.application.port.out.ProductoRepositoryPort;
 import com.example.optiway.application.port.out.TiendaRepositoryPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.application.port.out.VentaRepositoryPort;
-import com.example.optiway.application.service.AccesoDenegadoException;
-import com.example.optiway.application.service.RecursoNoEncontradoException;
-import com.example.optiway.application.service.StockInsuficienteException;
+import com.example.optiway.application.exception.AccesoDenegadoException;
+import com.example.optiway.application.exception.RecursoNoEncontradoException;
+import com.example.optiway.application.exception.StockInsuficienteException;
 import com.example.optiway.application.service.VentaService;
 import com.example.optiway.domain.model.Inventario;
 import com.example.optiway.domain.model.Producto;
@@ -106,18 +106,21 @@ class VentaServiceTest {
     void registrarVenta_stockInsuficiente_lanzaExcepcion() {
         Long tiendaId = 1L;
         Long productoId = 10L;
+        UUID authUserId = UUID.randomUUID();
 
         Tienda tienda = new Tienda(tiendaId, "TND-001", "Tienda Norte", "Calle 10", "Medellin", true, 100L);
+        Usuario admin = new Usuario(1L, authUserId, "Admin", "admin@optiway.com", Rol.ADMINISTRADOR, null);
         Producto producto = new Producto(productoId, "PROD-001", "Camisa", "Ropa", BigDecimal.valueOf(50.0), "Unidad", true);
         Inventario inventario = new Inventario(1L, tiendaId, null, productoId, 2, 5);
 
         when(tiendaRepositoryPort.obtenerPorId(tiendaId)).thenReturn(Optional.of(tienda));
+        when(usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)).thenReturn(Optional.of(admin));
         when(productoRepositoryPort.findById(productoId)).thenReturn(Optional.of(producto));
         when(inventarioRepositoryPort.findByTiendaIdAndProductoId(tiendaId, productoId)).thenReturn(Optional.of(inventario));
 
         RegistrarVentaCommand command = new RegistrarVentaCommand(tiendaId, productoId, 5, LocalDateTime.now());
 
-        assertThrows(StockInsuficienteException.class, () -> ventaService.registrarVenta(null, command));
+        assertThrows(StockInsuficienteException.class, () -> ventaService.registrarVenta(authUserId, command));
         verify(inventarioRepositoryPort, never()).save(any());
         verify(ventaRepositoryPort, never()).guardar(any());
     }
@@ -126,16 +129,19 @@ class VentaServiceTest {
     void registrarVenta_productoInactivo_lanzaExcepcion() {
         Long tiendaId = 1L;
         Long productoId = 10L;
+        UUID authUserId = UUID.randomUUID();
 
         Tienda tienda = new Tienda(tiendaId, "TND-001", "Tienda Norte", "Calle 10", "Medellin", true, 100L);
+        Usuario admin = new Usuario(1L, authUserId, "Admin", "admin@optiway.com", Rol.ADMINISTRADOR, null);
         Producto producto = new Producto(productoId, "PROD-001", "Camisa", "Ropa", BigDecimal.valueOf(50.0), "Unidad", false); // Inactivo
 
         when(tiendaRepositoryPort.obtenerPorId(tiendaId)).thenReturn(Optional.of(tienda));
+        when(usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)).thenReturn(Optional.of(admin));
         when(productoRepositoryPort.findById(productoId)).thenReturn(Optional.of(producto));
 
         RegistrarVentaCommand command = new RegistrarVentaCommand(tiendaId, productoId, 1, LocalDateTime.now());
 
-        assertThrows(IllegalArgumentException.class, () -> ventaService.registrarVenta(null, command));
+        assertThrows(IllegalArgumentException.class, () -> ventaService.registrarVenta(authUserId, command));
         verify(inventarioRepositoryPort, never()).save(any());
     }
 
