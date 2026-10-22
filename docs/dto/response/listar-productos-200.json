@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "identificador": "PROD-001",
+    "nombre": "Aceite Vegetal 1L",
+    "categoria": "Abarrotes",
+    "precio": 12.50,
+    "unidadMedida": "Litro",
+    "activo": true,
+    "estado": "activo"
+  },
+  {
+    "id": 2,
+    "identificador": "PROD-002",
+    "nombre": "Arroz Blanco Premium 1kg",
+    "categoria": "Granos",
+    "precio": 8.90,
+    "unidadMedida": "KG",
+    "activo": false,
+    "estado": "inactivo"
+  }
+]

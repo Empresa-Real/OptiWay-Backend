@@ -1,5 +1,4 @@
 {
-  "status": 400,
-  "error": "Bad Request",
-  "message": "El nombre de la tienda es obligatorio."
+  "error": "El nombre es obligatorio",
+  "message": "El nombre es obligatorio"
 }

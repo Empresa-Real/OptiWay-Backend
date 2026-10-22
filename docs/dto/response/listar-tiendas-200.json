@@ -5,7 +5,10 @@
     "nombre": "Tienda Central Medellín",
     "direccion": "Calle 50 # 45-10",
     "ciudad": "Medellín",
-    "estado": "Activa"
+    "activo": true,
+    "estado": "Activa",
+    "encargadoId": 3,
+    "centrosAbastecedoresIds": [1, 2]
   },
   {
     "id": 2,
@@ -13,6 +16,9 @@
     "nombre": "Tienda Poblado",
     "direccion": "Carrera 43A # 1-50",
     "ciudad": "Medellín",
-    "estado": "Activa"
+    "activo": true,
+    "estado": "Activa",
+    "encargadoId": null,
+    "centrosAbastecedoresIds": [2]
   }
 ]
