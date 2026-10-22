@@ -16,7 +16,7 @@ OptiWay utiliza la especificación **OpenAPI 3** a través de la librería ofici
 
 ## 2. Dependencia Maven
 
-En [`pom.xml`](file:///c:/Users/Fixer/Desktop/Git%20Kraken/OptiWay-Backend/pom.xml):
+En [`pom.xml`](../pom.xml):
 
 ```xml
 <dependency>
@@ -49,7 +49,7 @@ Cuando el backend se ejecuta localmente (`./mvnw spring-boot:run` en el puerto `
 OptiWay implementa seguridad basada en **OAuth 2.0 / Resource Server** con **Supabase Auth**.
 
 ### 4.1. Configuración del Esquema de Seguridad (`OpenApiConfig.java`)
-En [`OpenApiConfig.java`](file:///c:/Users/Fixer/Desktop/Git%20Kraken/OptiWay-Backend/src/main/java/com/example/optiway/infrastructure/config/OpenApiConfig.java), se registró el esquema de seguridad global `bearerAuth`:
+En [`OpenApiConfig.java`](../src/main/java/com/example/optiway/infrastructure/config/OpenApiConfig.java), se registró el esquema de seguridad global `bearerAuth`:
 
 ```java
 @Configuration
@@ -86,10 +86,10 @@ public class OpenApiConfig {
 ### 4.2. Inyección Criptográfica de `@AuthUserId`
 Los controladores de OptiWay reciben la identidad del usuario mediante el parámetro `@AuthUserId UUID authUserId`.
 
-- **Seguridad**: El UUID del usuario **nunca** se recibe como parámetro de URL ni del body. [`AuthUserIdArgumentResolver`](file:///c:/Users/Fixer/Desktop/Git%20Kraken/OptiWay-Backend/src/main/java/com/example/optiway/infrastructure/security/AuthUserIdArgumentResolver.java) lo extrae criptográficamente del claim `sub` del JWT firmado por Supabase.
+- **Seguridad**: El UUID del usuario **nunca** se recibe como parámetro de URL ni del body. [`AuthUserIdArgumentResolver`](../src/main/java/com/example/optiway/infrastructure/security/AuthUserIdArgumentResolver.java) lo extrae criptográficamente del claim `sub` del JWT firmado por Supabase.
 - **Ocultación en Swagger**: Para evitar que Swagger solicite manualmente un `authUserId`, se configuró:
   1. `SpringDocUtils.getConfig().addAnnotationsToIgnore(AuthUserId.class)`.
-  2. `@Parameter(hidden = true)` en la anotación [`AuthUserId.java`](file:///c:/Users/Fixer/Desktop/Git%20Kraken/OptiWay-Backend/src/main/java/com/example/optiway/infrastructure/security/AuthUserId.java).
+  2. `@Parameter(hidden = true)` en la anotación [`AuthUserId.java`](../src/main/java/com/example/optiway/infrastructure/security/AuthUserId.java).
 
 ### 4.3. Cómo Autenticarse en Swagger UI
 1. Iniciar sesión en el frontend o en la web local.
@@ -107,13 +107,13 @@ Los controladores de OptiWay reciben la identidad del usuario mediante el parám
 ## 5. Control de Entornos y Seguridad en Producción
 
 1. **Habilitado en Docker / Despliegue**:
-   En [`Dockerfile`](file:///c:/Users/Fixer/Desktop/Git%20Kraken/OptiWay-Backend/Dockerfile#L27):
+   En [`Dockerfile`](../Dockerfile#L27):
    ```dockerfile
    ENV SWAGGER_ENABLED=true
    ```
    Permite explorar y probar la API directamente en el despliegue de Render (`https://optiway-backend.onrender.com/swagger-ui.html`). Si en algún momento se desea desactivar en producción sin reconstruir la imagen, basta con asignar la variable de entorno `SWAGGER_ENABLED=false` en el panel de Render.
 
-2. **Propiedades configurables en [`application.properties`](file:///c:/Users/Fixer/Desktop/Git%20Kraken/OptiWay-Backend/src/main/resources/application.properties)**:
+2. **Propiedades configurables en [`application.properties`](../src/main/resources/application.properties)**:
    ```properties
    # Soporte para proxy inverso HTTPS (Render, Cloudflare)
    server.forward-headers-strategy=framework
@@ -125,7 +125,7 @@ Los controladores de OptiWay reciben la identidad del usuario mediante el parám
    springdoc.swagger-ui.tagsSorter=alpha
    ```
 
-3. **Filtro de Seguridad en [`SecurityConfig.java`](file:///c:/Users/Fixer/Desktop/Git%20Kraken/OptiWay-Backend/src/main/java/com/example/optiway/infrastructure/config/SecurityConfig.java#L32-L41)**:
+3. **Filtro de Seguridad en [`SecurityConfig.java`](../src/main/java/com/example/optiway/infrastructure/config/SecurityConfig.java#L32-L41)**:
    Se permite acceso público sin requerir token a las rutas de documentación cuando Swagger está activo:
    ```java
    .requestMatchers(
