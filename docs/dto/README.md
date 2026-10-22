@@ -111,6 +111,12 @@ export interface ActualizarRolRequest {
   rol: RolUsuario;
 }
 
+export interface AsignacionUbicacion {
+  tipo: "TIENDA" | "CD";
+  id: number; // id de la tienda o del CD
+  nombre: string; // nombre de la ubicación
+}
+
 export interface UsuarioResponse {
   id: number;
   authUserId: string; // UUID de Supabase Auth
@@ -118,6 +124,7 @@ export interface UsuarioResponse {
   email: string;
   rol: RolUsuario;
   creadoPor: string | null; // authUserId del administrador creador
+  asignacion: AsignacionUbicacion | null; // siempre presente: objeto o null
 }
 ```
 

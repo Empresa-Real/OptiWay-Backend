@@ -1,5 +1,6 @@
 package com.example.optiway.application.service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,9 +17,14 @@ import com.example.optiway.application.port.in.EliminarUsuarioUseCase;
 import com.example.optiway.application.port.in.ObtenerUsuarioUseCase;
 import com.example.optiway.application.port.in.ObtenerUsuariosUseCase;
 import com.example.optiway.application.port.in.dto.UsuarioResponse;
+import com.example.optiway.application.port.in.dto.AsignacionUbicacion;
 import com.example.optiway.application.port.out.AuthPort;
+import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
+import com.example.optiway.application.port.out.TiendaRepositoryPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
+import com.example.optiway.domain.model.CentroDistribucion;
 import com.example.optiway.domain.model.Rol;
+import com.example.optiway.domain.model.Tienda;
 import com.example.optiway.domain.model.Usuario;
 import com.example.optiway.infrastructure.adapter.out.auth.SupabaseAuthException;
 import com.example.optiway.application.port.out.AuthorizationPort;
@@ -28,16 +34,22 @@ import com.example.optiway.infrastructure.security.AccionAutorizada;
 public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCase,
     ObtenerUsuarioUseCase, EliminarUsuarioUseCase, ActualizarRolUsuarioUseCase {
     private final UsuarioRepositoryPort usuarioRepositoryPort;
+    private final TiendaRepositoryPort tiendaRepositoryPort;
+    private final CentroDistribucionRepositoryPort centroDistribucionRepositoryPort;
     private final AuthPort authPort;
     private final AuthorizationPort authorizationService;
     private final AuthErrorMapper authErrorMapper;
 
     public UsuarioService(
             UsuarioRepositoryPort usuarioRepositoryPort,
+            TiendaRepositoryPort tiendaRepositoryPort,
+            CentroDistribucionRepositoryPort centroDistribucionRepositoryPort,
             AuthPort authPort,
             AuthorizationPort authorizationService,
             AuthErrorMapper authErrorMapper) {
         this.usuarioRepositoryPort = usuarioRepositoryPort;
+        this.tiendaRepositoryPort = tiendaRepositoryPort;
+        this.centroDistribucionRepositoryPort = centroDistribucionRepositoryPort;
         this.authPort = authPort;
         this.authorizationService = authorizationService;
         this.authErrorMapper = authErrorMapper;
@@ -61,14 +73,37 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
         usuario.setRol(rol);
         usuario.setCreadoPor(authUserId);
         usuario.setAuthUserId(invitarEnAuth(email));
-        return UsuarioResponse.from(usuarioRepositoryPort.guardar(usuario));
+        return UsuarioResponse.from(usuarioRepositoryPort.guardar(usuario), null);
     }
 
     @Override
     public List<UsuarioResponse> obtenerUsuarios(UUID authUserId) {
         authorizationService.requireAdministrador(authUserId, AccionAutorizada.LISTAR_USUARIOS);
+        var tiendas = tiendaRepositoryPort.findAll();
+        var centros = centroDistribucionRepositoryPort.obtenerTodos();
+
+        var asignaciones = new HashMap<Long, AsignacionUbicacion>();
+        for (var tienda : tiendas) {
+            Long encargadoId = tienda.getEncargadoId();
+            if (encargadoId != null) {
+                asignaciones.put(encargadoId, AsignacionUbicacion.tienda(tienda));
+            }
+        }
+        for (var centro : centros) {
+            Long encargadoId = centro.getEncargadoId();
+            if (encargadoId != null) {
+                asignaciones.put(encargadoId, AsignacionUbicacion.cd(centro));
+            }
+        }
+
         return usuarioRepositoryPort.obtenerTodos().stream()
-                .map(UsuarioResponse::from)
+                .map(usuario -> {
+                    AsignacionUbicacion asignacion = null;
+                    if (usuario.esEncargadoTienda() || usuario.esEncargadoCD()) {
+                        asignacion = asignaciones.get(usuario.getId());
+                    }
+                    return UsuarioResponse.from(usuario, asignacion);
+                })
                 .toList();
     }
 
@@ -88,13 +123,35 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
             throw new AccesoDenegadoException("No tiene permisos para consultar el detalle de otro usuario");
         }
 
-        return Optional.of(UsuarioResponse.from(objetivo));
+        Optional<Tienda> tiendaPorEncargado = tiendaRepositoryPort.obtenerPorEncargadoId(objetivo.getId())
+                .stream().findFirst();
+        Optional<CentroDistribucion> cdPorEncargado = centroDistribucionRepositoryPort.obtenerPorEncargadoId(objetivo.getId())
+                .stream().findFirst();
+        AsignacionUbicacion asignacion = null;
+        if (objetivo.esEncargadoTienda() && tiendaPorEncargado.isPresent()) {
+            asignacion = AsignacionUbicacion.tienda(tiendaPorEncargado.get());
+        } else if (objetivo.esEncargadoCD() && cdPorEncargado.isPresent()) {
+            asignacion = AsignacionUbicacion.cd(cdPorEncargado.get());
+        }
+        return Optional.of(UsuarioResponse.from(objetivo, asignacion));
     }
 
     @Override
     public Optional<UsuarioResponse> obtenerUsuarioPorAuthId(UUID authUserId) {
         Usuario solicitante = authorizationService.requireAuthenticated(authUserId);
-        return usuarioRepositoryPort.obtenerPorAuthUserId(solicitante.getAuthUserId()).map(UsuarioResponse::from);
+        return usuarioRepositoryPort.obtenerPorAuthUserId(solicitante.getAuthUserId()).map(usuario -> {
+            Optional<Tienda> tiendaPorEncargado = tiendaRepositoryPort.obtenerPorEncargadoId(usuario.getId())
+                    .stream().findFirst();
+            Optional<CentroDistribucion> cdPorEncargado = centroDistribucionRepositoryPort.obtenerPorEncargadoId(usuario.getId())
+                    .stream().findFirst();
+            AsignacionUbicacion asignacion = null;
+            if (usuario.esEncargadoTienda() && tiendaPorEncargado.isPresent()) {
+                asignacion = AsignacionUbicacion.tienda(tiendaPorEncargado.get());
+            } else if (usuario.esEncargadoCD() && cdPorEncargado.isPresent()) {
+                asignacion = AsignacionUbicacion.cd(cdPorEncargado.get());
+            }
+            return UsuarioResponse.from(usuario, asignacion);
+        });
     }
 
     @Override
@@ -154,6 +211,6 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
         }
 
         usuario.setRol(nuevoRol);
-        return UsuarioResponse.from(usuarioRepositoryPort.guardar(usuario));
+        return UsuarioResponse.from(usuarioRepositoryPort.guardar(usuario), null);
     }
 }

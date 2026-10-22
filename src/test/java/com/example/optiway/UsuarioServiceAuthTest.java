@@ -21,6 +21,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.example.optiway.application.port.in.CrearUsuarioCommand;
 import com.example.optiway.application.port.out.AuthPort;
+import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
+import com.example.optiway.application.port.out.TiendaRepositoryPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.application.service.AuthErrorMapper;
 import com.example.optiway.application.exception.InvitacionAuthException;
@@ -42,6 +44,12 @@ class UsuarioServiceAuthTest {
     private UsuarioRepositoryPort usuarioRepositoryPort;
 
     @Mock
+    private TiendaRepositoryPort tiendaRepositoryPort;
+
+    @Mock
+    private CentroDistribucionRepositoryPort centroDistribucionRepositoryPort;
+
+    @Mock
     private AuthPort authPort;
 
     private UsuarioService usuarioService;
@@ -52,8 +60,8 @@ class UsuarioServiceAuthTest {
     @BeforeEach
     void setUp() {
         AuthorizationService authorizationService = new AuthorizationService(usuarioRepositoryPort);
-        usuarioService = new UsuarioService(usuarioRepositoryPort, authPort, authorizationService,
-                new AuthErrorMapper());
+        usuarioService = new UsuarioService(usuarioRepositoryPort, tiendaRepositoryPort,
+                centroDistribucionRepositoryPort, authPort, authorizationService, new AuthErrorMapper());
         adminAuthId = UUID.randomUUID();
         admin = new Usuario(1L, adminAuthId, "Admin", "admin@optiway.com", Rol.ADMINISTRADOR, null);
     }
