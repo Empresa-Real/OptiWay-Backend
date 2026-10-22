@@ -1,10 +1,10 @@
 # Deuda Técnica y Decisiones Arquitectónicas Abiertas (OptiWay)
 
 > Este documento recoge **decisiones de diseño pendientes e inconsistencias internas** del código que no son tareas de producto.
-> El trabajo funcional (endpoints por conectar, features a completar) vive en [`docs/pendientes.md`](./pendientes.md).
+> El trabajo funcional (endpoints por conectar, features a completar) vive en las [historias de usuario](./Historias%20de%20Usuario/).
 > Los cambios ya ejecutados y justificados viven en [`docs/Fix´s/`](./Fix´s/).
 
-**Actualizado:** 20 de octubre de 2026
+**Actualizado:** 21 de octubre de 2026
 
 ---
 
@@ -89,7 +89,7 @@ A favor de **mantenerlo propio**: en *consultas* (GET de listas), filtros en que
 
 **Estado:** ⚠️ Activo · **Impacto:** Regresiones silenciosas · **Esfuerzo:** Medio
 
-Los 38 tests actuales cubren inventario, ingresos, ventas, usuarios, ubicación y grafo. **Sin ninguna prueba:**
+La suite actual cubre inventario, ingresos, ventas, usuarios, autorización, ubicación y grafo. **Sin ninguna prueba:**
 
 | Servicio sin tests | Operaciones expuestas |
 | :--- | :--- |
@@ -222,7 +222,28 @@ El modelo actual implica reglas cardinales que **no están formalizadas** ni val
 
 ---
 
-![alt text](./img/cd_tienda.png)
+## 9. Logging: guía teórica sin implementación real
+
+**Estado:** ⚠️ Abierto · **Impacto:** Observabilidad / diagnóstico en producción · **Esfuerzo:** Bajo-Medio
+
+El proyecto **no tiene una política de logging definida**. Hoy solo existe:
+
+- `spring.jpa.show-sql=true` y `format_sql=true` en `application.properties` (SQL por consola).
+- `log.error` en `ApiExceptionHandler.errorInesperado` para excepciones no controladas.
+- El logging por defecto de Spring Boot (SLF4J + Logback, nivel `INFO`, solo consola).
+
+El antiguo `docs/Sistema-de-Logs.md` era una guía genérica (niveles, `CommonsRequestLoggingFilter`, logging manual, rotación de archivos, buenas prácticas). No describía una implementación existente del proyecto, así que se eliminó para no confundirla con el estado real.
+
+**Pendiente:**
+- Definir niveles por entorno: `DEBUG` local (web/security/SQL) e `INFO` o `WARN` en producción.
+- Sacar `show-sql` de producción o moverlo a un logger específico.
+- Loguear peticiones sin volcar tokens JWT ni datos sensibles.
+- Evaluar formato estructurado (JSON) si se consume desde Render u otra herramienta de observabilidad.
+- En Render, priorizar stdout; añadir rotación/archivo solo si se necesita retención local.
+
+---
+
+![alt text](../img/cd_tienda.png)
 
 ---
 
