@@ -75,3 +75,13 @@
 - `@AuthUserId` + `AuthUserIdArgumentResolver`: el `UUID` del usuario autenticado se inyecta sin manipular objetos `Jwt` en los controladores.
 - Suite de pruebas unitarias sobre H2 en memoria (`MODE=PostgreSQL`) para correr sin acceso a Supabase; la ejecución real usa PostgreSQL en la nube.
 - Contratos de API para frontend en `docs/dto/` (JSON + TypeScript) e historias de usuario en `docs/Historias de Usuario/`.
+
+## Exposición de asignación de ubicación en DTO de usuario
+
+- `GET /api/usuarios`, `GET /api/usuarios/{id}` y `GET /api/usuarios/me` ahora devuelven `asignacion` en el `UsuarioResponse` (objeto `{ tipo, id, nombre }` o `null`, siempre presente).
+- Nuevo DTO `AsignacionUbicacion` con tipo `"TIENDA"` o `"CD"` e id/nombre de la ubicación, reutilizando la misma fuente de verdad (`tienda.encargado_id` / `centro_distribucion.encargado_id`).
+- `ADMINISTRADOR` y `PLANIFICADOR` devuelven `asignacion: null`; solo encargados reciben asignación.
+- Resolución sin N+1: `UsuarioService` carga tiendas y CDs de una vez y mapea en memoria.
+- `GET /api/usuarios/me` corrige el bug del frontend que hardcodeaba `locationId: 1`.
+- Tests de integración: encargado a tienda, encargado a CD, sin asignación y administrador con `null`.
+- Documentación actualizada en `docs/dto/` (interfaz TypeScript y ejemplos JSON).

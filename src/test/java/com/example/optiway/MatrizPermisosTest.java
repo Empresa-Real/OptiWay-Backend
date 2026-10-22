@@ -104,8 +104,8 @@ class MatrizPermisosTest {
     @BeforeEach
     void setUp() {
         authorizationService = new AuthorizationService(usuarioRepositoryPort);
-        usuarioService = new UsuarioService(usuarioRepositoryPort, authPort, authorizationService,
-                new AuthErrorMapper());
+        usuarioService = new UsuarioService(usuarioRepositoryPort, tiendaRepositoryPort,
+                centroDistribucionRepositoryPort, authPort, authorizationService, new AuthErrorMapper());
         tiendaService = new TiendaService(tiendaRepositoryPort, usuarioRepositoryPort, authorizationService);
         centroDistribucionService = new CentroDistribucionService(
                 centroDistribucionRepositoryPort, usuarioRepositoryPort, authorizationService);

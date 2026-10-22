@@ -23,9 +23,16 @@ public record UsuarioResponse(
         String rol,
 
         @Schema(description = "UUID del administrador que registró al usuario", example = "a1b2c3d4-e5f6-7890-abcd-1234567890ab")
-        UUID creadoPor
+        UUID creadoPor,
+
+        @Schema(description = "Asignación de ubicación del usuario (tienda o centro de distribución)", example = "{\"tipo\":\"TIENDA\",\"id\":5,\"nombre\":\"Sucursal Centro\"}")
+        AsignacionUbicacion asignacion
 ) {
     public static UsuarioResponse from(Usuario usuario) {
+        return from(usuario, null);
+    }
+
+    public static UsuarioResponse from(Usuario usuario, AsignacionUbicacion asignacion) {
         if (usuario == null) {
             return null;
         }
@@ -35,7 +42,8 @@ public record UsuarioResponse(
                 usuario.getNombre(),
                 usuario.getEmail(),
                 usuario.getRol() != null ? usuario.getRol().name() : null,
-                usuario.getCreadoPor()
+                usuario.getCreadoPor(),
+                asignacion
         );
     }
 }

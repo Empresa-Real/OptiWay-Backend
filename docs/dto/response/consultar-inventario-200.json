@@ -2,6 +2,7 @@
   {
     "id": 1,
     "tiendaId": 2,
+    "centroDistribucionId": null,
     "productoId": 10,
     "nombreProducto": "Arroz Blanco Premium 1kg",
     "categoriaProducto": "Granos",
@@ -12,6 +13,7 @@
   {
     "id": 2,
     "tiendaId": 2,
+    "centroDistribucionId": null,
     "productoId": 11,
     "nombreProducto": "Aceite Vegetal 900ml",
     "categoriaProducto": "Abarrotes",

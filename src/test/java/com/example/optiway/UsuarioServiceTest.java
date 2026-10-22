@@ -4,16 +4,23 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import com.example.optiway.application.port.in.ActualizarRolCommand;
+import com.example.optiway.application.port.in.dto.AsignacionUbicacion;
+import com.example.optiway.application.port.in.dto.UsuarioResponse;
 import com.example.optiway.application.port.out.AuthPort;
+import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
+import com.example.optiway.application.port.out.TiendaRepositoryPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.application.exception.AccesoDenegadoException;
 import com.example.optiway.application.service.AuthErrorMapper;
 import com.example.optiway.application.service.UsuarioService;
+import com.example.optiway.domain.model.CentroDistribucion;
 import com.example.optiway.domain.model.Rol;
+import com.example.optiway.domain.model.Tienda;
 import com.example.optiway.domain.model.Usuario;
 import com.example.optiway.infrastructure.security.AuthorizationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,6 +38,12 @@ class UsuarioServiceTest {
     private UsuarioRepositoryPort usuarioRepositoryPort;
 
     @Mock
+    private TiendaRepositoryPort tiendaRepositoryPort;
+
+    @Mock
+    private CentroDistribucionRepositoryPort centroDistribucionRepositoryPort;
+
+    @Mock
     private AuthPort authPort;
 
     private UsuarioService usuarioService;
@@ -41,8 +54,8 @@ class UsuarioServiceTest {
     @BeforeEach
     void setUp() {
         AuthorizationService authService = new AuthorizationService(usuarioRepositoryPort);
-        usuarioService = new UsuarioService(usuarioRepositoryPort, authPort, authService,
-                new AuthErrorMapper());
+        usuarioService = new UsuarioService(usuarioRepositoryPort, tiendaRepositoryPort,
+                centroDistribucionRepositoryPort, authPort, authService, new AuthErrorMapper());
         adminAuthId = UUID.randomUUID();
         adminUsuario = new Usuario(1L, adminAuthId, "Admin User", "admin@optiway.com", Rol.ADMINISTRADOR, null);
     }
@@ -229,6 +242,134 @@ class UsuarioServiceTest {
 
             assertEquals("Solo un administrador puede actualizar roles de usuario", exception.getMessage());
             verify(usuarioRepositoryPort, never()).guardar(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("Asignación de ubicación en DTO de usuario")
+    class AsignacionUbicacionDtoTests {
+
+        @Test
+        @DisplayName("obtenerUsuarios devuelve asignacion TIENDA para encargado de tienda")
+        void obtenerUsuarios_encargadoTienda_devuelveAsignacionTienda() {
+            Tienda tienda = new Tienda(5L, "TND-005", "Tienda Centro", "Calle 1", "Medellin", true, 2L);
+            Usuario encargado = new Usuario(2L, null, "Encargado", "enc@optiway.com", Rol.ENCARGADO_TIENDA, null);
+            Usuario admin = new Usuario(1L, null, "Admin", "admin@optiway.com", Rol.ADMINISTRADOR, null);
+
+            when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(admin));
+            when(tiendaRepositoryPort.findAll()).thenReturn(List.of(tienda));
+            when(centroDistribucionRepositoryPort.obtenerTodos()).thenReturn(List.of());
+            when(usuarioRepositoryPort.obtenerTodos()).thenReturn(List.of(encargado, admin));
+
+            List<UsuarioResponse> resultado = usuarioService.obtenerUsuarios(adminAuthId);
+
+            UsuarioResponse encDto = resultado.stream().filter(u -> u.id().equals(2L)).findFirst().orElseThrow();
+            assertEquals("TIENDA", encDto.asignacion().tipo());
+            assertEquals(5L, encDto.asignacion().id());
+            assertEquals("Tienda Centro", encDto.asignacion().nombre());
+
+            UsuarioResponse adminDto = resultado.stream().filter(u -> u.id().equals(1L)).findFirst().orElseThrow();
+            assertEquals(null, adminDto.asignacion());
+        }
+
+        @Test
+        @DisplayName("obtenerUsuarios devuelve asignacion CD para encargado de CD")
+        void obtenerUsuarios_encargadoCD_devuelveAsignacionCD() {
+            CentroDistribucion cd = new CentroDistribucion(7L, "CD-007", "CD Norte", "Autopista 2", 5000, 3L, null);
+            Usuario encargado = new Usuario(3L, null, "Encargado CD", "cd@optiway.com", Rol.ENCARGADO_CD, null);
+            Usuario admin = new Usuario(1L, null, "Admin", "admin@optiway.com", Rol.ADMINISTRADOR, null);
+
+            when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(admin));
+            when(tiendaRepositoryPort.findAll()).thenReturn(List.of());
+            when(centroDistribucionRepositoryPort.obtenerTodos()).thenReturn(List.of(cd));
+            when(usuarioRepositoryPort.obtenerTodos()).thenReturn(List.of(encargado, admin));
+
+            List<UsuarioResponse> resultado = usuarioService.obtenerUsuarios(adminAuthId);
+
+            UsuarioResponse cdDto = resultado.stream().filter(u -> u.id().equals(3L)).findFirst().orElseThrow();
+            assertEquals("CD", cdDto.asignacion().tipo());
+            assertEquals(7L, cdDto.asignacion().id());
+            assertEquals("CD Norte", cdDto.asignacion().nombre());
+
+            UsuarioResponse adminDto = resultado.stream().filter(u -> u.id().equals(1L)).findFirst().orElseThrow();
+            assertEquals(null, adminDto.asignacion());
+        }
+
+        @Test
+        @DisplayName("obtenerUsuarios devuelve asignacion null para usuario sin ubicacion")
+        void obtenerUsuarios_sinAsignacion_devuelveNull() {
+            Usuario planificador = new Usuario(6L, null, "Planificador", "plan@optiway.com", Rol.PLANIFICADOR, null);
+            Usuario admin = new Usuario(1L, null, "Admin", "admin@optiway.com", Rol.ADMINISTRADOR, null);
+
+            when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(admin));
+            when(tiendaRepositoryPort.findAll()).thenReturn(List.of());
+            when(centroDistribucionRepositoryPort.obtenerTodos()).thenReturn(List.of());
+            when(usuarioRepositoryPort.obtenerTodos()).thenReturn(List.of(planificador, admin));
+
+            List<UsuarioResponse> resultado = usuarioService.obtenerUsuarios(adminAuthId);
+
+            UsuarioResponse planDto = resultado.stream().filter(u -> u.id().equals(6L)).findFirst().orElseThrow();
+            assertEquals(null, planDto.asignacion());
+
+            UsuarioResponse adminDto = resultado.stream().filter(u -> u.id().equals(1L)).findFirst().orElseThrow();
+            assertEquals(null, adminDto.asignacion());
+        }
+
+        @Test
+        @DisplayName("obtenerUsuarioPorId devuelve asignacion TIENDA para encargado de tienda")
+        void obtenerUsuarioPorId_encargadoTienda_devuelveAsignacion() {
+            Tienda tienda = new Tienda(5L, "TND-005", "Tienda Centro", "Calle 1", "Medellin", true, 2L);
+            Usuario solicitante = new Usuario(1L, null, "Admin", "admin@optiway.com", Rol.ADMINISTRADOR, null);
+            Usuario objetivo = new Usuario(2L, null, "Encargado", "enc@optiway.com", Rol.ENCARGADO_TIENDA, null);
+
+            when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(solicitante));
+            when(usuarioRepositoryPort.obtenerPorId(2L)).thenReturn(Optional.of(objetivo));
+            when(tiendaRepositoryPort.obtenerPorEncargadoId(2L)).thenReturn(List.of(tienda));
+            when(centroDistribucionRepositoryPort.obtenerPorEncargadoId(2L)).thenReturn(List.of());
+
+            Optional<UsuarioResponse> resultado = usuarioService.obtenerUsuarioPorId(adminAuthId, 2L);
+
+            assertEquals(true, resultado.isPresent());
+            assertEquals("TIENDA", resultado.get().asignacion().tipo());
+            assertEquals(5L, resultado.get().asignacion().id());
+        }
+
+        @Test
+        @DisplayName("obtenerUsuarioPorAuthId devuelve asignacion del autenticado")
+        void obtenerUsuarioPorAuthId_encargadoTienda_devuelveAsignacion() {
+            Tienda tienda = new Tienda(5L, "TND-005", "Tienda Centro", "Calle 1", "Medellin", true, 2L);
+            Usuario usuario = new Usuario(2L, adminAuthId, "Encargado", "enc@optiway.com", Rol.ENCARGADO_TIENDA, null);
+
+            when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(usuario));
+            when(tiendaRepositoryPort.obtenerPorEncargadoId(2L)).thenReturn(List.of(tienda));
+            when(centroDistribucionRepositoryPort.obtenerPorEncargadoId(2L)).thenReturn(List.of());
+
+            Optional<UsuarioResponse> resultado = usuarioService.obtenerUsuarioPorAuthId(adminAuthId);
+
+            assertEquals(true, resultado.isPresent());
+            assertEquals("TIENDA", resultado.get().asignacion().tipo());
+            assertEquals(5L, resultado.get().asignacion().id());
+        }
+
+        @Test
+        @DisplayName("crearUsuario devuelve asignacion null")
+        void crearUsuario_devuelveAsignacionNull() {
+            Usuario admin = new Usuario(1L, adminAuthId, "Admin", "admin@optiway.com", Rol.ADMINISTRADOR, null);
+            Usuario nuevo = new Usuario(null, null, "Nuevo", "nuevo@optiway.com", Rol.ENCARGADO_TIENDA, null);
+
+            when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(admin));
+            when(usuarioRepositoryPort.existePorEmail("nuevo@optiway.com")).thenReturn(false);
+            when(authPort.invitar("nuevo@optiway.com")).thenReturn(UUID.randomUUID());
+            when(usuarioRepositoryPort.guardar(any(Usuario.class))).thenAnswer(inv -> {
+                Usuario u = inv.getArgument(0);
+                u.setId(10L);
+                return u;
+            });
+
+            UsuarioResponse resultado = usuarioService.crearUsuario(adminAuthId,
+                    new com.example.optiway.application.port.in.CrearUsuarioCommand("Nuevo", "nuevo@optiway.com", Rol.ENCARGADO_TIENDA));
+
+            assertEquals(null, resultado.asignacion());
         }
     }
 }

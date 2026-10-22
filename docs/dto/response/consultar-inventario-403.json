@@ -1,3 +1,4 @@
 {
-  "error": "No tiene permisos para consultar esta tienda"
+  "error": "No tiene permisos para consultar el inventario de esta tienda",
+  "message": "No tiene permisos para consultar el inventario de esta tienda"
 }

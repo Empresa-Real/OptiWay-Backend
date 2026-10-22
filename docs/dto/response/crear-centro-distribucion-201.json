@@ -4,5 +4,6 @@
   "nombre": "CD Principal Valle de Aburrá",
   "direccion": "Autopista Sur # 65-120, Itagüí",
   "capacidad": 15000,
+  "encargadoId": 4,
   "tiendasAbastecidasIds": [1, 2, 3]
 }

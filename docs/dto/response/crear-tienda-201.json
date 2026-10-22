@@ -4,5 +4,8 @@
   "nombre": "Tienda Central Medellín",
   "direccion": "Calle 50 # 45-10",
   "ciudad": "Medellín",
-  "estado": "Activa"
+  "activo": true,
+  "estado": "Activa",
+  "encargadoId": 3,
+  "centrosAbastecedoresIds": [1, 2]
 }

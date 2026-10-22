@@ -1,2 +1,5 @@
 /mvnw text eol=lf
 *.cmd text eol=crlf
+
+# Grafo generado por graphify: no debe contar en las estadisticas de lenguaje de GitHub
+src/main/resources/static/graph.html linguist-generated=true
