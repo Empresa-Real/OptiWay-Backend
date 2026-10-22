@@ -1,0 +1,5 @@
+{
+  "error": "email rate limit exceeded",
+  "message": "Se ha superado el límite de correos de invitación por hora de Supabase Auth. Por favor espera unos minutos antes de registrar otro usuario.",
+  "code": 429
+}

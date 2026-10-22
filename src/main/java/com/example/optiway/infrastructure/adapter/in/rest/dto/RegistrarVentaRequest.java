@@ -17,17 +17,14 @@ public record RegistrarVentaRequest(
         @NotNull(message = "La cantidad vendida es obligatoria")
         @Positive(message = "La cantidad vendida debe ser mayor a cero")
         @Schema(description = "Cantidad de unidades vendidas", example = "3")
-        Integer cantidad,
-
-        @Schema(description = "Fecha y hora de la venta (si se omite, usa la hora actual del servidor)", example = "2026-10-18T10:30:00")
-        LocalDateTime fechaHora
+        Integer cantidad
 ) {
     public RegistrarVentaCommand toCommand(Long tiendaId) {
         return new RegistrarVentaCommand(
                 tiendaId,
                 productoId,
                 cantidad,
-                fechaHora != null ? fechaHora : LocalDateTime.now()
+                LocalDateTime.now()
         );
     }
 }

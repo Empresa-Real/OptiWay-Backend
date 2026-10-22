@@ -247,6 +247,107 @@ El antiguo `docs/Sistema-de-Logs.md` era una guía genérica (niveles, `CommonsR
 
 ---
 
+## 10. Documentación de reglas de autorización de negocio en OpenAPI / Swagger
+
+**Estado:** ⚠️ Abierto · **Impacto:** Fricción de integración frontend/backend · **Esfuerzo:** Bajo-Medio
+
+### El problema
+
+OpenAPI / Swagger UI documenta actualmente solo la **firma sintáctica de los endpoints** (parámetros de URL, formato del request body y esquema de seguridad `bearerAuth`), pero **no expone las reglas de autorización de negocio** aplicadas en la capa de servicios (`AuthorizationService`, `TiendaSecurity`, `MatrizPermisosTest`):
+
+- Por ejemplo, en `POST /api/tiendas/{id}/ventas`, el esquema indica que requiere autenticación y un `id` numérico en la URL, pero **no declara** que un usuario con rol `ENCARGADO_TIENDA` solo puede registrar ventas en la tienda específica a la que fue asignado (`tienda.encargadoId == authUserId`), y que intentar operar en otra tienda devuelve un `403 Forbidden`.
+- Esto provoca que los clientes (frontend o integradores externos) asuman que tener el rol es suficiente para operar en cualquier recurso, descubriendo las restricciones de pertenencia o tenencia recién al recibir errores `403` en tiempo de ejecución.
+
+### Estrategias de solución identificadas
+
+1. **Documentar códigos de error y restricciones en `@Operation` y `@ApiResponse` (Opción directa e inmediata):**
+   Aprovechar el soporte de Markdown en la descripción de `@Operation` y tipar el `403` con su causa de negocio:
+   ```java
+   @PostMapping("/{id}/ventas")
+   @ResponseStatus(HttpStatus.CREATED)
+   @Operation(
+       summary = "Registrar venta en tienda",
+       description = """
+           Registra una transacción de venta descontando stock inmediatamente.
+           
+           **Reglas de autorización de negocio:**
+           * **ADMINISTRADOR / PLANIFICADOR:** Pueden registrar ventas en *cualquier* tienda.
+           * **ENCARGADO_TIENDA:** Únicamente puede vender en la tienda donde está asignado (`tienda.encargadoId == authUserId`). Si el `id` en la URL es de otra tienda, responderá `403`.
+           * **ENCARGADO_CD:** Acceso denegado (`403`).
+           """
+   )
+   @ApiResponses(value = {
+       @ApiResponse(responseCode = "201", description = "Venta registrada con éxito"),
+       @ApiResponse(responseCode = "400", description = "Stock insuficiente, producto inactivo o formato de fecha inválido"),
+       @ApiResponse(
+           responseCode = "403", 
+           description = "Acceso denegado: El usuario no tiene rol autorizado o intenta operar en una tienda que no tiene asignada"
+       ),
+       @ApiResponse(responseCode = "404", description = "La tienda o el producto no existen")
+   })
+   public VentaResponse registrarVenta(...) { ... }
+   ```
+
+2. **Usar extensiones de OpenAPI (`x-roles` / `x-permissions`):**
+   Declarar metadatos legibles por herramientas o pipelines cliente usando propiedades `x-`:
+   ```java
+   @Operation(
+       summary = "Registrar venta",
+       extensions = {
+           @Extension(name = "security-rules", properties = {
+               @ExtensionProperty(name = "allowed-roles", value = "ADMINISTRADOR, PLANIFICADOR, ENCARGADO_TIENDA"),
+               @ExtensionProperty(name = "scope", value = "OWN_STORE_ONLY")
+           })
+       }
+   )
+   ```
+
+3. **Crear anotaciones personalizadas compuestas (DRY & Clean):**
+   Unificar la regla de seguridad de Spring Security y la documentación de OpenAPI en una sola meta-anotación:
+   ```java
+   @Target({ElementType.METHOD})
+   @Retention(RetentionPolicy.RUNTIME)
+   @PreAuthorize("hasAnyRole('ADMINISTRADOR', 'PLANIFICADOR') or @tiendaSecurity.isEncargado(#id, authentication)")
+   @Operation(description = "🔒 **Restricción:** Solo administradores o el encargado asignado a esta tienda específica.")
+   @ApiResponse(responseCode = "403", description = "No autorizado para operar en esta tienda.")
+   public @interface RequireAssignedStoreOrAdmin {
+   }
+   ```
+   En el controlador:
+   ```java
+   @PostMapping("/{id}/ventas")
+   @RequireAssignedStoreOrAdmin
+   public VentaResponse registrarVenta(...) { ... }
+   ```
+
+4. **Automatización con `OpenApiCustomizer` en `OpenApiConfig.java`:**
+   Implementar un bean `OpenApiCustomizer` que inspeccione `@PreAuthorize` o anotaciones de seguridad al arrancar la aplicación e inyecte dinámicamente en el Swagger UI la lista de permisos requeridos por cada ruta.
+
+---
+
+## 11. Generación de tipos cliente desde OpenAPI: ventajas, problemas y limitaciones
+
+**Estado:** ⚠️ Abierto / En adopción · **Impacto:** DX y robustez de integración · **Esfuerzo:** Bajo-Medio
+
+### Contexto
+
+El frontend ha incorporado un script (`scripts/gen-api.mjs`) que descarga el contrato JSON de `/v3/api-docs` y genera tipos TypeScript estáticos (`src/api/schema.d.ts`) usando `openapi-typescript`.
+
+### Ventajas de adoptar tipos generados desde OpenAPI
+
+1. **Eliminación de discrepancias en nombres de campos y rutas:** Cualquier desalineación de endpoints (ej. llamar a `/api/ventas` en lugar de `/api/tiendas/{id}/ventas`) o de propiedades (ej. `precio` vs `price`) genera un error de TypeScript en tiempo de compilación antes de llegar a pruebas manuales.
+2. **Refactorizaciones seguras en el backend:** Cambios en los DTOs de Spring Boot se propagan mecánicamente al frontend al ejecutar `npm run gen-api`.
+3. **Reducción de código duplicado:** Evita mantener interfaces manuales paralelas (`BackendUsuario`, `BackendTienda`, etc.) en cada servicio.
+
+### Problemas y limitaciones identificadas
+
+1. **Dependencia de red y servidor activo para regenerar:** El script requiere que el backend (local o en Render) esté encendido para consultar `/v3/api-docs`. En cold starts de Render o trabajo offline, la generación falla si no se versiona una copia local `docs/openapi.json`.
+2. **Riesgo con `propertiesRequiredByDefault: true`:** SpringDoc no marca automáticamente campos como `required` a menos que tengan Bean Validation (`@NotNull`). Forzar que todas las propiedades sean requeridas por defecto en `openapiTS` puede provocar que campos que admiten `null` (como `encargadoId` o `asignacion`) se tipen como siempre presentes, ocultando posibles `NullPointerException` en el frontend.
+3. **Validación estática vs runtime:** Los archivos `.d.ts` solo aplican en tiempo de compilación. Si la API en producción cambia sin regenerar los tipos en el cliente, la aplicación puede fallar silenciosamente en ejecución si no se complementa con validación en runtime (ej. Zod).
+4. **Cero visibilidad de autorización y reglas de negocio:** El tipado generado describe la estructura del JSON pero ignora por completo permisos de usuario y reglas de pertenencia (documentadas en el ítem 10).
+
+---
+
 ## Cómo mantener este documento
 
 - Este documento recoge **sólo deuda abierta y decisiones de diseño pendientes**. Lo resuelto **no se mantiene aquí**: se documenta en [`docs/Fix´s/`](./Fix´s/) y se elimina de esta lista.

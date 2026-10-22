@@ -32,6 +32,7 @@ docs/dto/
     ├── crear-tienda-400.json
     ├── crear-usuario-201.json
     ├── editar-producto-200.json
+    ├── error-502-supabase-auth.json
     ├── listar-productos-200.json
     ├── listar-tiendas-200.json
     ├── listar-usuarios-200.json
@@ -193,7 +194,7 @@ La respuesta usa el esquema de `crear-tienda-201.json`.
 }
 ```
 
-`fechaHora` es opcional; si se omite, se usa la hora del servidor.
+La fecha y hora de la venta las asigna el **servidor** automáticamente; no se envían en el body. (Antes existía un `fechaHora` opcional, eliminado para evitar el error `400` cuando el frontend enviaba un ISO-8601 con `Z`.)
 
 ### Response 201 Created (`POST /api/tiendas/{id}/ventas`)
 * **Archivo:** [`docs/dto/response/registrar-venta-201.json`](./response/registrar-venta-201.json)
@@ -240,7 +241,7 @@ export interface TiendaResponse {
 export interface RegistrarVentaRequest {
   productoId: number;
   cantidad: number;
-  fechaHora?: string; // ISO-8601; si se omite, usa la hora del servidor
+  // La fecha y hora las asigna el servidor; no se envían.
 }
 
 export interface VentaResponse {
@@ -570,17 +571,32 @@ export interface ProductoStockResponse {
 
 ## 6. Errores
 
-Todos los errores usan `ErrorResponse`:
+> **Importante:** la API **no emite un único formato de error**. Hay tres formas posibles según dónde ocurra el fallo. El frontend debe tolerar las tres y nunca asumir que el body siempre tiene la misma forma.
+
+### 6.1. Resumen de formatos
+
+| Formato | Forma del body | Cuándo aparece |
+| :--- | :--- | :--- |
+| **A — `ErrorResponse`** | `{ "error", "message", "code"? }` | Casi todos los errores: validación, reglas de negocio, 4xx/5xx de controladores y **Supabase Admin API** (invitar/eliminar usuarios). |
+| **B — Error por defecto de Spring Boot** | `{ "timestamp", "status", "error", "path" }` | Errores que ocurren **fuera** del ciclo normal de los controladores (filtros o contenedor). No hay un formato propio configurado para este caso. |
+| **C — Sin body** | vacío (o texto plano en CORS) | 401/403 de Spring Security, 404 de `/graph` y rechazos de CORS. |
+
+### 6.2. Formato A — `ErrorResponse` (el esperado)
 
 ```typescript
 export interface ErrorResponse {
-  error: string;     // mensaje natural del proveedor o descripción técnica
-  message: string;   // mensaje amigable en español
-  code?: number;     // código del proveedor, solo cuando existe (p. ej. 429 de Supabase)
+  error: string;     // diagnóstico: mensaje natural del proveedor o descripción técnica
+  message: string;   // texto en español apto para mostrar al usuario
+  code?: number;     // código del proveedor; se omite cuando no existe
 }
 ```
 
-* **400 Bad Request (validación):** [`docs/dto/response/crear-tienda-400.json`](./response/crear-tienda-400.json)
+* **`message`** es el único campo que debe mostrarse al usuario final.
+* **`error`** es diagnóstico (logs o soporte); **no** mostrarlo en la interfaz.
+* **`code`** solo aparece en errores de proveedores externos (Supabase). Se omite si es `null`.
+* En la mayoría de errores de negocio, `error` y `message` contienen el mismo texto. En errores de Supabase difieren (ver §6.5).
+
+**Ejemplo — 400 validación:** [`docs/dto/response/crear-tienda-400.json`](./response/crear-tienda-400.json)
 
 ```json
 {
@@ -589,5 +605,86 @@ export interface ErrorResponse {
 }
 ```
 
-* **403 Forbidden:** `error` y `message` contienen el motivo; `code` se omite.
-* **429 / 502 en auth:** el `error` conserva el mensaje de Supabase y `code` su código (p. ej. `429` para rate limit).
+**Orígenes que usan este formato:**
+
+| HTTP | Origen | ¿Trae `message`? |
+| :--- | :--- | :--- |
+| `400` | Bean Validation, `IllegalArgumentException`, `StockInsuficienteException` | Sí |
+| `401` | `AutenticacionRequeridaException` (fallback dentro del ciclo MVC) | Sí |
+| `403` | `AccesoDenegadoException` y reglas de pertenencia a ubicación | Sí |
+| `404` | `RecursoNoEncontradoException` y rutas de API inexistentes | Sí |
+| `405` | Método HTTP no permitido | Sí |
+| `409` | Correo o producto duplicado | Sí |
+| `415` | `Content-Type` no soportado | Sí |
+| `500` | Error no controlado en el servidor | Sí |
+| `502` | Fallo de Supabase Admin API (ver §6.5) | Sí |
+
+### 6.3. Formato B — Error por defecto de Spring Boot
+
+```typescript
+export interface SpringBootError {
+  timestamp: string;
+  status: number;
+  error: string;   // nombre genérico del estado, p. ej. "Internal Server Error"
+  path: string;
+}
+```
+
+Aparece en fallos muy puntuales que no llegan a `ApiExceptionHandler` (por ejemplo, errores en filtros o en el contenedor). **No es un contrato estable:** no se debe depender de sus campos. El frontend debe tratarlo como un error genérico y mostrar un mensaje neutro usando `status`.
+
+### 6.4. Formato C — Respuesta sin body
+
+| HTTP | Origen | Body |
+| :--- | :--- | :--- |
+| `401` | Spring Security: token ausente, inválido o expirado | Vacío (solo cabecera `WWW-Authenticate`) |
+| `403` | Spring Security: acceso denegado en el filtro | Vacío |
+| `403` | Rechazo de CORS | Texto plano `Invalid CORS request` |
+| `404` | `GET /graph` cuando no existe el archivo del grafo | Vacío (comportamiento aceptado) |
+
+**Decisión de producto:** estos casos **no** añaden un `message` desde el backend. El frontend debe traducir el código HTTP a un texto amigable:
+
+| Código | Mensaje sugerido |
+| :--- | :--- |
+| `401` | "Tu sesión expiró. Vuelve a iniciar sesión." |
+| `403` | "No tienes permiso para realizar esta acción." |
+| `404` | "No encontramos lo que buscabas." |
+| `500` | "Algo falló en el servidor. Intenta de nuevo." |
+
+Si el frontend prefiere no traducir, puede mostrar únicamente el código (`Error 401`), pero el mensaje sugerido ofrece mejor experiencia.
+
+### 6.5. Supabase Auth (casos concretos)
+
+Supabase **no tiene un formato propio**: usa el formato A o el C según el servicio que falle.
+
+**a) Supabase Admin API (invitar o eliminar usuario) → formato A, HTTP `502`**
+
+```json
+{
+  "error": "email rate limit exceeded",
+  "message": "Se ha superado el límite de correos de invitación por hora de Supabase Auth. Por favor espera unos minutos antes de registrar otro usuario.",
+  "code": 429
+}
+```
+
+* Ejemplo completo: [`docs/dto/response/error-502-supabase-auth.json`](./response/error-502-supabase-auth.json)
+* **`HTTP 502` es intencional** y no coincide con el `code` interno (`429`/`422`). Es una decisión conocida: **el frontend debe usar `message`** y no inferir nada del 502.
+* `error` contiene el mensaje natural del proveedor (diagnóstico), `message` el texto en español y `code` el código real de Supabase.
+
+**b) Supabase como emisor del JWT (token ausente/inválido/expirado) → formato C**
+
+El token lo valida Spring Security, no `ApiExceptionHandler`. Responde `401` con body vacío (ver §6.4).
+
+### 6.6. Guía de parseo para el frontend
+
+1. Leer el body como texto.
+2. Si está **vacío** → usar la tabla de §6.4 según el código HTTP.
+3. Si es JSON y trae `message` → mostrar `message`.
+4. Si es JSON y trae `timestamp`/`status`/`error`/`path` (formato B) → mostrar un mensaje genérico según `status`.
+5. **Nunca** mostrar `error` ni `code` al usuario final.
+
+### 6.7. Comportamientos aceptados (no son bugs)
+
+* `GET /graph` responde `404` con body vacío.
+* Los `401`/`403` de Spring Security no traen mensaje; el frontend los traduce.
+* Supabase Admin API responde `502` aunque su `code` interno sea `429`/`422`; el frontend muestra `message`.
+* El formato B puede aparecer en fallos atípicos; no se prioriza su unificación.

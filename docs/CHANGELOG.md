@@ -85,3 +85,10 @@
 - `GET /api/usuarios/me` corrige el bug del frontend que hardcodeaba `locationId: 1`.
 - Tests de integración: encargado a tienda, encargado a CD, sin asignación y administrador con `null`.
 - Documentación actualizada en `docs/dto/` (interfaz TypeScript y ejemplos JSON).
+
+## Contrato de errores y fecha de venta
+
+- **Documentación de errores**: `docs/dto/README.md` §6 documenta los tres formatos que puede emitir la API (`ErrorResponse`, error por defecto de Spring Boot y respuestas sin body), cuándo aparece cada uno y cómo debe parsearlos el frontend.
+- **Errores de Supabase**: documentado que la Admin API responde `502` con el `code` del proveedor (`429`/`422`) y que un JWT inválido se resuelve con `401` vacío; nuevo ejemplo `docs/dto/response/error-502-supabase-auth.json`.
+- **Ventas sin fecha del cliente**: eliminado `fechaHora` de `RegistrarVentaRequest`; el servidor asigna `LocalDateTime.now()`. Evita el `400` cuando el frontend enviaba ISO-8601 con `Z` y no rompe clientes viejos (Spring ignora campos desconocidos).
+- **Deuda técnica**: retirado el ítem de `LocalDateTime` con `Z` porque ya no existe ningún `LocalDateTime` en un request DTO.
