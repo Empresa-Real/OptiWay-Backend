@@ -53,7 +53,7 @@ public class CentroDistribucionRepositoryAdapter implements CentroDistribucionRe
         if (encargadoId == null) {
             return List.of();
         }
-        return repository.findByEncargadoId(encargadoId).stream()
+        return repository.findByEncargado_Id(encargadoId).stream()
                 .map(this::toDomain)
                 .collect(Collectors.toList());
     }

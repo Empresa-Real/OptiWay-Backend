@@ -10,13 +10,13 @@ import org.springframework.stereotype.Repository;
 public interface InventarioJpaRepository
         extends JpaRepository<InventarioJpaEntity, Long> {
 
-    List<InventarioJpaEntity> findByTiendaId(Long tiendaId);
+    List<InventarioJpaEntity> findByTienda_Id(Long tiendaId);
 
-    List<InventarioJpaEntity> findByCentroDistribucionId(Long centroDistribucionId);
+    List<InventarioJpaEntity> findByCentroDistribucion_Id(Long centroDistribucionId);
 
-    Optional<InventarioJpaEntity> findByTiendaIdAndProductoId(Long tiendaId, Long productoId);
+    Optional<InventarioJpaEntity> findByTienda_IdAndProducto_Id(Long tiendaId, Long productoId);
 
-    Optional<InventarioJpaEntity> findByCentroDistribucionIdAndProductoId(Long centroDistribucionId, Long productoId);
+    Optional<InventarioJpaEntity> findByCentroDistribucion_IdAndProducto_Id(Long centroDistribucionId, Long productoId);
 
-    boolean existsByProductoIdAndCantidadActualGreaterThan(Long productoId, Integer cantidad);
+    boolean existsByProducto_IdAndCantidadActualGreaterThan(Long productoId, Integer cantidad);
 }

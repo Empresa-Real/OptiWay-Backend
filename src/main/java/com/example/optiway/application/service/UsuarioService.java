@@ -22,9 +22,7 @@ import com.example.optiway.application.port.out.AuthPort;
 import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
 import com.example.optiway.application.port.out.TiendaRepositoryPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
-import com.example.optiway.domain.model.CentroDistribucion;
 import com.example.optiway.domain.model.Rol;
-import com.example.optiway.domain.model.Tienda;
 import com.example.optiway.domain.model.Usuario;
 import com.example.optiway.infrastructure.adapter.out.auth.SupabaseAuthException;
 import com.example.optiway.application.port.out.AuthorizationPort;
@@ -123,35 +121,35 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
             throw new AccesoDenegadoException("No tiene permisos para consultar el detalle de otro usuario");
         }
 
-        Optional<Tienda> tiendaPorEncargado = tiendaRepositoryPort.obtenerPorEncargadoId(objetivo.getId())
-                .stream().findFirst();
-        Optional<CentroDistribucion> cdPorEncargado = centroDistribucionRepositoryPort.obtenerPorEncargadoId(objetivo.getId())
-                .stream().findFirst();
-        AsignacionUbicacion asignacion = null;
-        if (objetivo.esEncargadoTienda() && tiendaPorEncargado.isPresent()) {
-            asignacion = AsignacionUbicacion.tienda(tiendaPorEncargado.get());
-        } else if (objetivo.esEncargadoCD() && cdPorEncargado.isPresent()) {
-            asignacion = AsignacionUbicacion.cd(cdPorEncargado.get());
-        }
-        return Optional.of(UsuarioResponse.from(objetivo, asignacion));
+        return Optional.of(UsuarioResponse.from(objetivo, buscarAsignacion(objetivo)));
     }
 
     @Override
     public Optional<UsuarioResponse> obtenerUsuarioPorAuthId(UUID authUserId) {
         Usuario solicitante = authorizationService.requireAuthenticated(authUserId);
-        return usuarioRepositoryPort.obtenerPorAuthUserId(solicitante.getAuthUserId()).map(usuario -> {
-            Optional<Tienda> tiendaPorEncargado = tiendaRepositoryPort.obtenerPorEncargadoId(usuario.getId())
-                    .stream().findFirst();
-            Optional<CentroDistribucion> cdPorEncargado = centroDistribucionRepositoryPort.obtenerPorEncargadoId(usuario.getId())
-                    .stream().findFirst();
-            AsignacionUbicacion asignacion = null;
-            if (usuario.esEncargadoTienda() && tiendaPorEncargado.isPresent()) {
-                asignacion = AsignacionUbicacion.tienda(tiendaPorEncargado.get());
-            } else if (usuario.esEncargadoCD() && cdPorEncargado.isPresent()) {
-                asignacion = AsignacionUbicacion.cd(cdPorEncargado.get());
-            }
-            return UsuarioResponse.from(usuario, asignacion);
-        });
+        return usuarioRepositoryPort.obtenerPorAuthUserId(solicitante.getAuthUserId())
+                .map(usuario -> UsuarioResponse.from(usuario, buscarAsignacion(usuario)));
+    }
+
+    /**
+     * Resuelve la ubicación sólo para los roles que pueden tener una.
+     * Administradores y planificadores no tienen asignación, así que se evitan
+     * las dos consultas (tiendas y centros de distribución).
+     */
+    private AsignacionUbicacion buscarAsignacion(Usuario usuario) {
+        if (usuario.esEncargadoTienda()) {
+            return tiendaRepositoryPort.obtenerPorEncargadoId(usuario.getId()).stream()
+                    .findFirst()
+                    .map(AsignacionUbicacion::tienda)
+                    .orElse(null);
+        }
+        if (usuario.esEncargadoCD()) {
+            return centroDistribucionRepositoryPort.obtenerPorEncargadoId(usuario.getId()).stream()
+                    .findFirst()
+                    .map(AsignacionUbicacion::cd)
+                    .orElse(null);
+        }
+        return null;
     }
 
     @Override

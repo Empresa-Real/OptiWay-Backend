@@ -8,5 +8,5 @@ import java.util.List;
 public interface IngresoMercanciaJpaRepository
         extends JpaRepository<IngresoMercanciaJpaEntity, Long> {
 
-    List<IngresoMercanciaJpaEntity> findByCentroDistribucionId(Long centroDistribucionId);
+    List<IngresoMercanciaJpaEntity> findByCentroDistribucion_Id(Long centroDistribucionId);
 }

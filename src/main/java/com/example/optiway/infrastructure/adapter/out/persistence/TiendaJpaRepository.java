@@ -8,5 +8,5 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface TiendaJpaRepository extends JpaRepository<TiendaJpaEntity, Long> {
     boolean existsByCodigo(String codigo);
-    List<TiendaJpaEntity> findByEncargadoId(Long encargadoId);
+    List<TiendaJpaEntity> findByEncargado_Id(Long encargadoId);
 }

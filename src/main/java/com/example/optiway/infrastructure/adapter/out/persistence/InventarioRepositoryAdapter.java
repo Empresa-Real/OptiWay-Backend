@@ -55,7 +55,7 @@ public class InventarioRepositoryAdapter implements InventarioRepositoryPort {
 
     @Override
     public List<Inventario> findByTiendaId(Long tiendaId) {
-        return inventarioJpaRepository.findByTiendaId(tiendaId)
+        return inventarioJpaRepository.findByTienda_Id(tiendaId)
                 .stream()
                 .map(this::toDomain)
                 .toList();
@@ -63,7 +63,7 @@ public class InventarioRepositoryAdapter implements InventarioRepositoryPort {
 
     @Override
     public List<Inventario> findByCentroDistribucionId(Long centroDistribucionId) {
-        return inventarioJpaRepository.findByCentroDistribucionId(centroDistribucionId)
+        return inventarioJpaRepository.findByCentroDistribucion_Id(centroDistribucionId)
                 .stream()
                 .map(this::toDomain)
                 .toList();
@@ -71,13 +71,13 @@ public class InventarioRepositoryAdapter implements InventarioRepositoryPort {
 
     @Override
     public Optional<Inventario> findByTiendaIdAndProductoId(Long tiendaId, Long productoId) {
-        return inventarioJpaRepository.findByTiendaIdAndProductoId(tiendaId, productoId)
+        return inventarioJpaRepository.findByTienda_IdAndProducto_Id(tiendaId, productoId)
                 .map(this::toDomain);
     }
 
     @Override
     public Optional<Inventario> findByCentroDistribucionIdAndProductoId(Long centroDistribucionId, Long productoId) {
-        return inventarioJpaRepository.findByCentroDistribucionIdAndProductoId(centroDistribucionId, productoId)
+        return inventarioJpaRepository.findByCentroDistribucion_IdAndProducto_Id(centroDistribucionId, productoId)
                 .map(this::toDomain);
     }
 
@@ -94,6 +94,6 @@ public class InventarioRepositoryAdapter implements InventarioRepositoryPort {
 
     @Override
     public boolean existeStockActivoDeProducto(Long productoId) {
-        return inventarioJpaRepository.existsByProductoIdAndCantidadActualGreaterThan(productoId, 0);
+        return inventarioJpaRepository.existsByProducto_IdAndCantidadActualGreaterThan(productoId, 0);
     }
 }
