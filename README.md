@@ -3,7 +3,7 @@
 <div align="center">
 <img alt="Java" src="https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white" /> <img alt="Spring Boot" src="https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F?logo=springboot&logoColor=whit" /> <img alt="Spring Security" src="https://img.shields.io/badge/Spring%20Security-7-6DB33F?logo=springsecurity&logoColor=white" /> <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-15+-4169E1?logo=postgresql&logoColor=white" /> <img alt="Supabase" src="https://img.shields.io/badge/Supabase-Cloud-3ECF8E?logo=supabase&logoColor=white" /> <img alt="Apache Maven" src="https://img.shields.io/badge/Apache%20Maven-3.9+-C71A36?logo=apachemaven&logoColor=white" />
 
-<img alt="API REST" src="https://img.shields.io/badge/API-REST-FF6C37?logo=postman&logoColor=white" /> <img alt="Arquitecture" src="https://img.shields.io/badge/Arquitectura-Hexagonal-6C5CE7" />
+<img alt="API REST" src="https://img.shields.io/badge/API-REST-FF6C37?logo=postman&logoColor=white" /> <img alt="Arquitecture" src="https://img.shields.io/badge/Arquitectura-Hexagonal-6C5CE7" /> <a href="https://optiway-backend.onrender.com/swagger-ui.html"><img alt="Swagger UI" src="https://img.shields.io/badge/Swagger-Probar%20la%20API-85EA2D?logo=swagger&logoColor=black" /></a>
 </div>
 
 ## Descripción General
@@ -39,12 +39,15 @@ El proyecto organiza sus responsabilidades mediante el patrón de **Arquitectura
 ```text
 src/main/java/com/example/optiway/
 ├── domain/                  # Reglas de negocio puras e independientes de frameworks
-│   └── model/               # Entidades de dominio (Usuario, Tienda, CentroDistribucion, Rol, Inventario, Producto)
+│   └── model/               # Entidades de dominio (Usuario, Tienda, CentroDistribucion, Rol,
+│                            # Inventario, Producto, IngresoMercancia, Venta)
 │
 ├── application/             # Orquestación de casos de uso y lógica de aplicación
+│   ├── exception/           # Excepciones de negocio (acceso denegado, stock, duplicados, etc.)
 │   ├── port/
 │   │   ├── in/              # Casos de uso / Puertos de entrada
-│   │   └── out/             # Puertos de salida (persistencia y servicios externos)
+│   │   │   └── dto/         # DTOs de respuesta de la API
+│   │   └── out/             # Puertos de salida (repositorios, AuthPort, AuthorizationPort)
 │   └── service/             # Implementación de casos de uso y validaciones de negocio
 │
 └── infrastructure/          # Adaptadores y tecnologías externas
@@ -53,7 +56,8 @@ src/main/java/com/example/optiway/
     │   └── out/
     │       ├── auth/        # Adaptador de autenticación externa (Supabase Admin API)
     │       └── persistence/ # Entidades JPA, repositorios Spring Data y adaptadores de persistencia
-    └── config/              # Configuración del framework (Spring Security, Beans)
+    ├── config/              # Configuración del framework (Spring Security, OpenAPI, MVC)
+    └── security/            # Autorización centralizada y resolución de @AuthUserId desde el JWT
 ```
 
 ### Flujo de la Aplicacion
@@ -66,22 +70,26 @@ flowchart TD
 
     subgraph InfraIn["Infraestructura — Adaptadores de Entrada"]
         Security["Spring Security (Filtro JWT / Roles)"]
+        Resolver["AuthUserIdArgumentResolver (@AuthUserId)"]
         Controller["Controladores REST (Usuario, Tienda, etc.)"]
     end
 
     subgraph Application["Aplicación — Casos de Uso y Orquestación"]
-        PortIn["Puertos de Entrada (Interfaces UseCase)"]
-        Service["Servicios de Aplicación (Lógica y Orquestación)"]
-        PortOut["Puertos de Salida (Interfaces RepositoryPort / AuthPort)"]
+        PortIn["Puertos de Entrada (*UseCase)"]
+        Service["Servicios de Aplicación"]
+        PortAuthz["AuthorizationPort (Contrato de permisos)"]
+        PortRepo["RepositoryPorts (Contratos de datos)"]
+        PortAuth["AuthPort (Contrato de identidad)"]
     end
 
     subgraph Domain["Dominio — Reglas de Negocio"]
-        Model["Modelos de Dominio (Entidades puras e invariantes)"]
+        Model["Modelos de Dominio (Entidades puras)"]
     end
 
     subgraph InfraOut["Infraestructura — Adaptadores de Salida"]
-        RepoAdapter["Adaptadores de Persistencia (RepositoryAdapter)"]
-        AuthAdapter["Adaptador de Autenticación (SupabaseAuthAdapter)"]
+        AuthzService["AuthorizationService (Validación de roles)"]
+        RepoAdapter["Adaptadores de Persistencia (*RepositoryAdapter)"]
+        AuthAdapter["SupabaseAuthAdapter"]
         JpaRepo["Spring Data JPA Repositories"]
     end
 
@@ -91,15 +99,26 @@ flowchart TD
     end
 
     Req --> Security
-    Security --> Controller
+    Security --> Resolver
+    Resolver --> Controller
     Controller --> PortIn
     PortIn --> Service
     Service --> Model
-    Service --> PortOut
-    PortOut --> RepoAdapter
-    PortOut --> AuthAdapter
+
+    %% Flujo 1: Autorización
+    Service --> PortAuthz
+    PortAuthz -.-> AuthzService
+    AuthzService --> PortRepo
+
+    %% Flujo 2: Persistencia del caso de uso
+    Service --> PortRepo
+    PortRepo -.-> RepoAdapter
     RepoAdapter --> JpaRepo
     JpaRepo --> DB
+
+    %% Flujo 3: Proveedor de Auth externo
+    Service --> PortAuth
+    PortAuth -.-> AuthAdapter
     AuthAdapter --> SupabaseAuth
 ```
 
@@ -108,36 +127,7 @@ Para una explicación a fondo del flujo de capas, consulta [`docs/Hexagonal-Arqu
 
 ### Endpoints
 
-#### Usuarios & Autenticación (`HU-01` & `HU-29`)
-* `POST /api/usuarios`: Invitación y creación de usuarios (restringido a rol `ADMINISTRADOR`).
-* `GET /api/usuarios`: Listado de todos los usuarios registrados (restringido a `ADMINISTRADOR`).
-* `GET /api/usuarios/{id}`: Consulta de usuario por identificador. Sólo un `ADMINISTRADOR` puede consultar el detalle de **otros** usuarios; cualquier usuario autenticado puede consultar el suyo.
-* `GET /api/usuarios/me`: Consulta de perfil y rol del usuario autenticado a partir del JWT.
-* `DELETE /api/usuarios/{id}`: Eliminación de usuario. Un administrador no puede eliminarse a sí mismo ni a otro administrador.
-* `PATCH /api/usuarios/{id}/rol`: Cambio de rol (restringido a `ADMINISTRADOR`; no se puede cambiar el rol de un administrador ni otorgar el rol `ADMINISTRADOR`).
-
-#### Tiendas (`HU-07` & `HU-11`)
-* `POST /api/tiendas`: Registro de nueva tienda (generación automática de código `TND-XXXXXXXX`). Requiere rol `ADMINISTRADOR` o `PLANIFICADOR`.
-* `GET /api/tiendas`: Listado de tiendas (filtrado por su sede para encargados de tienda).
-* `PUT /api/tiendas/{id}/encargado`: Asignación de encargado a una tienda. Requiere `ADMINISTRADOR` o `PLANIFICADOR`; el usuario asignado debe ser Encargado de Tienda.
-* `POST /api/tiendas/{id}/ventas`: Registro de venta con descuento transaccional de stock (`HU-11`).
-
-#### Centros de Distribución (`HU-09` & `HU-18`)
-* `POST /api/centros-distribucion`: Registro de nuevo CD (código `CD-XXXXXXXX`) y asignación de tiendas abastecidas. Requiere `ADMINISTRADOR` o `PLANIFICADOR`.
-* `GET /api/centros-distribucion`: Listado de CDs con su información de cobertura (filtrado por su sede para encargados de CD).
-* `PUT /api/centros-distribucion/{id}/encargado`: Asignación de encargado a un CD. Requiere `ADMINISTRADOR` o `PLANIFICADOR`; el usuario asignado debe ser Encargado de CD.
-* `POST /api/centros-distribucion/{id}/ingresos`: Registro de ingreso de mercancía (alias corto: `POST /api/cd/{id}/ingresos`).
-
-#### Productos (`HU-04`, `HU-05` & `HU-06`)
-* `POST /api/productos`: Registro en el catálogo maestro de productos. Requiere `ADMINISTRADOR` o `PLANIFICADOR`.
-* `GET /api/productos`: Listado del catálogo de productos (cualquier usuario autenticado).
-* `PATCH /api/productos/{id}`: Edición parcial de campos con auditoría del editor. Requiere `ADMINISTRADOR` o `PLANIFICADOR`.
-* `PATCH /api/productos/{id}/estado`: Activación / desactivación de productos. Requiere `ADMINISTRADOR` o `PLANIFICADOR`.
-* `GET /api/productos/{id}/tiene-stock`: Verificación de existencias antes de desactivar.
-
-#### Inventario (`HU-12` & `HU-16`)
-* `GET /api/inventario`: Consulta de inventario por tienda (`tiendaId` requerido) con filtros opcionales por `nombre`, `categoria` y `productoId`.
-* `GET /api/inventario/centro-distribucion`: Consulta de inventario por CD (`centroDistribucionId` requerido) con los mismos filtros y cálculo dinámico de `stockBajo`.
+La referencia completa de la API (métodos, roles requeridos, códigos de estado y ejemplos) está en [`docs/Swagger_OpenAPI.md`](docs/Swagger_OpenAPI.md). Para probarla directamente, entra a [Swagger UI del backend desplegado](https://optiway-backend.onrender.com/swagger-ui.html) o, en local, a [`http://localhost:8080/swagger-ui.html`](http://localhost:8080/swagger-ui.html).
 
 
 ## Instalación y Ejecución
@@ -173,11 +163,27 @@ La aplicación iniciará por defecto en `http://localhost:8080`.
 
 ### Pruebas
 
-La suite de pruebas unitarias (JUnit 5 + Mockito) corre sobre **H2 en memoria** (`MODE=PostgreSQL`) para no depender de Supabase:
+Por defecto, la suite de pruebas unitarias (JUnit 5 + Mockito) corre sobre **H2 en memoria** (`MODE=PostgreSQL`) para no depender de Supabase:
 
 ```powershell
 .\mvnw.cmd test
 ```
+
+También se puede ejecutar la misma suite contra la base real de **Supabase**, validando el esquema sin crear ni borrar tablas (`ddl-auto=validate`). Usa el pooler de transacciones (`6543`) con `prepareThreshold=0`:
+
+```powershell
+$env:SPRING_DATASOURCE_URL="jdbc:postgresql://aws-0-us-west-2.pooler.supabase.com:6543/postgres?prepareThreshold=0"
+$env:SPRING_DATASOURCE_USERNAME="postgres.cehzzcvnkiuvkabglrzp"
+$env:SPRING_DATASOURCE_PASSWORD=$env:DB_PASSWORD
+$env:SPRING_DATASOURCE_DRIVER_CLASS_NAME="org.postgresql.Driver"
+$env:SPRING_JPA_HIBERNATE_DDL_AUTO="validate"
+$env:SPRING_JPA_DATABASE_PLATFORM="org.hibernate.dialect.PostgreSQLDialect"
+$env:SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE="1"
+$env:SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE="0"
+.\mvnw.cmd test
+```
+
+> Contra Supabase usa siempre `ddl-auto=validate`. Nunca `create-drop` ni `update`: podrían borrar o alterar las tablas reales.
 
 La aplicación en ejecución siempre usa PostgreSQL (Supabase).
 
@@ -187,5 +193,5 @@ La aplicación en ejecución siempre usa PostgreSQL (Supabase).
 * [Swagger / OpenAPI](docs/Swagger_OpenAPI.md): catálogo completo de operaciones, códigos de estado y ejemplos.
 * [DTOs y contratos de API](docs/dto/README.md): esquemas JSON y tipos TypeScript para el frontend.
 * [Historias de Usuario](docs/Historias%20de%20Usuario/): especificación funcional por HU.
-* [Pendientes](docs/pendientes.md) y [Deuda técnica](docs/deudaTecnica.md): trabajo abierto y decisiones de diseño pendientes.
+* [Deuda técnica](docs/deudaTecnica.md): trabajo abierto y decisiones de diseño pendientes.
 * [Changelog](docs/CHANGELOG.md): resumen de los cambios relevantes por tema.
