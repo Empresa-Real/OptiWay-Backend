@@ -56,7 +56,7 @@ public class TiendaRepositoryAdapter implements TiendaRepositoryPort {
 
     @Override
     public List<Tienda> obtenerPorEncargadoId(Long encargadoId) {
-        return tiendaJpaRepository.findByEncargadoId(encargadoId).stream()
+        return tiendaJpaRepository.findByEncargado_Id(encargadoId).stream()
                 .map(this::toDomain)
                 .toList();
     }

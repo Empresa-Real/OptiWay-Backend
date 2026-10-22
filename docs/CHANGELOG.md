@@ -14,6 +14,15 @@
 
 ---
 
+## Persistencia JPA: consultas derivadas por relación (fix)
+
+- **500 en `/me`, detalle de usuario, inventario, ventas e ingresos**: las consultas derivadas `findByEncargadoId`, `findByTiendaId` y `findByCentroDistribucionId` apuntaban a atributos `*Id` que las entidades no tienen (usan relaciones `encargado`, `tienda`, `centroDistribucion` y `producto`). Spring Data las construye en la primera ejecución, no al arrancar, por lo que el fallo (`UnknownPathException`) aparecía solo en runtime.
+- **Fix**: navegación explícita con `_` (`findByEncargado_Id`, `findByTienda_Id`, `findByCentroDistribucion_Id`, `...AndProducto_Id`, `existsByProducto_Id...`) en `TiendaJpaRepository`, `CentroDistribucionJpaRepository`, `InventarioJpaRepository`, `IngresoMercanciaJpaRepository` y `VentaJpaRepository`.
+- **Asignación de ubicación**: solo se consultan tiendas/CDs para `ENCARGADO_TIENDA` y `ENCARGADO_CD`; administradores y planificadores ya no ejecutan esas consultas.
+- **Regresión**: `RepositoriosConsultasDerivadasTest` ejecuta las consultas contra H2 para que este tipo de fallo aparezca en tests y no en producción.
+
+---
+
 ## Estandarización hexagonal de la API (Fix 28-40)
 
 - **Commands inmutables en casos de uso** (Fix 28, 35): firmas de mutación con `authUserId` obligatorio como primer parámetro en toda capa; comandos como records inmutables.

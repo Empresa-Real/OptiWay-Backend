@@ -46,7 +46,7 @@ public class VentaRepositoryAdapter implements VentaRepositoryPort {
 
     @Override
     public List<Venta> findByTiendaId(Long tiendaId) {
-        return ventaJpaRepository.findByTiendaId(tiendaId)
+        return ventaJpaRepository.findByTienda_Id(tiendaId)
                 .stream()
                 .map(this::toDomain)
                 .toList();

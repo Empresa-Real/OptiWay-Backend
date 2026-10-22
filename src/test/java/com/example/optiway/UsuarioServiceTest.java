@@ -325,7 +325,6 @@ class UsuarioServiceTest {
             when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(solicitante));
             when(usuarioRepositoryPort.obtenerPorId(2L)).thenReturn(Optional.of(objetivo));
             when(tiendaRepositoryPort.obtenerPorEncargadoId(2L)).thenReturn(List.of(tienda));
-            when(centroDistribucionRepositoryPort.obtenerPorEncargadoId(2L)).thenReturn(List.of());
 
             Optional<UsuarioResponse> resultado = usuarioService.obtenerUsuarioPorId(adminAuthId, 2L);
 
@@ -342,7 +341,6 @@ class UsuarioServiceTest {
 
             when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(usuario));
             when(tiendaRepositoryPort.obtenerPorEncargadoId(2L)).thenReturn(List.of(tienda));
-            when(centroDistribucionRepositoryPort.obtenerPorEncargadoId(2L)).thenReturn(List.of());
 
             Optional<UsuarioResponse> resultado = usuarioService.obtenerUsuarioPorAuthId(adminAuthId);
 

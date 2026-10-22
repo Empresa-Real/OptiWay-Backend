@@ -54,7 +54,7 @@ public class IngresoMercanciaRepositoryAdapter
 
     @Override
     public List<IngresoMercancia> findByCentroDistribucionId(Long centroDistribucionId) {
-        return repository.findByCentroDistribucionId(centroDistribucionId)
+        return repository.findByCentroDistribucion_Id(centroDistribucionId)
                 .stream()
                 .map(this::toDomain)
                 .toList();

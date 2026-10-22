@@ -8,5 +8,5 @@ import java.util.List;
 @Repository
 public interface CentroDistribucionJpaRepository extends JpaRepository<CentroDistribucionJpaEntity, Long> {
     boolean existsByCodigo(String codigo);
-    List<CentroDistribucionJpaEntity> findByEncargadoId(Long encargadoId);
+    List<CentroDistribucionJpaEntity> findByEncargado_Id(Long encargadoId);
 }
