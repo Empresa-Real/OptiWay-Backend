@@ -1,9 +1,11 @@
 package com.example.optiway.infrastructure.adapter.in.rest.dto;
 
 import com.example.optiway.application.port.in.CrearUsuarioCommand;
+import com.example.optiway.domain.model.Rol;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 @Schema(description = "Petición para crear un usuario en el sistema")
 public record CrearUsuarioRequest(
@@ -16,9 +18,9 @@ public record CrearUsuarioRequest(
         @Schema(description = "Correo electrónico del usuario (identifier de Supabase Auth)", example = "ana@optiway.com")
         String email,
 
-        @NotBlank(message = "El rol es obligatorio")
+        @NotNull(message = "El rol es obligatorio")
         @Schema(description = "Rol asignado al usuario", example = "ENCARGADO_TIENDA")
-        String rol
+        Rol rol
 ) {
     public CrearUsuarioCommand toCommand() {
         return new CrearUsuarioCommand(nombre, email, rol);

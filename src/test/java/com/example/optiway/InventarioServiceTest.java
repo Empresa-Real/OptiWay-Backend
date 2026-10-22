@@ -25,7 +25,7 @@ import com.example.optiway.application.port.out.InventarioRepositoryPort;
 import com.example.optiway.application.port.out.ProductoRepositoryPort;
 import com.example.optiway.application.port.out.TiendaRepositoryPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
-import com.example.optiway.application.service.AccesoDenegadoException;
+import com.example.optiway.application.exception.AccesoDenegadoException;
 import com.example.optiway.application.service.InventarioService;
 import com.example.optiway.application.port.in.dto.InventarioResponse;
 import com.example.optiway.domain.model.CentroDistribucion;

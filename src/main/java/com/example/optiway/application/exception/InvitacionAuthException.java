@@ -1,15 +1,9 @@
-package com.example.optiway.application.service;
+package com.example.optiway.application.exception;
 
 public class InvitacionAuthException extends RuntimeException {
 
     private final Integer statusCode;
     private final Object detalle;
-
-    public InvitacionAuthException(String message) {
-        super(message);
-        this.statusCode = null;
-        this.detalle = null;
-    }
 
     public InvitacionAuthException(String message, Integer statusCode, Object detalle) {
         super(message);
@@ -21,7 +15,7 @@ public class InvitacionAuthException extends RuntimeException {
         return statusCode;
     }
 
-    public Object getDetalle() {
-        return detalle;
+    public String getError() {
+        return detalle != null ? detalle.toString() : getMessage();
     }
 }

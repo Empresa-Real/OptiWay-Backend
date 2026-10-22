@@ -1,21 +1,25 @@
 package com.example.optiway.infrastructure.adapter.out.persistence;
 
 import com.example.optiway.application.port.out.ProductoRepositoryPort;
-import com.example.optiway.application.service.ProductoDuplicadoException;
+import com.example.optiway.application.exception.ProductoDuplicadoException;
 import com.example.optiway.domain.model.Producto;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Component
 public class ProductoRepositoryAdapter implements ProductoRepositoryPort {
 
     private final ProductoJpaRepository productoJpaRepository;
     private final ProductoEdicionJpaRepository productoEdicionJpaRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public ProductoRepositoryAdapter(ProductoJpaRepository productoJpaRepository,
                                      ProductoEdicionJpaRepository productoEdicionJpaRepository) {
@@ -59,7 +63,7 @@ public class ProductoRepositoryAdapter implements ProductoRepositoryPort {
 
     @Override
     @Transactional
-    public Producto update(Producto cambios, UUID authUserId) {
+    public Producto update(Producto cambios, Long usuarioId) {
         ProductoJpaEntity entity = productoJpaRepository.findById(cambios.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado con ID: " + cambios.getId()));
 
@@ -68,7 +72,10 @@ public class ProductoRepositoryAdapter implements ProductoRepositoryPort {
         entity.setPrecio(cambios.getPrecio());
         entity.setUnidadMedida(cambios.getUnidadMedida());
         ProductoJpaEntity savedEntity = productoJpaRepository.save(entity);
-        productoEdicionJpaRepository.save(new ProductoEdicionJpaEntity(savedEntity.getId(), authUserId));
+        UsuarioJpaEntity usuario = usuarioId != null
+                ? entityManager.getReference(UsuarioJpaEntity.class, usuarioId)
+                : null;
+        productoEdicionJpaRepository.save(new ProductoEdicionJpaEntity(savedEntity, usuario));
         return toDomain(savedEntity);
     }
 

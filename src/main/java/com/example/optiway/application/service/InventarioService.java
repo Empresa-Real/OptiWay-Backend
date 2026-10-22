@@ -1,5 +1,7 @@
 package com.example.optiway.application.service;
 
+import com.example.optiway.application.exception.RecursoNoEncontradoException;
+import com.example.optiway.application.exception.StockInsuficienteException;
 import com.example.optiway.application.port.in.ObtenerInventarioCommand;
 import com.example.optiway.application.port.in.ObtenerInventarioUseCase;
 import com.example.optiway.application.port.in.dto.InventarioResponse;
@@ -11,7 +13,8 @@ import com.example.optiway.domain.model.CentroDistribucion;
 import com.example.optiway.domain.model.Inventario;
 import com.example.optiway.domain.model.Producto;
 import com.example.optiway.domain.model.Tienda;
-import com.example.optiway.infrastructure.security.AuthorizationService;
+import com.example.optiway.application.port.out.AuthorizationPort;
+import com.example.optiway.infrastructure.security.AccionAutorizada;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -27,14 +30,14 @@ public class InventarioService implements ObtenerInventarioUseCase {
     private final ProductoRepositoryPort productoRepositoryPort;
     private final TiendaRepositoryPort tiendaRepositoryPort;
     private final CentroDistribucionRepositoryPort centroDistribucionRepositoryPort;
-    private final AuthorizationService authorizationService;
+    private final AuthorizationPort authorizationService;
 
     public InventarioService(
             InventarioRepositoryPort inventarioRepositoryPort,
             ProductoRepositoryPort productoRepositoryPort,
             TiendaRepositoryPort tiendaRepositoryPort,
             CentroDistribucionRepositoryPort centroDistribucionRepositoryPort,
-            AuthorizationService authorizationService) {
+            AuthorizationPort authorizationService) {
 
         this.inventarioRepositoryPort = inventarioRepositoryPort;
         this.productoRepositoryPort = productoRepositoryPort;
@@ -71,12 +74,12 @@ public class InventarioService implements ObtenerInventarioUseCase {
         if (tiendaId != null) {
             Tienda tienda = tiendaRepositoryPort.obtenerPorId(tiendaId)
                     .orElseThrow(() -> new IllegalArgumentException("La tienda no existe."));
-            authorizationService.requirePermisoConsultarTienda(authUserId, tienda, "consultar esta tienda");
+            authorizationService.requirePermisoTienda(authUserId, tienda, AccionAutorizada.CONSULTAR_INVENTARIO_TIENDA);
         } else if (centroDistribucionId != null) {
             CentroDistribucion centro = centroDistribucionRepositoryPort.obtenerPorId(centroDistribucionId)
                     .orElseThrow(() -> new IllegalArgumentException("El centro de distribución no existe"));
             authorizationService.requirePermisoCentroDistribucion(
-                    authUserId, centro, "consultar el inventario de este centro de distribución");
+                    authUserId, centro, AccionAutorizada.CONSULTAR_INVENTARIO_CENTRO_DISTRIBUCION);
         }
     }
 

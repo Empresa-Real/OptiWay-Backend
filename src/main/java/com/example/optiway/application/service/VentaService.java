@@ -1,5 +1,7 @@
 package com.example.optiway.application.service;
 
+import com.example.optiway.application.exception.RecursoNoEncontradoException;
+import com.example.optiway.application.exception.StockInsuficienteException;
 import com.example.optiway.application.port.in.RegistrarVentaCommand;
 import com.example.optiway.application.port.in.RegistrarVentaUseCase;
 import com.example.optiway.application.port.in.dto.VentaResponse;
@@ -11,7 +13,8 @@ import com.example.optiway.domain.model.Inventario;
 import com.example.optiway.domain.model.Producto;
 import com.example.optiway.domain.model.Tienda;
 import com.example.optiway.domain.model.Venta;
-import com.example.optiway.infrastructure.security.AuthorizationService;
+import com.example.optiway.application.port.out.AuthorizationPort;
+import com.example.optiway.infrastructure.security.AccionAutorizada;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,14 +28,14 @@ public class VentaService implements RegistrarVentaUseCase {
     private final InventarioRepositoryPort inventarioRepositoryPort;
     private final TiendaRepositoryPort tiendaRepositoryPort;
     private final ProductoRepositoryPort productoRepositoryPort;
-    private final AuthorizationService authorizationService;
+    private final AuthorizationPort authorizationService;
 
     public VentaService(
             VentaRepositoryPort ventaRepositoryPort,
             InventarioRepositoryPort inventarioRepositoryPort,
             TiendaRepositoryPort tiendaRepositoryPort,
             ProductoRepositoryPort productoRepositoryPort,
-            AuthorizationService authorizationService) {
+            AuthorizationPort authorizationService) {
         this.ventaRepositoryPort = ventaRepositoryPort;
         this.inventarioRepositoryPort = inventarioRepositoryPort;
         this.tiendaRepositoryPort = tiendaRepositoryPort;
@@ -61,10 +64,8 @@ public class VentaService implements RegistrarVentaUseCase {
                 .orElseThrow(() -> new RecursoNoEncontradoException(
                         "La tienda con ID " + command.tiendaId() + " no fue encontrada."));
 
-        // 2. Control de acceso y roles si se proporciona identidad
-        if (authUserId != null) {
-            authorizationService.requirePermisoTienda(authUserId, tienda, "registrar ventas en la tienda especificada.");
-        }
+        // 2. Control de acceso y roles: la identidad siempre es obligatoria
+        authorizationService.requirePermisoTienda(authUserId, tienda, AccionAutorizada.REGISTRAR_VENTA);
 
         // 3. Validar existencia y estado del producto
         Producto producto = productoRepositoryPort.findById(command.productoId())

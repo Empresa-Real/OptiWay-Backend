@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.optiway.application.exception.RecursoNoEncontradoException;
 import com.example.optiway.application.port.in.RegistrarIngresoCommand;
 import com.example.optiway.application.port.in.RegistrarIngresoMercanciaUseCase;
 import com.example.optiway.application.port.in.dto.IngresoMercanciaResponse;
@@ -17,7 +18,8 @@ import com.example.optiway.domain.model.CentroDistribucion;
 import com.example.optiway.domain.model.IngresoMercancia;
 import com.example.optiway.domain.model.Inventario;
 import com.example.optiway.domain.model.Usuario;
-import com.example.optiway.infrastructure.security.AuthorizationService;
+import com.example.optiway.application.port.out.AuthorizationPort;
+import com.example.optiway.infrastructure.security.AccionAutorizada;
 
 @Service
 public class IngresoMercanciaService implements RegistrarIngresoMercanciaUseCase {
@@ -26,14 +28,14 @@ public class IngresoMercanciaService implements RegistrarIngresoMercanciaUseCase
     private final InventarioRepositoryPort inventarioRepositoryPort;
     private final CentroDistribucionRepositoryPort centroDistribucionRepositoryPort;
     private final ProductoRepositoryPort productoRepositoryPort;
-    private final AuthorizationService authorizationService;
+    private final AuthorizationPort authorizationService;
 
     public IngresoMercanciaService(
             IngresoMercanciaRepositoryPort ingresoRepositoryPort,
             InventarioRepositoryPort inventarioRepositoryPort,
             CentroDistribucionRepositoryPort centroDistribucionRepositoryPort,
             ProductoRepositoryPort productoRepositoryPort,
-            AuthorizationService authorizationService) {
+            AuthorizationPort authorizationService) {
 
         this.ingresoRepositoryPort = ingresoRepositoryPort;
         this.inventarioRepositoryPort = inventarioRepositoryPort;
@@ -68,7 +70,7 @@ public class IngresoMercanciaService implements RegistrarIngresoMercanciaUseCase
 
         // 2. Validar permisos del usuario sobre el centro de distribución
         Usuario usuario = authorizationService.requirePermisoCentroDistribucion(
-                authUserId, centro, "registrar ingresos en este Centro de Distribución");
+                authUserId, centro, AccionAutorizada.REGISTRAR_INGRESO);
 
         // 3. Verificar que exista el producto
         productoRepositoryPort.findById(command.productoId())

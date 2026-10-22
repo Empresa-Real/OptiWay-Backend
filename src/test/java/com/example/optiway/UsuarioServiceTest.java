@@ -7,9 +7,11 @@ import static org.mockito.Mockito.*;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.example.optiway.application.port.in.ActualizarRolCommand;
 import com.example.optiway.application.port.out.AuthPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
-import com.example.optiway.application.service.AccesoDenegadoException;
+import com.example.optiway.application.exception.AccesoDenegadoException;
+import com.example.optiway.application.service.AuthErrorMapper;
 import com.example.optiway.application.service.UsuarioService;
 import com.example.optiway.domain.model.Rol;
 import com.example.optiway.domain.model.Usuario;
@@ -39,7 +41,8 @@ class UsuarioServiceTest {
     @BeforeEach
     void setUp() {
         AuthorizationService authService = new AuthorizationService(usuarioRepositoryPort);
-        usuarioService = new UsuarioService(usuarioRepositoryPort, authPort, authService);
+        usuarioService = new UsuarioService(usuarioRepositoryPort, authPort, authService,
+                new AuthErrorMapper());
         adminAuthId = UUID.randomUUID();
         adminUsuario = new Usuario(1L, adminAuthId, "Admin User", "admin@optiway.com", Rol.ADMINISTRADOR, null);
     }
@@ -154,6 +157,78 @@ class UsuarioServiceTest {
             assertEquals("Usuario no encontrado con ID: " + idInexistente, exception.getMessage());
             verify(usuarioRepositoryPort, never()).eliminar(any());
             verify(authPort, never()).eliminarUsuarioAuth(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("Reglas de cambio de rol (actualizarRol)")
+    class ActualizarRolTests {
+
+        @Test
+        @DisplayName("Cambiar el rol de un usuario no administrador exitosamente")
+        void actualizarRol_aUsuarioNormal_exitoso() {
+            Long usuarioId = 7L;
+            Usuario encargado = new Usuario(usuarioId, UUID.randomUUID(), "Encargado", "enc@optiway.com", Rol.ENCARGADO_TIENDA, adminAuthId);
+
+            when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(adminUsuario));
+            when(usuarioRepositoryPort.obtenerPorId(usuarioId)).thenReturn(Optional.of(encargado));
+            when(usuarioRepositoryPort.guardar(any(Usuario.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            usuarioService.actualizarRol(adminAuthId, new ActualizarRolCommand(usuarioId, Rol.PLANIFICADOR));
+
+            assertEquals(Rol.PLANIFICADOR, encargado.getRol());
+            verify(usuarioRepositoryPort, times(1)).guardar(encargado);
+        }
+
+        @Test
+        @DisplayName("Rechazar cambio de rol de un usuario ADMINISTRADOR")
+        void actualizarRol_aUsuarioAdministrador_lanzaAccesoDenegado() {
+            Long otroAdminId = 99L;
+            Usuario otroAdmin = new Usuario(otroAdminId, UUID.randomUUID(), "Otro Admin", "admin2@optiway.com", Rol.ADMINISTRADOR, null);
+
+            when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(adminUsuario));
+            when(usuarioRepositoryPort.obtenerPorId(otroAdminId)).thenReturn(Optional.of(otroAdmin));
+
+            AccesoDenegadoException exception = assertThrows(AccesoDenegadoException.class, () ->
+                    usuarioService.actualizarRol(adminAuthId, new ActualizarRolCommand(otroAdminId, Rol.ENCARGADO_TIENDA))
+            );
+
+            assertEquals("No está permitido cambiar el rol de un usuario con rol ADMINISTRADOR", exception.getMessage());
+            verify(usuarioRepositoryPort, never()).guardar(any());
+        }
+
+        @Test
+        @DisplayName("Rechazar otorgar el rol ADMINISTRADOR a otro usuario")
+        void actualizarRol_otorgarAdmin_lanzaAccesoDenegado() {
+            Long usuarioId = 8L;
+            Usuario encargado = new Usuario(usuarioId, UUID.randomUUID(), "Encargado", "enc@optiway.com", Rol.ENCARGADO_TIENDA, adminAuthId);
+
+            when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(adminUsuario));
+            when(usuarioRepositoryPort.obtenerPorId(usuarioId)).thenReturn(Optional.of(encargado));
+
+            AccesoDenegadoException exception = assertThrows(AccesoDenegadoException.class, () ->
+                    usuarioService.actualizarRol(adminAuthId, new ActualizarRolCommand(usuarioId, Rol.ADMINISTRADOR))
+            );
+
+            assertEquals("No está permitido otorgar el rol ADMINISTRADOR", exception.getMessage());
+            assertEquals(Rol.ENCARGADO_TIENDA, encargado.getRol());
+            verify(usuarioRepositoryPort, never()).guardar(any());
+        }
+
+        @Test
+        @DisplayName("Rechazar si el solicitante no es Administrador")
+        void actualizarRol_solicitanteNoEsAdmin_lanzaAccesoDenegado() {
+            UUID planificadorAuthId = UUID.randomUUID();
+            Usuario planificador = new Usuario(5L, planificadorAuthId, "Planificador", "plan@optiway.com", Rol.PLANIFICADOR, null);
+
+            when(usuarioRepositoryPort.obtenerPorAuthUserId(planificadorAuthId)).thenReturn(Optional.of(planificador));
+
+            AccesoDenegadoException exception = assertThrows(AccesoDenegadoException.class, () ->
+                    usuarioService.actualizarRol(planificadorAuthId, new ActualizarRolCommand(7L, Rol.ENCARGADO_TIENDA))
+            );
+
+            assertEquals("Solo un administrador puede actualizar roles de usuario", exception.getMessage());
+            verify(usuarioRepositoryPort, never()).guardar(any());
         }
     }
 }

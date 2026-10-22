@@ -7,10 +7,16 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
 @Component
 public class VentaRepositoryAdapter implements VentaRepositoryPort {
 
     private final VentaJpaRepository ventaJpaRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public VentaRepositoryAdapter(VentaJpaRepository ventaJpaRepository) {
         this.ventaJpaRepository = ventaJpaRepository;
@@ -47,13 +53,17 @@ public class VentaRepositoryAdapter implements VentaRepositoryPort {
     }
 
     private VentaJpaEntity toEntity(Venta venta) {
-        return new VentaJpaEntity(
-                venta.getId(),
-                venta.getTiendaId(),
-                venta.getProductoId(),
-                venta.getCantidad(),
-                venta.getFechaHora()
-        );
+        VentaJpaEntity entity = new VentaJpaEntity();
+        entity.setId(venta.getId());
+        if (venta.getTiendaId() != null) {
+            entity.setTienda(entityManager.getReference(TiendaJpaEntity.class, venta.getTiendaId()));
+        }
+        if (venta.getProductoId() != null) {
+            entity.setProducto(entityManager.getReference(ProductoJpaEntity.class, venta.getProductoId()));
+        }
+        entity.setCantidad(venta.getCantidad());
+        entity.setFechaHora(venta.getFechaHora());
+        return entity;
     }
 
     private Venta toDomain(VentaJpaEntity entity) {

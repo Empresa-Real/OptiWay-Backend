@@ -1,7 +1,10 @@
 package com.example.optiway.application.port.in;
 
+import com.example.optiway.domain.model.Rol;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Comando inmutable que encapsula los datos requeridos para registrar
@@ -15,7 +18,7 @@ public record CrearUsuarioCommand(
         @Email(message = "El email debe tener un formato válido")
         String email,
 
-        @NotBlank(message = "El rol es obligatorio")
-        String rol
+        @NotNull(message = "El rol es obligatorio")
+        Rol rol
 ) {
 }

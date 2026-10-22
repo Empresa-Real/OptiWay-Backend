@@ -8,10 +8,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
 @Component
 public class TiendaRepositoryAdapter implements TiendaRepositoryPort {
 
     private final TiendaJpaRepository tiendaJpaRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public TiendaRepositoryAdapter(TiendaJpaRepository tiendaJpaRepository) {
         this.tiendaJpaRepository = tiendaJpaRepository;
@@ -26,7 +32,11 @@ public class TiendaRepositoryAdapter implements TiendaRepositoryPort {
         entity.setDireccion(tienda.getDireccion());
         entity.setCiudad(tienda.getCiudad());
         entity.setActivo(tienda.isActivo());
-        entity.setEncargadoId(tienda.getEncargadoId());
+        if (tienda.getEncargadoId() != null) {
+            entity.setEncargado(entityManager.getReference(UsuarioJpaEntity.class, tienda.getEncargadoId()));
+        } else {
+            entity.setEncargado(null);
+        }
 
         TiendaJpaEntity savedEntity = tiendaJpaRepository.save(entity);
         return toDomain(savedEntity);

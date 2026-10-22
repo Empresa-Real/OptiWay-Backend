@@ -36,6 +36,7 @@ build/
 ### VS Code ###
 .vscode/
 
+
 ### Local environment and temporary files ###
 .env
 .env.*
@@ -55,3 +56,7 @@ product_backlog.txt
 *.mp3
 *.wav
 audio_taller.*
+
+docs/diagramas/
+other/
+src/main/resources/static/web

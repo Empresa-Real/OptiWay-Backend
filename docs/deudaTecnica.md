@@ -127,8 +127,108 @@ Nota: en `Producto` el campo equivalente **sí tiene sentido** (identificador de
 
 ---
 
+## 5. `eliminarUsuario`: operación distribuida sin transacción (Supabase + BD local)
+
+**Estado:** ⚠️ Abierto (decisión consciente) · **Impacto:** Consistencia de datos · **Esfuerzo:** Alto (requiere patrón de compensación)
+
+`UsuarioService.eliminarUsuario` realiza **dos efectos que no pueden agruparse en una transacción**:
+
+```java
+if (usuarioAEliminar.getAuthUserId() != null) {
+    authPort.eliminarUsuarioAuth(usuarioAEliminar.getAuthUserId()); // 1) HTTP a Supabase Auth (irreversible)
+}
+usuarioRepositoryPort.eliminar(id);                                 // 2) borrado en la BD local (revertible)
+```
+
+`@Transactional` sólo protege operaciones contra la base de datos; **no puede revertir una llamada HTTP** ya ejecutada contra Supabase. Por eso añadir la anotación **no elimina el problema**: lo mueve.
+
+### Las dos ventanas de inconsistencia
+
+| Orden | Qué falla | Resultado | ¿Recuperable? |
+| :--- | :--- | :--- | :--- |
+| Supabase → BD (actual) | El borrado local falla tras el de Supabase | Usuario borrado en Auth, vivo en la BD local | ❌ No: el correo queda tomado en Auth y no aparece en la BD |
+| BD → Supabase (invertido) | El borrado en Supabase falla tras el local | La transacción local revierte; nada se borra en Auth | ✅ Sí: reintentable |
+| BD → Supabase (invertido) | El **commit** local falla tras el de Supabase | Usuario borrado en Auth, vivo en la BD local | ❌ No |
+
+Ningún orden elimina la ventana por completo; sólo cambia cuál es más probable. Un fix real exige un **patrón de compensación**: marcar el borrado como intención pendiente en la BD, borrar en Supabase y confirmar, con una tarea de reconciliación que reintente los borrados que quedaron a medias. Eso es infraestructura (outbox/cola + job), desproporcionada para el tamaño actual.
+
+### Mitigación parcial disponible (no aplicada)
+
+Invertir el orden (BD primero) y añadir `@Transactional` reduciría la ventana al caso poco frecuente de "commit local falla tras Supabase OK", porque el caso común ("Supabase caído") pasa a ser recuperable con un simple reintento. Se documenta pero **no se implementa** por decisión explícita, dado que no cierra el problema y añade complejidad.
+
+### Relacionado
+
+El mismo patrón de dos efectos (invitar en Supabase y luego guardar en la BD local) existe en `crearUsuario`, aunque ahí el fallo deja un usuario invitado sin registro local — menos grave porque es reintentable reutilizando la cuenta por email.
+
+---
+
+## 6. `Usuario`: entidad de dominio con lógica de autorización (Fat Domain)
+
+**Estado:** ⚠️ Abierto (decisión consciente) · **Impacto:** Diseño · **Esfuerzo:** Medio
+
+`Usuario` concentra métodos de decisión de permisos (`puedeOperarTienda`, `esEncargadoDe`, `puedeGestionarTodo`, `admiteAsignacionDeUbicacion`). Mezcla "datos del usuario" con "reglas de autorización complejas".
+
+**Postura adoptada:** esto **no es un defecto**, es el patrón **Information Expert** (GRASP): quien tiene la información (el rol y la asignación) es quien decide. La alternativa —que cada uno de los ~7 servicios inspeccione `usuario.getRol() == X`— dispersa la regla y es peor. Que una regla nueva ("un encargado opera sólo en horario comercial") toque `Usuario` es el comportamiento **esperado** del patrón, no un síntoma.
+
+**Límite conocido:** cuando aparezcan reglas que dependan de **contexto** (hora, ubicación física, estado de la operación) y no sólo del usuario, la decisión deja de ser responsabilidad del dominio y conviene un `Policy`/`Specification` fuera de `Usuario`. Hoy no existen esas reglas, así que no se introduce esa capa (evitar sobreingeniería). Queda como umbral documentado: **si una regla necesita datos externos al usuario, la decisión sale de la entidad.**
+
+---
+
+## 7. `Rol`: enum anémico y reglas dispersas
+
+**Estado:** ⚠️ Abierto (decisión consciente) · **Impacto:** Mantenibilidad · **Esfuerzo:** Medio-Alto
+
+`Rol` es un enum sin lógica; el "qué puede hacer cada rol" vive en `Usuario` (`puedeGestionarTodo`, `esAdministrador`) y en `AuthorizationService` (guardas). Añadir un rol nuevo obliga a tocar varios puntos.
+
+**Postura adoptada:** el enum **debe** ser anémico; meter la lógica de permisos dentro de `Rol` sólo movería el problema y la acoplaría al enum. La dispersión es real pero acotada: los roles actuales se resuelven con **tres reglas** (`esAdministrador`, `puedeGestionarTodo`, `esEncargadoDe`), no con una regla por rol.
+
+**Cuándo revisar:** si se añade un rol con un perfil de permisos que no encaje en las tres reglas (el ejemplo típico: `AUDITOR` de sólo lectura), conviene introducir una tabla de capacidades por rol (p. ej. `Rol` con un `Set<Capacidad>` o un `Map<Rol, Set<Permiso>>`) en lugar de seguir añadiendo métodos `esX()`. Mientras los roles encajen en las tres reglas, la tabla de capacidades es infraestructura innecesaria.
+
+---
+
+## 8. Cardinalidad de roles, encargados y ubicaciones (regla no explicitada)
+
+**Estado:** ⚠️ Abierto · **Impacto:** Diseño / Integridad de datos · **Esfuerzo:** Bajo-Medio
+
+### Estado actual
+
+El modelo actual implica reglas cardinales que **no están formalizadas** ni validadas explícitamente:
+
+| Relación | ¿Cómo está hoy? | ¿Se valida? |
+| :--- | :--- | :--- |
+| **Usuario → Rol** | Un usuario tiene **un solo** `Rol` (`Usuario.rol`). | Implícito (campo único). |
+| **Usuario → Tiendas** | Un encargado puede estar asignado a **una o varias** tiendas vía `Tienda.encargadoId` (sin restricción `UNIQUE`). | No. El esquema permite asignar el mismo usuario a distintas tiendas. |
+| **Usuario → Centros de Distribución** | Igual que tiendas: `CentroDistribucion.encargadoId` permite **uno o varios** CD por usuario. | No. Sin restricción. |
+| **Tienda → Encargado** | Una tienda puede tener **un encargado** asignado (`encargadoId` nullable). | No hay restricción `UNIQUE` que impida reutilizar al mismo encargado. |
+| **CD → Encargado** | Un CD puede tener **un encargado** asignado (`encargadoId` nullable). | Ídem. |
+| **Usuario distinto a encargado** | `Usuario.admiteAsignacionDeUbicacion()` limita quién puede recibir una asignación. | Sí, existe esa regla. |
+
+### Preguntas a resolver
+
+- **¿Un usuario puede tener más de un rol?** ¿O debe seguir siendo **un rol por usuario**? Pasar a múltiples roles cambiaría sustancialmente la autorización.
+- **¿Un usuario puede gestionar más de una tienda o más de un CD?** Si sí, `AuthorizationService.requirePermisoTienda` debe pasar de "su tienda" a **conjunto de tiendas asignadas**. Si no, hay que aplicar la restricción.
+- **¿Una tienda o un CD pueden tener más de un encargado simultáneamente?** Si se permite, hay que definir igualdad de permisos, jerarquía o encargado principal. Hoy es **0..1** por intención, pero **no está forzado**.
+- **¿Puede un mismo usuario ser encargado de una tienda y, a la vez, de un CD?** El esquema lo permite hoy. ¿Es correcto o debe prohibirse?
+
+### Decisión pendiente
+
+**Definir y formalizar la cardinalidad explícitamente.** Según la respuesta:
+
+- **Mantener 1:1 (encargado ↔ tienda/CD):** añadir validaciones en aplicación + `UNIQUE (encargadoId)` en `tiendas` y `centros_distribucion` (teniendo en cuenta `NULL`).
+- **Permitir 1:N:** refactorizar autorización para trabajar con **colecciones de ubicaciones** en `AuthorizationService` y en el dominio.
+- **Múltiples roles:** rediseñar `Usuario.rol` a relación, actualizar enum/autorización y migraciones.
+
+**Postura actual:** el código asume **un rol por usuario** y permite **asignaciones múltiples** sin validar. Esto debe aclararse antes de añadir más reglas o restricciones en base de datos.
+
+---
+
+![alt text](./img/cd_tienda.png)
+
+---
 
 ## Cómo mantener este documento
 
-- Cada ítem lleva **estado** (`⚠️ Abierto` / `✅ Resuelto` / `🔄 En curso`), impacto y esfuerzo.
-- Cuando una decisión se ejecute, mover el detalle al fix correspondiente en `docs/Fix´s/` y marcarlo aquí como resuelto con enlace.
+- Este documento recoge **sólo deuda abierta y decisiones de diseño pendientes**. Lo resuelto **no se mantiene aquí**: se documenta en [`docs/Fix´s/`](./Fix´s/) y se elimina de esta lista.
+- Cada ítem lleva **estado** (`⚠️ Abierto` / `🔄 En curso`), impacto y esfuerzo.
+- Cuando una decisión se ejecute, se documenta en el fix correspondiente y se **retira** de aquí; no se deja como "resuelto".
+

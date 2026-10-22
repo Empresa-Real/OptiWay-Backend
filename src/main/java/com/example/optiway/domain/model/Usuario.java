@@ -2,9 +2,6 @@ package com.example.optiway.domain.model;
 
 import java.util.UUID;
 
-import com.example.optiway.domain.model.CentroDistribucion;
-import com.example.optiway.domain.model.Tienda;
-
 public class Usuario {
     private Long id;
     private UUID authUserId;
@@ -74,42 +71,75 @@ public class Usuario {
         this.creadoPor = creadoPor;
     }
 
+    /**
+     * Verifica si este usuario es Administrador.
+     * El rol ADMINISTRADOR es el único que puede gestionar usuarios y roles.
+     *
+     * @return true si el rol es ADMINISTRADOR
+     */
     public boolean esAdministrador() {
         return this.rol == Rol.ADMINISTRADOR;
     }
 
-    public boolean esPlanificador() {
-        return this.rol == Rol.PLANIFICADOR;
+    /**
+     * Verifica si este usuario puede gestionar el dominio logístico (catálogo, tiendas,
+     * centros, productos, inventario, ventas e ingresos) sin restricción de ubicación.
+     * Pueden hacerlo ADMINISTRADOR y PLANIFICADOR; los encargados quedan limitados a
+     * las ubicaciones que tienen asignadas.
+     *
+     * @return true si el usuario tiene visión y gestión logística global
+     */
+    public boolean puedeGestionarTodo() {
+        return esAdministrador() || this.rol == Rol.PLANIFICADOR;
     }
 
+    /**
+     * Verifica si este usuario es Encargado de Tienda (por rol).
+     * Para comprobar además que está asignado a una tienda concreta, usa
+     * {@link #esEncargadoDe(Tienda)}.
+     *
+     * @return true si el rol es ENCARGADO_TIENDA
+     */
     public boolean esEncargadoTienda() {
         return this.rol == Rol.ENCARGADO_TIENDA;
     }
 
+    /**
+     * Verifica si este usuario es Encargado de Centro de Distribución (por rol).
+     * Para comprobar además que está asignado a un CD concreto, usa
+     * {@link #esEncargadoDe(CentroDistribucion)}.
+     *
+     * @return true si el rol es ENCARGADO_CD
+     */
     public boolean esEncargadoCD() {
         return this.rol == Rol.ENCARGADO_CD;
     }
 
-    public boolean esEncargado() {
-        return esEncargadoTienda() || esEncargadoCD();
-    }
-
     /**
-     * Verifica si este usuario puede operar sobre una tienda dada.
-     * Puede hacerlo si es Administrador, o si es Encargado de tienda y está asignado a esa tienda.
+     * Verifica si este usuario puede operar sobre una tienda dada: o puede gestionar
+     * todo el dominio logístico, o es el Encargado de Tienda asignado a esa tienda.
      *
      * @param tienda la tienda sobre la que se quiere operar
      * @return true si el usuario tiene permiso para operar la tienda
      */
     public boolean puedeOperarTienda(Tienda tienda) {
-        if (tienda == null) {
-            return false;
-        }
-        return esAdministrador() || esEncargadoDe(tienda);
+        return puedeGestionarTodo() || esEncargadoDe(tienda);
+    }
+
+    /**
+     * Verifica si este usuario puede operar sobre un Centro de Distribución dado: o puede
+     * gestionar todo el dominio logístico, o es el Encargado de CD asignado a ese centro.
+     *
+     * @param centroDistribucion el centro de distribución sobre el que se quiere operar
+     * @return true si el usuario tiene permiso para operar el centro
+     */
+    public boolean puedeOperarCentroDistribucion(CentroDistribucion centroDistribucion) {
+        return puedeGestionarTodo() || esEncargadoDe(centroDistribucion);
     }
 
     /**
      * Verifica si este usuario es el Encargado de Tienda asignado a la tienda dada.
+     * Comprueba rol y asignación: no basta con ser encargado, hay que estar asignado.
      *
      * @param tienda la tienda a verificar
      * @return true si es Encargado de Tienda y su ID coincide con el encargado de la tienda
@@ -122,10 +152,11 @@ public class Usuario {
     }
 
     /**
-     * Verifica si este usuario es el Encargado de Centro de Distribución asignado al CD dado.
+     * Verifica si este usuario es el Encargado de CD asignado al centro dado.
+     * Comprueba rol y asignación: no basta con ser encargado, hay que estar asignado.
      *
      * @param centroDistribucion el centro de distribución a verificar
-     * @return true si es Encargado de CD y su ID coincide con el encargado del CD
+     * @return true si es Encargado de CD y su ID coincide con el encargado del centro
      */
     public boolean esEncargadoDe(CentroDistribucion centroDistribucion) {
         if (centroDistribucion == null || this.id == null || !esEncargadoCD()) {
@@ -135,38 +166,13 @@ public class Usuario {
     }
 
     /**
-     * Verifica si este usuario puede ver todo el catálogo logístico (tiendas, centros, etc.).
-     * Puede hacerlo si es Administrador o Planificador.
+     * Verifica si este usuario puede recibir la asignación de una ubicación (tienda o CD).
+     * Solo los encargados se asignan a ubicaciones; Administrador y Planificador gestionan
+     * todo el catálogo y no se vinculan a una ubicación concreta.
      *
-     * @return true si puede ver todo el catálogo logístico
+     * @return true si el rol admite una asignación de ubicación
      */
-    public boolean puedeVerTodoElCatalogoLogistico() {
-        return esAdministrador() || esPlanificador();
-    }
-
-    private boolean tieneAccesoLogisticoOEncargado(boolean esEncargado) {
-        return puedeVerTodoElCatalogoLogistico() || esEncargado;
-    }
-
-    /**
-     * Verifica si este usuario puede consultar el inventario de una tienda.
-     * Puede hacerlo si tiene visión logística global o es el Encargado asignado a esa tienda.
-     *
-     * @param tienda la tienda a consultar
-     * @return true si tiene permisos para consultar
-     */
-    public boolean puedeConsultarTienda(Tienda tienda) {
-        return tienda != null && tieneAccesoLogisticoOEncargado(esEncargadoDe(tienda));
-    }
-
-    /**
-     * Verifica si este usuario puede operar o consultar un Centro de Distribución.
-     * Puede hacerlo si tiene visión logística global o es el Encargado asignado a ese CD.
-     *
-     * @param centroDistribucion el centro de distribución a verificar
-     * @return true si tiene permisos
-     */
-    public boolean puedeOperarCentroDistribucion(CentroDistribucion centroDistribucion) {
-        return centroDistribucion != null && tieneAccesoLogisticoOEncargado(esEncargadoDe(centroDistribucion));
+    public boolean admiteAsignacionDeUbicacion() {
+        return esEncargadoTienda() || esEncargadoCD();
     }
 }

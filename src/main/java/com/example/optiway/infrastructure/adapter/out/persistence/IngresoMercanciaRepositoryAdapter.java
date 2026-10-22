@@ -7,11 +7,17 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
 @Component
 public class IngresoMercanciaRepositoryAdapter
         implements IngresoMercanciaRepositoryPort {
 
     private final IngresoMercanciaJpaRepository repository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public IngresoMercanciaRepositoryAdapter(
             IngresoMercanciaJpaRepository repository) {
@@ -22,11 +28,19 @@ public class IngresoMercanciaRepositoryAdapter
     public IngresoMercancia guardar(IngresoMercancia ingreso) {
 
         IngresoMercanciaJpaEntity entity = new IngresoMercanciaJpaEntity();
-        entity.setCentroDistribucionId(ingreso.getCentroDistribucionId());
-        entity.setProductoId(ingreso.getProductoId());
+        if (ingreso.getCentroDistribucionId() != null) {
+            entity.setCentroDistribucion(entityManager.getReference(CentroDistribucionJpaEntity.class, ingreso.getCentroDistribucionId()));
+        }
+        if (ingreso.getProductoId() != null) {
+            entity.setProducto(entityManager.getReference(ProductoJpaEntity.class, ingreso.getProductoId()));
+        }
+        if (ingreso.getUsuarioId() != null) {
+            entity.setUsuario(entityManager.getReference(UsuarioJpaEntity.class, ingreso.getUsuarioId()));
+        } else {
+            entity.setUsuario(null);
+        }
         entity.setCantidad(ingreso.getCantidad());
         entity.setOrigen(ingreso.getOrigen());
-        entity.setUsuarioId(ingreso.getUsuarioId());
         entity.setFechaIngreso(ingreso.getFechaIngreso());
 
         IngresoMercanciaJpaEntity saved = repository.save(entity);
