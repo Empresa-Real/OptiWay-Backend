@@ -2,9 +2,13 @@ package com.example.optiway.infrastructure.adapter.out.persistence;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
@@ -17,11 +21,13 @@ public class VentaJpaEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "tienda_id", nullable = false)
-    private Long tiendaId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "tienda_id", nullable = false, foreignKey = @ForeignKey(name = "fk_ventas_tienda"))
+    private TiendaJpaEntity tienda;
 
-    @Column(name = "producto_id", nullable = false)
-    private Long productoId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "producto_id", nullable = false, foreignKey = @ForeignKey(name = "fk_ventas_producto"))
+    private ProductoJpaEntity producto;
 
     @Column(name = "cantidad", nullable = false)
     private Integer cantidad;
@@ -31,10 +37,10 @@ public class VentaJpaEntity {
 
     public VentaJpaEntity() {}
 
-    public VentaJpaEntity(Long id, Long tiendaId, Long productoId, Integer cantidad, LocalDateTime fechaHora) {
+    public VentaJpaEntity(Long id, TiendaJpaEntity tienda, ProductoJpaEntity producto, Integer cantidad, LocalDateTime fechaHora) {
         this.id = id;
-        this.tiendaId = tiendaId;
-        this.productoId = productoId;
+        this.tienda = tienda;
+        this.producto = producto;
         this.cantidad = cantidad;
         this.fechaHora = fechaHora;
     }
@@ -42,11 +48,14 @@ public class VentaJpaEntity {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public Long getTiendaId() { return tiendaId; }
-    public void setTiendaId(Long tiendaId) { this.tiendaId = tiendaId; }
+    public TiendaJpaEntity getTienda() { return tienda; }
+    public void setTienda(TiendaJpaEntity tienda) { this.tienda = tienda; }
 
-    public Long getProductoId() { return productoId; }
-    public void setProductoId(Long productoId) { this.productoId = productoId; }
+    public ProductoJpaEntity getProducto() { return producto; }
+    public void setProducto(ProductoJpaEntity producto) { this.producto = producto; }
+
+    public Long getTiendaId() { return tienda != null ? tienda.getId() : null; }
+    public Long getProductoId() { return producto != null ? producto.getId() : null; }
 
     public Integer getCantidad() { return cantidad; }
     public void setCantidad(Integer cantidad) { this.cantidad = cantidad; }

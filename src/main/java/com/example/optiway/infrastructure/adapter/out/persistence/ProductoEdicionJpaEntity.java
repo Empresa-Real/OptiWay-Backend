@@ -2,14 +2,20 @@ package com.example.optiway.infrastructure.adapter.out.persistence;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import java.time.Instant;
-import java.util.UUID;
 
 @Entity
 @Table(name = "producto_ediciones")
@@ -18,20 +24,23 @@ public class ProductoEdicionJpaEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "producto_id", nullable = false)
-    private Long productoId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "producto_id", nullable = false, foreignKey = @ForeignKey(name = "fk_producto_ediciones_producto"))
+    private ProductoJpaEntity producto;
 
     @Column(name = "fecha_edicion", nullable = false)
     private Instant fechaEdicion;
 
-    @Column(name = "usuario_auth_id", nullable = false)
-    private UUID usuarioAuthId;
+    @OnDelete(action = OnDeleteAction.SET_NULL)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id", foreignKey = @ForeignKey(name = "fk_producto_ediciones_usuario"))
+    private UsuarioJpaEntity usuario;
 
     public ProductoEdicionJpaEntity() {}
 
-    public ProductoEdicionJpaEntity(Long productoId, UUID usuarioAuthId) {
-        this.productoId = productoId;
-        this.usuarioAuthId = usuarioAuthId;
+    public ProductoEdicionJpaEntity(ProductoJpaEntity producto, UsuarioJpaEntity usuario) {
+        this.producto = producto;
+        this.usuario = usuario;
     }
 
     @PrePersist
@@ -40,7 +49,11 @@ public class ProductoEdicionJpaEntity {
     }
 
     public Long getId() { return id; }
-    public Long getProductoId() { return productoId; }
+    public ProductoJpaEntity getProducto() { return producto; }
+    public void setProducto(ProductoJpaEntity producto) { this.producto = producto; }
+    public Long getProductoId() { return producto != null ? producto.getId() : null; }
     public Instant getFechaEdicion() { return fechaEdicion; }
-    public UUID getUsuarioAuthId() { return usuarioAuthId; }
+    public UsuarioJpaEntity getUsuario() { return usuario; }
+    public void setUsuario(UsuarioJpaEntity usuario) { this.usuario = usuario; }
+    public Long getUsuarioId() { return usuario != null ? usuario.getId() : null; }
 }

@@ -7,10 +7,16 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
 @Component
 public class InventarioRepositoryAdapter implements InventarioRepositoryPort {
 
     private final InventarioJpaRepository inventarioJpaRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public InventarioRepositoryAdapter(
             InventarioJpaRepository inventarioJpaRepository) {
@@ -25,9 +31,19 @@ public class InventarioRepositoryAdapter implements InventarioRepositoryPort {
         if (inventario.getId() != null) {
             entity.setId(inventario.getId());
         }
-        entity.setTiendaId(inventario.getTiendaId());
-        entity.setCentroDistribucionId(inventario.getCentroDistribucionId());
-        entity.setProductoId(inventario.getProductoId());
+        if (inventario.getTiendaId() != null) {
+            entity.setTienda(entityManager.getReference(TiendaJpaEntity.class, inventario.getTiendaId()));
+        } else {
+            entity.setTienda(null);
+        }
+        if (inventario.getCentroDistribucionId() != null) {
+            entity.setCentroDistribucion(entityManager.getReference(CentroDistribucionJpaEntity.class, inventario.getCentroDistribucionId()));
+        } else {
+            entity.setCentroDistribucion(null);
+        }
+        if (inventario.getProductoId() != null) {
+            entity.setProducto(entityManager.getReference(ProductoJpaEntity.class, inventario.getProductoId()));
+        }
         entity.setCantidadActual(inventario.getCantidadActual());
         entity.setStockMinimo(inventario.getStockMinimo() != null ? inventario.getStockMinimo() : 0);
 

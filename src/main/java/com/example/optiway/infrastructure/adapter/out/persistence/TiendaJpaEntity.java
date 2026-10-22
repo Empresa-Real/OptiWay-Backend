@@ -2,11 +2,19 @@ package com.example.optiway.infrastructure.adapter.out.persistence;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import java.util.List;
 import java.util.ArrayList;
 
@@ -33,22 +41,24 @@ public class TiendaJpaEntity {
     @Column(nullable = false, columnDefinition = "boolean default true")
     private Boolean activo = true;
 
-    @Column(name = "encargado_id")
-    private Long encargadoId;
+    @OnDelete(action = OnDeleteAction.SET_NULL)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "encargado_id", foreignKey = @ForeignKey(name = "fk_tiendas_encargado"))
+    private UsuarioJpaEntity encargado;
 
     @ManyToMany(mappedBy = "tiendasAbastecidas")
     private List<CentroDistribucionJpaEntity> centrosDistribucion = new ArrayList<>();
 
     public TiendaJpaEntity() {}
 
-    public TiendaJpaEntity(Long id, String codigo, String nombre, String direccion, String ciudad, Boolean activo, Long encargadoId) {
+    public TiendaJpaEntity(Long id, String codigo, String nombre, String direccion, String ciudad, Boolean activo, UsuarioJpaEntity encargado) {
         this.id = id;
         this.codigo = codigo;
         this.nombre = nombre;
         this.direccion = direccion;
         this.ciudad = ciudad;
         this.activo = activo != null ? activo : true;
-        this.encargadoId = encargadoId;
+        this.encargado = encargado;
     }
 
     public Long getId() { return id;}
@@ -69,8 +79,10 @@ public class TiendaJpaEntity {
     public Boolean getActivo() { return activo != null ? activo : true; }
     public void setActivo(Boolean activo) { this.activo = activo != null ? activo : true; }
 
-    public Long getEncargadoId() { return encargadoId; }
-    public void setEncargadoId(Long encargadoId) { this.encargadoId = encargadoId; }
+    public UsuarioJpaEntity getEncargado() { return encargado; }
+    public void setEncargado(UsuarioJpaEntity encargado) { this.encargado = encargado; }
+
+    public Long getEncargadoId() { return encargado != null ? encargado.getId() : null; }
 
     public List<CentroDistribucionJpaEntity> getCentrosDistribucion() {
         return centrosDistribucion != null ? centrosDistribucion : List.of();

@@ -1,6 +1,17 @@
 package com.example.optiway.infrastructure.adapter.out.persistence;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "inventarios")
@@ -10,14 +21,17 @@ public class InventarioJpaEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "tienda_id", nullable = true)
-    private Long tiendaId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tienda_id", foreignKey = @ForeignKey(name = "fk_inventarios_tienda"))
+    private TiendaJpaEntity tienda;
 
-    @Column(name = "centro_distribucion_id", nullable = true)
-    private Long centroDistribucionId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "centro_distribucion_id", foreignKey = @ForeignKey(name = "fk_inventarios_cd"))
+    private CentroDistribucionJpaEntity centroDistribucion;
 
-    @Column(name = "producto_id", nullable = false)
-    private Long productoId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "producto_id", nullable = false, foreignKey = @ForeignKey(name = "fk_inventarios_producto"))
+    private ProductoJpaEntity producto;
 
     @Column(name = "cantidad_actual", nullable = false)
     private Integer cantidadActual;
@@ -28,12 +42,12 @@ public class InventarioJpaEntity {
     public InventarioJpaEntity() {
     }
 
-    public InventarioJpaEntity(Long id, Long tiendaId, Long centroDistribucionId, Long productoId,
-                               Integer cantidadActual, Integer stockMinimo) {
+    public InventarioJpaEntity(Long id, TiendaJpaEntity tienda, CentroDistribucionJpaEntity centroDistribucion,
+                               ProductoJpaEntity producto, Integer cantidadActual, Integer stockMinimo) {
         this.id = id;
-        this.tiendaId = tiendaId;
-        this.centroDistribucionId = centroDistribucionId;
-        this.productoId = productoId;
+        this.tienda = tienda;
+        this.centroDistribucion = centroDistribucion;
+        this.producto = producto;
         this.cantidadActual = cantidadActual;
         this.stockMinimo = stockMinimo;
     }
@@ -41,8 +55,8 @@ public class InventarioJpaEntity {
     @PrePersist
     @PreUpdate
     protected void validarExclusividadUbicacion() {
-        boolean tieneTienda = (this.tiendaId != null);
-        boolean tieneCd = (this.centroDistribucionId != null);
+        boolean tieneTienda = (this.tienda != null);
+        boolean tieneCd = (this.centroDistribucion != null);
         if (tieneTienda && tieneCd) {
             throw new IllegalStateException(
                     "Un registro de inventario no puede tener asociados simultáneamente una tienda y un centro de distribución.");
@@ -61,28 +75,40 @@ public class InventarioJpaEntity {
         this.id = id;
     }
 
-    public Long getTiendaId() {
-        return tiendaId;
+    public TiendaJpaEntity getTienda() {
+        return tienda;
     }
 
-    public void setTiendaId(Long tiendaId) {
-        this.tiendaId = tiendaId;
+    public void setTienda(TiendaJpaEntity tienda) {
+        this.tienda = tienda;
+    }
+
+    public CentroDistribucionJpaEntity getCentroDistribucion() {
+        return centroDistribucion;
+    }
+
+    public void setCentroDistribucion(CentroDistribucionJpaEntity centroDistribucion) {
+        this.centroDistribucion = centroDistribucion;
+    }
+
+    public ProductoJpaEntity getProducto() {
+        return producto;
+    }
+
+    public void setProducto(ProductoJpaEntity producto) {
+        this.producto = producto;
+    }
+
+    public Long getTiendaId() {
+        return tienda != null ? tienda.getId() : null;
     }
 
     public Long getCentroDistribucionId() {
-        return centroDistribucionId;
-    }
-
-    public void setCentroDistribucionId(Long centroDistribucionId) {
-        this.centroDistribucionId = centroDistribucionId;
+        return centroDistribucion != null ? centroDistribucion.getId() : null;
     }
 
     public Long getProductoId() {
-        return productoId;
-    } 
-
-    public void setProductoId(Long productoId) {
-        this.productoId = productoId;
+        return producto != null ? producto.getId() : null;
     }
 
     public Integer getCantidadActual() {

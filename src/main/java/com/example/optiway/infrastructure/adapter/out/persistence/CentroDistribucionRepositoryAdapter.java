@@ -15,11 +15,17 @@ import org.springframework.stereotype.Component;
 import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
 import com.example.optiway.domain.model.CentroDistribucion;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
 @Component
 public class CentroDistribucionRepositoryAdapter implements CentroDistribucionRepositoryPort {
 
     private final CentroDistribucionJpaRepository repository;
     private final TiendaJpaRepository tiendaJpaRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public CentroDistribucionRepositoryAdapter(
             CentroDistribucionJpaRepository repository,
@@ -65,7 +71,11 @@ public class CentroDistribucionRepositoryAdapter implements CentroDistribucionRe
         entity.setNombre(domain.getNombre());
         entity.setDireccion(domain.getDireccion());
         entity.setCapacidad(domain.getCapacidad());
-        entity.setEncargadoId(domain.getEncargadoId());
+        if (domain.getEncargadoId() != null) {
+            entity.setEncargado(entityManager.getReference(UsuarioJpaEntity.class, domain.getEncargadoId()));
+        } else {
+            entity.setEncargado(null);
+        }
         if (domain.getTiendasAbastecidasIds() != null && !domain.getTiendasAbastecidasIds().isEmpty()) {
             entity.setTiendasAbastecidas(tiendaJpaRepository.findAllById(domain.getTiendasAbastecidasIds()));
         }

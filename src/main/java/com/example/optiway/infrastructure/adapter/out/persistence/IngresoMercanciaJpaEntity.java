@@ -1,5 +1,18 @@
 package com.example.optiway.infrastructure.adapter.out.persistence;
-import jakarta.persistence.*;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
 
@@ -11,11 +24,13 @@ public class IngresoMercanciaJpaEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "centro_distribucion_id", nullable = false)
-    private Long centroDistribucionId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "centro_distribucion_id", nullable = false, foreignKey = @ForeignKey(name = "fk_ingresos_cd"))
+    private CentroDistribucionJpaEntity centroDistribucion;
 
-    @Column(name = "producto_id", nullable = false)
-    private Long productoId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "producto_id", nullable = false, foreignKey = @ForeignKey(name = "fk_ingresos_producto"))
+    private ProductoJpaEntity producto;
 
     @Column(nullable = false)
     private Integer cantidad;
@@ -23,8 +38,10 @@ public class IngresoMercanciaJpaEntity {
     @Column(nullable = false)
     private String origen;
 
-    @Column(name = "usuario_id", nullable = false)
-    private Long usuarioId;
+    @OnDelete(action = OnDeleteAction.SET_NULL)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id", foreignKey = @ForeignKey(name = "fk_ingresos_usuario"))
+    private UsuarioJpaEntity usuario;
 
     @Column(name = "fecha_ingreso", nullable = false)
     private LocalDateTime fechaIngreso;
@@ -39,20 +56,40 @@ public class IngresoMercanciaJpaEntity {
         this.id = id;
     }
 
-    public Long getCentroDistribucionId() {
-        return centroDistribucionId;
+    public CentroDistribucionJpaEntity getCentroDistribucion() {
+        return centroDistribucion;
     }
 
-    public void setCentroDistribucionId(Long centroDistribucionId) {
-        this.centroDistribucionId = centroDistribucionId;
+    public void setCentroDistribucion(CentroDistribucionJpaEntity centroDistribucion) {
+        this.centroDistribucion = centroDistribucion;
+    }
+
+    public ProductoJpaEntity getProducto() {
+        return producto;
+    }
+
+    public void setProducto(ProductoJpaEntity producto) {
+        this.producto = producto;
+    }
+
+    public UsuarioJpaEntity getUsuario() {
+        return usuario;
+    }
+
+    public void setUsuario(UsuarioJpaEntity usuario) {
+        this.usuario = usuario;
+    }
+
+    public Long getCentroDistribucionId() {
+        return centroDistribucion != null ? centroDistribucion.getId() : null;
     }
 
     public Long getProductoId() {
-        return productoId;
+        return producto != null ? producto.getId() : null;
     }
 
-    public void setProductoId(Long productoId) {
-        this.productoId = productoId;
+    public Long getUsuarioId() {
+        return usuario != null ? usuario.getId() : null;
     }
 
     public Integer getCantidad() {
@@ -69,14 +106,6 @@ public class IngresoMercanciaJpaEntity {
 
     public void setOrigen(String origen) {
         this.origen = origen;
-    }
-
-    public Long getUsuarioId() {
-        return usuarioId;
-    }
-
-    public void setUsuarioId(Long usuarioId) {
-        this.usuarioId = usuarioId;
     }
 
     public LocalDateTime getFechaIngreso() {

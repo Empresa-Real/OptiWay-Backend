@@ -15,6 +15,7 @@ import com.example.optiway.application.port.out.InventarioRepositoryPort;
 import com.example.optiway.application.port.out.ProductoRepositoryPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.domain.model.Producto;
+import com.example.optiway.domain.model.Usuario;
 import com.example.optiway.application.port.out.AuthorizationPort;
 import com.example.optiway.infrastructure.security.AccionAutorizada;
 import org.springframework.stereotype.Service;
@@ -83,7 +84,7 @@ public class ProductoService implements CrearProductoUseCase, ObtenerProductosUs
 
     @Override
     public ProductoResponse editarProducto(UUID authUserId, EditarProductoCommand command) {
-        authorizationService.requireGestionLogistica(authUserId, AccionAutorizada.EDITAR_PRODUCTO);
+        Usuario usuario = authorizationService.requireGestionLogistica(authUserId, AccionAutorizada.EDITAR_PRODUCTO);
         if (command.id() == null || command.id() <= 0) {
             throw new IllegalArgumentException("El ID del producto no es válido.");
         }
@@ -116,7 +117,7 @@ public class ProductoService implements CrearProductoUseCase, ObtenerProductosUs
         }
 
         // ID, identificador y estado se toman del registro actual y nunca del cuerpo de la solicitud.
-        return ProductoResponse.from(productoRepositoryPort.update(actual, authUserId));
+        return ProductoResponse.from(productoRepositoryPort.update(actual, usuario.getId()));
     }
 
     @Override
