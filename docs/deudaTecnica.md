@@ -222,8 +222,13 @@ El modelo actual implica reglas cardinales que **no están formalizadas** ni val
 
 ---
 
+![alt text](./img/cd_tienda.png)
+
+---
+
 ## Cómo mantener este documento
 
 - Este documento recoge **sólo deuda abierta y decisiones de diseño pendientes**. Lo resuelto **no se mantiene aquí**: se documenta en [`docs/Fix´s/`](./Fix´s/) y se elimina de esta lista.
 - Cada ítem lleva **estado** (`⚠️ Abierto` / `🔄 En curso`), impacto y esfuerzo.
 - Cuando una decisión se ejecute, se documenta en el fix correspondiente y se **retira** de aquí; no se deja como "resuelto".
+

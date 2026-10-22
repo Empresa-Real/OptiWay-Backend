@@ -4,7 +4,17 @@
 
 ---
 
-## Estandarización hexagonal de la API (Fix 28–40)
+## Autenticación, permisos y persistencia JPA (cambios sin publicar)
+
+- **Errores de Supabase Auth**: `error` muestra el `msg` natural del proveedor y `code` su código (p. ej. `429`); `message` se mantiene en español.
+- **Autorización centralizada**: `AuthorizationPort` + catálogo `AccionAutorizada`, con tests de la matriz de permisos.
+- **Relaciones JPA reales**: FK `@ManyToOne` en tiendas, centros, inventario, ventas, ingresos y ediciones, con `ON DELETE SET NULL` para las referencias a usuarios.
+- **Auditoría de ediciones**: `producto_ediciones` guarda `usuario_id` (id local) en lugar de `usuario_auth_id`.
+- **Migraciones**: FK de usuarios con `ON DELETE SET NULL`, y `usuario_id` nullable en ingresos y ediciones.
+
+---
+
+## Estandarización hexagonal de la API (Fix 28-40)
 
 - **Commands inmutables en casos de uso** (Fix 28, 35): firmas de mutación con `authUserId` obligatorio como primer parámetro en toda capa; comandos como records inmutables.
 - **Nomenclatura unificada de consultas** (Fix 29): lecturas bajo el prefijo `Obtener`; filtros de inventario encapsulados en `ObtenerInventarioCommand`.
