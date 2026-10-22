@@ -348,6 +348,42 @@ El frontend ha incorporado un script (`scripts/gen-api.mjs`) que descarga el con
 
 ---
 
+## 12. Declarar respuestas de error (`@ApiResponse`) en los controladores
+
+**Estado:** ⚠️ Abierto · **Impacto:** Contrato de API para frontend e integradores · **Esfuerzo:** Medio
+
+### El problema
+
+Los controladores documentan con `@Operation` y `@Tag`, pero **ninguno declara `@ApiResponse`**. En `/v3/api-docs` y Swagger UI solo se ven las respuestas exitosas y el esquema genérico; no aparecen los códigos de error (`400`, `401`, `403`, `404`, `409`, `415`, `500`, `502`) ni su formato real.
+
+Además, la API emite tres formatos de error distintos (documentados en [`docs/dto/README.md` §6](./dto/README.md#6-errores)): `ErrorResponse`, el error por defecto de Spring Boot y respuestas sin body. Swagger no refleja ninguno de forma explícita.
+
+### Estrategia propuesta
+
+Declarar por endpoint las respuestas de error relevantes, reutilizando el esquema `ErrorResponse`:
+
+```java
+@ApiResponses(value = {
+    @ApiResponse(responseCode = "200", description = "OK"),
+    @ApiResponse(responseCode = "400", description = "Solicitud inválida",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+    @ApiResponse(responseCode = "403", description = "Sin permisos",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+    @ApiResponse(responseCode = "404", description = "Recurso no encontrado",
+        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+})
+```
+
+Incluir una nota para los casos sin body (`401`/`403` de Spring Security y `404` de `/graph`), que no siguen el esquema `ErrorResponse`.
+
+### Criterio de cierre
+
+- Cada controlador declara los códigos de error que realmente puede devolver.
+- Swagger UI muestra `ErrorResponse` para los errores con body.
+- Se documenta explícitamente qué endpoints pueden responder sin body.
+
+---
+
 ## Cómo mantener este documento
 
 - Este documento recoge **sólo deuda abierta y decisiones de diseño pendientes**. Lo resuelto **no se mantiene aquí**: se documenta en [`docs/Fix´s/`](./Fix´s/) y se elimina de esta lista.
