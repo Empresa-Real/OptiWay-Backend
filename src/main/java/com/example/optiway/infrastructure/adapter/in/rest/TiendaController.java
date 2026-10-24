@@ -14,6 +14,7 @@ import com.example.optiway.infrastructure.adapter.in.rest.dto.CrearTiendaRequest
 import com.example.optiway.infrastructure.adapter.in.rest.dto.RegistrarVentaRequest;
 import com.example.optiway.infrastructure.security.AuthUserId;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -66,6 +67,7 @@ public class TiendaController {
     @Operation(summary = "Asignar encargado a tienda", description = "Asigna o desasigna un usuario con rol TIENDA como encargado. Requiere rol ADMINISTRADOR.")
     public TiendaResponse asignarEncargado(
             @AuthUserId UUID authUserId,
+            @Parameter(description = "ID numérico (Long) de la tienda", example = "1")
             @PathVariable Long id,
             @Valid @RequestBody(required = false) AsignarEncargadoRequest request) {
         Long encargadoId = request != null ? request.encargadoId() : null;
@@ -77,6 +79,7 @@ public class TiendaController {
     @Operation(summary = "Registrar venta", description = "Registra una transacción de venta en la tienda indicada en la URL, descontando inmediatamente las existencias del inventario local.")
     public VentaResponse registrarVenta(
             @AuthUserId UUID authUserId,
+            @Parameter(description = "ID numérico (Long) de la tienda", example = "1")
             @PathVariable("id") Long tiendaId,
             @Valid @RequestBody RegistrarVentaRequest request) {
         return registrarVentaUseCase.registrarVenta(authUserId, request.toCommand(tiendaId));

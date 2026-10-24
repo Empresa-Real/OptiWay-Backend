@@ -13,6 +13,7 @@ import com.example.optiway.infrastructure.adapter.in.rest.dto.ActualizarRolReque
 import com.example.optiway.infrastructure.adapter.in.rest.dto.CrearUsuarioRequest;
 import com.example.optiway.infrastructure.security.AuthUserId;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -67,7 +68,10 @@ public class UsuarioController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener usuario por ID", description = "Consulta un usuario específico por su ID interno. Requiere autenticación.")
-    public UsuarioResponse obtenerUsuario(@AuthUserId UUID authUserId, @PathVariable Long id) {
+    public UsuarioResponse obtenerUsuario(
+            @AuthUserId UUID authUserId,
+            @Parameter(description = "ID numérico (Long) del usuario", example = "1")
+            @PathVariable Long id) {
         return obtenerUsuarioUseCase.obtenerUsuarioPorId(authUserId, id)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con ID: " + id));
     }
@@ -84,6 +88,7 @@ public class UsuarioController {
     @Operation(summary = "Eliminar usuario", description = "Elimina lógicamente o físicamente un usuario del sistema. Requiere rol ADMINISTRADOR.")
     public void eliminarUsuario(
             @AuthUserId UUID authUserId,
+            @Parameter(description = "ID numérico (Long) del usuario", example = "1")
             @PathVariable Long id) {
         eliminarUsuarioUseCase.eliminarUsuario(authUserId, id);
     }
@@ -92,6 +97,7 @@ public class UsuarioController {
     @Operation(summary = "Actualizar rol de usuario", description = "Modifica el rol de un usuario existente. Requiere rol ADMINISTRADOR.")
     public UsuarioResponse actualizarRol(
             @AuthUserId UUID authUserId,
+            @Parameter(description = "ID numérico (Long) del usuario", example = "1")
             @PathVariable Long id,
             @Valid @RequestBody ActualizarRolRequest request) {
         return actualizarRolUsuarioUseCase.actualizarRol(authUserId, request.toCommand(id));

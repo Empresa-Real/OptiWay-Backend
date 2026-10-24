@@ -12,6 +12,7 @@ import com.example.optiway.infrastructure.adapter.in.rest.dto.CrearProductoReque
 import com.example.optiway.infrastructure.adapter.in.rest.dto.EditarProductoRequest;
 import com.example.optiway.infrastructure.security.AuthUserId;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -66,6 +67,7 @@ public class ProductoController {
     @PatchMapping("/{id}")
     @Operation(summary = "Editar producto existente", description = "Modifica los atributos comerciales de un producto. Requiere rol ADMINISTRADOR.")
     public ProductoResponse editarProducto(@AuthUserId UUID authUserId,
+                                           @Parameter(description = "ID numérico (Long) del producto", example = "1")
                                            @PathVariable Long id,
                                            @Valid @RequestBody EditarProductoRequest request) {
         return editarProductoUseCase.editarProducto(authUserId, request.toCommand(id));
@@ -74,6 +76,7 @@ public class ProductoController {
     @PatchMapping("/{id}/estado")
     @Operation(summary = "Cambiar estado de producto", description = "Activa o desactiva un producto en el catálogo. Requiere rol ADMINISTRADOR.")
     public ProductoResponse cambiarEstado(@AuthUserId UUID authUserId,
+                                          @Parameter(description = "ID numérico (Long) del producto", example = "1")
                                           @PathVariable Long id,
                                           @Valid @RequestBody CambiarEstadoProductoRequest request) {
         return cambiarEstadoProductoUseCase.cambiarEstadoProducto(authUserId, request.toCommand(id));
@@ -81,7 +84,10 @@ public class ProductoController {
 
     @GetMapping("/{id}/tiene-stock")
     @Operation(summary = "Verificar existencias de producto", description = "Consulta si el producto cuenta con existencias activas en alguna tienda o centro de distribución. Requiere autenticación.")
-    public ProductoStockResponse tieneStock(@AuthUserId UUID authUserId, @PathVariable Long id) {
+    public ProductoStockResponse tieneStock(
+            @AuthUserId UUID authUserId,
+            @Parameter(description = "ID numérico (Long) del producto", example = "1")
+            @PathVariable Long id) {
         return new ProductoStockResponse(verificarStockProductoUseCase.tieneStockActivo(authUserId, id));
     }
 }
