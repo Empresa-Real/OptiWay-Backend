@@ -86,11 +86,11 @@ public class CentroDistribucionService implements CrearCentroDistribucionUseCase
         authorizationService.requireGestionLogistica(authUserId, AccionAutorizada.ASIGNAR_ENCARGADO_CENTRO_DISTRIBUCION);
 
         CentroDistribucion centro = centroDistribucionRepositoryPort.obtenerPorId(centroId)
-                .orElseThrow(() -> new IllegalArgumentException("El centro de distribución no existe."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Centro de distribución no encontrado con ID: " + centroId));
 
         if (encargadoId != null) {
             Usuario encargado = usuarioRepositoryPort.obtenerPorId(encargadoId)
-                    .orElseThrow(() -> new IllegalArgumentException("El usuario encargado no existe."));
+                    .orElseThrow(() -> new RecursoNoEncontradoException("Usuario encargado no encontrado con ID: " + encargadoId));
 
             if (!encargado.admiteAsignacionDeUbicacion()) {
                 throw new IllegalArgumentException(

@@ -21,9 +21,11 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -115,6 +117,25 @@ public class ApiExceptionHandler {
                     + ". Valores permitidos: " + java.util.Arrays.toString(cause.getTargetType().getEnumConstants()));
         }
         return ErrorResponse.of("El cuerpo de la solicitud no tiene un formato JSON válido.");
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse parametroConTipoInvalido(MethodArgumentTypeMismatchException exception) {
+        Class<?> tipoRequerido = exception.getRequiredType();
+        String tipoEsperado = tipoRequerido != null
+                && (Number.class.isAssignableFrom(tipoRequerido) || tipoRequerido.isPrimitive())
+                ? "un número entero válido"
+                : "un valor válido";
+        return ErrorResponse.of("El valor '" + exception.getValue() + "' del parámetro '"
+                + exception.getName() + "' no es válido. Se esperaba " + tipoEsperado + ".");
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse parametroRequeridoFaltante(MissingServletRequestParameterException exception) {
+        return ErrorResponse.of("Falta el parámetro requerido '" + exception.getParameterName()
+                + "'. Consulte la documentación del endpoint.");
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)

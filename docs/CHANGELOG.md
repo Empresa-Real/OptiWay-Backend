@@ -4,6 +4,28 @@
 
 ---
 
+## Estandarización de errores HTTP y documentación OpenAPI (Fix 41)
+
+- **Manejo de tipos y parámetros inválidos en endpoints REST (400 Bad Request)**:
+  - Mapeo de `MethodArgumentTypeMismatchException` en `ApiExceptionHandler`: cuando un cliente o herramienta de pruebas (p. ej. TestSprite) envía un valor incompatible (como UUIDs en rutas numéricas `{id}`), la API responde `400 Bad Request` en español en lugar de un `500 Internal Server Error`.
+  - Mapeo de `MissingServletRequestParameterException` a `400 Bad Request` con mensaje descriptivo cuando falta un query param obligatorio.
+  - Suite de pruebas unitarias `ApiExceptionHandlerTest` para asegurar el comportamiento.
+- **Documentación OpenAPI de identificadores numéricos (`@Parameter` y `@Schema`)**:
+  - Se añadieron anotaciones `@Parameter(description = "...", example = "1")` en los endpoints con `@PathVariable` y `@RequestParam` de `CentroDistribucionController`, `TiendaController`, `ProductoController`, `InventarioController` y `UsuarioController`.
+  - Se documentó `@Schema(description = "...", example = "1")` en `AsignarEncargadoRequest.encargadoId`.
+  - Garantiza que las especificaciones generadas en Swagger / OpenAPI declaren explícitamente ejemplos y formato numérico (`Long`), evitando generación incorrecta de mocks.
+- **Estandarización semántica de recursos no encontrados (404 Not Found)**:
+  - Unificación de búsquedas de recursos inexistentes en BD con `RecursoNoEncontradoException` (404) en vez de `IllegalArgumentException` (400):
+    - `CentroDistribucionService`: búsqueda de CD y usuario encargado.
+    - `TiendaService`: búsqueda de tienda y usuario encargado.
+    - `IngresoMercanciaService`: búsqueda de centro de distribución.
+    - `UsuarioController`: consulta de usuario por ID y perfil propio (`/me`).
+  - Distinción estricta de responsabilidades: los recursos inexistentes responden `404 Not Found`, mientras que el incumplimiento de reglas de negocio (p. ej. rol no apto o exceso de capacidad) se mantiene en `IllegalArgumentException` / `400 Bad Request`.
+  - Pruebas unitarias ampliadas en `AsignacionUbicacionTest` e `IngresoMercanciaServiceTest`.
+  - Ignorado en `.gitignore` de archivos temporales de análisis y logs (`temp/`, `api-docs.json`, `content.md`, `last_logs.txt`).
+
+---
+
 ## Autenticación, permisos y persistencia JPA (cambios sin publicar)
 
 - **Errores de Supabase Auth**: `error` muestra el `msg` natural del proveedor y `code` su código (p. ej. `429`); `message` se mantiene en español.

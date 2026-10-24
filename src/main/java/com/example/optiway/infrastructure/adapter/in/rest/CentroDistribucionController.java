@@ -14,6 +14,7 @@ import com.example.optiway.infrastructure.adapter.in.rest.dto.CrearCentroDistrib
 import com.example.optiway.infrastructure.adapter.in.rest.dto.RegistrarIngresoMercanciaRequest;
 import com.example.optiway.infrastructure.security.AuthUserId;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -66,6 +67,7 @@ public class CentroDistribucionController {
     @Operation(summary = "Asignar encargado a centro de distribución", description = "Asigna o desasigna un usuario con rol ENCARGADO_CD como responsable. Requiere rol ADMINISTRADOR.")
     public CentroDistribucionResponse asignarEncargado(
             @AuthUserId UUID authUserId,
+            @Parameter(description = "ID numérico (Long) del centro de distribución", example = "1")
             @PathVariable Long id,
             @Valid @RequestBody(required = false) AsignarEncargadoRequest request) {
         Long encargadoId = request != null ? request.encargadoId() : null;
@@ -77,6 +79,7 @@ public class CentroDistribucionController {
     @Operation(summary = "Registrar ingreso de mercancía", description = "Registra una entrada de stock en el centro de distribución indicado en la URL. Alias corto: POST /api/cd/{id}/ingresos.")
     public IngresoMercanciaResponse registrarIngreso(
             @AuthUserId UUID authUserId,
+            @Parameter(description = "ID numérico (Long) del centro de distribución", example = "1")
             @PathVariable("id") Long centroDistribucionId,
             @Valid @RequestBody RegistrarIngresoMercanciaRequest request) {
         return registrarIngresoMercanciaUseCase.registrarIngreso(authUserId, request.toCommand(centroDistribucionId));

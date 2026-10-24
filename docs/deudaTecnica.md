@@ -384,6 +384,44 @@ Incluir una nota para los casos sin body (`401`/`403` de Spring Security y `404`
 
 ---
 
+## 13. Unificación de excepciones para recursos no encontrados (`404 Not Found` vs `400 Bad Request`)
+
+**Estado:** ⚠️ Abierto · **Impacto:** Consistencia semántica de la API REST · **Esfuerzo:** Bajo-Medio
+
+### Estado actual
+
+Tras el **Fix 41**, se unificaron las búsquedas por ID inexistente en `CentroDistribucionService`, `TiendaService`, `IngresoMercanciaService`, `VentaService` y `UsuarioController` para lanzar `RecursoNoEncontradoException`, mapeada a `404 Not Found`.
+
+Sin embargo, todavía existen servicios del dominio que lanzan `IllegalArgumentException` (mapeada a `400 Bad Request`) cuando una entidad consultada por su clave primaria no existe en la base de datos:
+
+| Servicio | Método | Línea | Comportamiento actual | Comportamiento esperado (REST) |
+| :--- | :--- | :--- | :--- | :--- |
+| `InventarioService` | `consultarInventario` | L76 | `IllegalArgumentException("La tienda no existe.")` (400) | `RecursoNoEncontradoException` (404) |
+| `InventarioService` | `consultarInventarioCD` | L80 | `IllegalArgumentException("El centro de distribución no existe")` (400) | `RecursoNoEncontradoException` (404) |
+| `ProductoService` | `editarProducto` | L93 | `IllegalArgumentException("Producto no encontrado con ID: ...")` (400) | `RecursoNoEncontradoException` (404) |
+| `ProductoService` | `cambiarEstadoProducto` | L131 | `IllegalArgumentException("El producto no existe con ID: ...")` (400) | `RecursoNoEncontradoException` (404) |
+| `UsuarioService` | `eliminarUsuario` | L159 | `IllegalArgumentException("Usuario no encontrado con ID: ...")` (400) | `RecursoNoEncontradoException` (404) |
+| `UsuarioService` | `actualizarRol` | L197 | `IllegalArgumentException("Usuario no encontrado con ID: ...")` (400) | `RecursoNoEncontradoException` (404) |
+
+### El conflicto
+
+El estándar HTTP y la semántica REST establecen que:
+- **`400 Bad Request`**: Debe reservarse para solicitudes sintácticamente inválidas (ej. tipos de datos incompatibles capturados por `MethodArgumentTypeMismatchException`) o para **violaciones de reglas de negocio** (ej. asignación de rol incompatible, stock insuficiente, aforo de CD excedido).
+- **`404 Not Found`**: Debe devolverse cuando el recurso referenciado por su identificador no existe en el sistema.
+
+La presencia simultánea de `400` y `404` para el mismo tipo de fallo ("recurso inexistente en BD") genera un comportamiento híbrido que confunde tanto a consumidores de la API (frontend, integraciones externas) como a suites de pruebas automáticas generadas a partir del contrato OpenAPI (como TestSprite).
+
+### Tareas pendientes para el cierre
+
+1. Sustituir `IllegalArgumentException` por `RecursoNoEncontradoException` en:
+   - `InventarioService` (`consultarInventario` y `consultarInventarioCD`).
+   - `ProductoService` (`editarProducto` y `cambiarEstadoProducto`).
+   - `UsuarioService` (`eliminarUsuario` y `actualizarRol`).
+2. Actualizar las pruebas unitarias existentes que aserten `IllegalArgumentException` en dichos casos (p. ej. `InventarioServiceTest`, `UsuarioServiceTest`).
+3. Documentar los códigos `404` correspondientes en las anotaciones `@ApiResponses` de los controladores respectivos (alineado con la sección 12).
+
+---
+
 ## Cómo mantener este documento
 
 - Este documento recoge **sólo deuda abierta y decisiones de diseño pendientes**. Lo resuelto **no se mantiene aquí**: se documenta en [`docs/Fix´s/`](./Fix´s/) y se elimina de esta lista.

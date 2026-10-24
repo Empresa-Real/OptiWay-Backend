@@ -60,3 +60,7 @@ audio_taller.*
 docs/diagramas/
 other/
 src/main/resources/static/web
+temp/
+api-docs.json
+content.md
+last_logs.txt

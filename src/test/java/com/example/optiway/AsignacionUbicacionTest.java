@@ -16,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.example.optiway.application.exception.RecursoNoEncontradoException;
 import com.example.optiway.application.port.in.dto.CentroDistribucionResponse;
 import com.example.optiway.application.port.in.dto.TiendaResponse;
 import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
@@ -181,5 +182,57 @@ class AsignacionUbicacionTest {
 
         assertEquals(2L, resultado.encargadoId());
         verify(tiendaRepositoryPort).save(tienda);
+    }
+
+    @Test
+    void asignarCD_centroNoExiste_lanzaRecursoNoEncontradoException() {
+        when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(adminUsuario));
+        when(centroDistribucionRepositoryPort.obtenerPorId(99L)).thenReturn(Optional.empty());
+
+        RecursoNoEncontradoException ex = assertThrows(RecursoNoEncontradoException.class, () ->
+                centroDistribucionService.asignarEncargado(adminAuthId, 99L, 3L));
+
+        assertEquals("Centro de distribución no encontrado con ID: 99", ex.getMessage());
+        verify(centroDistribucionRepositoryPort, never()).guardar(any(CentroDistribucion.class));
+    }
+
+    @Test
+    void asignarCD_encargadoNoExiste_lanzaRecursoNoEncontradoException() {
+        CentroDistribucion cd = new CentroDistribucion(20L, "CD-001", "CD Norte", "Autopista 2", 5000, null, null);
+        when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(adminUsuario));
+        when(centroDistribucionRepositoryPort.obtenerPorId(20L)).thenReturn(Optional.of(cd));
+        when(usuarioRepositoryPort.obtenerPorId(999L)).thenReturn(Optional.empty());
+
+        RecursoNoEncontradoException ex = assertThrows(RecursoNoEncontradoException.class, () ->
+                centroDistribucionService.asignarEncargado(adminAuthId, 20L, 999L));
+
+        assertEquals("Usuario encargado no encontrado con ID: 999", ex.getMessage());
+        verify(centroDistribucionRepositoryPort, never()).guardar(any(CentroDistribucion.class));
+    }
+
+    @Test
+    void asignarTienda_tiendaNoExiste_lanzaRecursoNoEncontradoException() {
+        when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(adminUsuario));
+        when(tiendaRepositoryPort.obtenerPorId(99L)).thenReturn(Optional.empty());
+
+        RecursoNoEncontradoException ex = assertThrows(RecursoNoEncontradoException.class, () ->
+                tiendaService.asignarEncargado(adminAuthId, 99L, 2L));
+
+        assertEquals("Tienda no encontrada con ID: 99", ex.getMessage());
+        verify(tiendaRepositoryPort, never()).save(any(Tienda.class));
+    }
+
+    @Test
+    void asignarTienda_encargadoNoExiste_lanzaRecursoNoEncontradoException() {
+        Tienda tienda = new Tienda(10L, "TND-001", "Tienda Central", "Calle 1", "Medellin", true, null);
+        when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(adminUsuario));
+        when(tiendaRepositoryPort.obtenerPorId(10L)).thenReturn(Optional.of(tienda));
+        when(usuarioRepositoryPort.obtenerPorId(999L)).thenReturn(Optional.empty());
+
+        RecursoNoEncontradoException ex = assertThrows(RecursoNoEncontradoException.class, () ->
+                tiendaService.asignarEncargado(adminAuthId, 10L, 999L));
+
+        assertEquals("Usuario encargado no encontrado con ID: 999", ex.getMessage());
+        verify(tiendaRepositoryPort, never()).save(any(Tienda.class));
     }
 }

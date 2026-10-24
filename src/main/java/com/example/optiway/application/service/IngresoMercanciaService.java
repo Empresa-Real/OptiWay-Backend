@@ -66,7 +66,8 @@ public class IngresoMercanciaService implements RegistrarIngresoMercanciaUseCase
         // 1. Verificar que exista el centro de distribución
         CentroDistribucion centro = centroDistribucionRepositoryPort
                 .obtenerPorId(command.centroDistribucionId())
-                .orElseThrow(() -> new IllegalArgumentException("Centro de distribución no encontrado"));
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "Centro de distribución no encontrado con ID: " + command.centroDistribucionId()));
 
         // 2. Validar permisos del usuario sobre el centro de distribución
         Usuario usuario = authorizationService.requirePermisoCentroDistribucion(
@@ -74,13 +75,14 @@ public class IngresoMercanciaService implements RegistrarIngresoMercanciaUseCase
 
         // 3. Verificar que exista el producto
         productoRepositoryPort.findById(command.productoId())
-                .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado"));
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "Producto no encontrado con ID: " + command.productoId()));
 
         // 4. Validar capacidad máxima del Centro de Distribución
         if (centro.getCapacidad() != null && centro.getCapacidad() > 0) {
             int stockTotalActual = inventarioRepositoryPort.findByCentroDistribucionId(centro.getId())
                     .stream()
-                    .mapToInt(Inventario::getCantidadActual)
+                    .mapToInt(i -> i.getCantidadActual() != null ? i.getCantidadActual() : 0)
                     .sum();
             if (stockTotalActual + command.cantidad() > centro.getCapacidad()) {
                 throw new IllegalArgumentException("El ingreso excede la capacidad máxima del centro de distribución ("
