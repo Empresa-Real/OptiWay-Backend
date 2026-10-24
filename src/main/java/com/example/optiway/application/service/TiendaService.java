@@ -79,11 +79,11 @@ public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase,
         authorizationService.requireGestionLogistica(authUserId, AccionAutorizada.ASIGNAR_ENCARGADO_TIENDA);
 
         Tienda tienda = tiendaRepositoryPort.obtenerPorId(tiendaId)
-                .orElseThrow(() -> new IllegalArgumentException("La tienda no existe."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Tienda no encontrada con ID: " + tiendaId));
 
         if (encargadoId != null) {
             Usuario encargado = usuarioRepositoryPort.obtenerPorId(encargadoId)
-                    .orElseThrow(() -> new IllegalArgumentException("El usuario encargado no existe."));
+                    .orElseThrow(() -> new RecursoNoEncontradoException("Usuario encargado no encontrado con ID: " + encargadoId));
 
             if (!encargado.admiteAsignacionDeUbicacion()) {
                 throw new IllegalArgumentException(

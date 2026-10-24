@@ -3,6 +3,7 @@ package com.example.optiway;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 import java.util.Optional;
@@ -15,6 +16,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.example.optiway.application.exception.RecursoNoEncontradoException;
 import com.example.optiway.application.port.in.RegistrarIngresoCommand;
 import com.example.optiway.application.port.in.dto.IngresoMercanciaResponse;
 import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
@@ -176,15 +178,15 @@ class IngresoMercanciaServiceTest {
         UUID authUserId = UUID.randomUUID();
         when(centroDistribucionRepositoryPort.obtenerPorId(99L)).thenReturn(Optional.empty());
 
-        IllegalArgumentException ex = assertThrows(
-                IllegalArgumentException.class,
+        RecursoNoEncontradoException ex = assertThrows(
+                RecursoNoEncontradoException.class,
                 () -> service.registrarIngreso(
                         authUserId,
                         new RegistrarIngresoCommand(99L, 1L, 10, "Proveedor")
                 )
         );
 
-        assertEquals("Centro de distribución no encontrado", ex.getMessage());
+        assertTrue(ex.getMessage().contains("Centro de distribución no encontrado"));
         verifyNoInteractions(ingresoRepositoryPort, inventarioRepositoryPort);
     }
 
@@ -200,15 +202,15 @@ class IngresoMercanciaServiceTest {
         when(usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)).thenReturn(Optional.of(usuario));
         when(productoRepositoryPort.findById(99L)).thenReturn(Optional.empty());
 
-        IllegalArgumentException ex = assertThrows(
-                IllegalArgumentException.class,
+        RecursoNoEncontradoException ex = assertThrows(
+                RecursoNoEncontradoException.class,
                 () -> service.registrarIngreso(
                         authUserId,
                         new RegistrarIngresoCommand(centroId, 99L, 10, "Proveedor")
                 )
         );
 
-        assertEquals("Producto no encontrado", ex.getMessage());
+        assertTrue(ex.getMessage().contains("Producto no encontrado"));
         verifyNoInteractions(ingresoRepositoryPort, inventarioRepositoryPort);
     }
 

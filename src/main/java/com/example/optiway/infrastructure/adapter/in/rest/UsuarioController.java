@@ -9,6 +9,7 @@ import com.example.optiway.application.port.in.EliminarUsuarioUseCase;
 import com.example.optiway.application.port.in.ObtenerUsuarioUseCase;
 import com.example.optiway.application.port.in.ObtenerUsuariosUseCase;
 import com.example.optiway.application.port.in.dto.UsuarioResponse;
+import com.example.optiway.application.exception.RecursoNoEncontradoException;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.ActualizarRolRequest;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.CrearUsuarioRequest;
 import com.example.optiway.infrastructure.security.AuthUserId;
@@ -73,14 +74,14 @@ public class UsuarioController {
             @Parameter(description = "ID numérico (Long) del usuario", example = "1")
             @PathVariable Long id) {
         return obtenerUsuarioUseCase.obtenerUsuarioPorId(authUserId, id)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con ID: " + id));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado con ID: " + id));
     }
 
     @GetMapping("/me")
     @Operation(summary = "Obtener perfil autenticado", description = "Consulta los datos y rol del usuario correspondiente al token JWT actual.")
     public UsuarioResponse obtenerUsuarioAutenticado(@AuthUserId UUID authUserId) {
         return obtenerUsuarioUseCase.obtenerUsuarioPorAuthId(authUserId)
-                .orElseThrow(() -> new IllegalArgumentException("Perfil no encontrado"));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Perfil no encontrado"));
     }
 
     @DeleteMapping("/{id}")
