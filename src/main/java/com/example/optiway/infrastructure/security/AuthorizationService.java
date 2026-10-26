@@ -36,7 +36,7 @@ public class AuthorizationService implements AuthorizationPort {
      * @return el Usuario autenticado y autorizado
      */
     @Override
-    public Usuario requireAdministrador(UUID authUserId, AccionAutorizada accion) {
+    public Usuario requireAdministrador(UUID authUserId, AuthorizedAction accion) {
         if (authUserId == null) {
             throw new AccesoDenegadoException("Autenticación requerida para " + accion.descripcion());
         }
@@ -58,7 +58,7 @@ public class AuthorizationService implements AuthorizationPort {
      * @return el Usuario autenticado y autorizado
      */
     @Override
-    public Usuario requireGestionLogistica(UUID authUserId, AccionAutorizada accion) {
+    public Usuario requireGestionLogistica(UUID authUserId, AuthorizedAction accion) {
         Usuario usuario = requireAuthenticated(authUserId);
         if (!usuario.puedeGestionarTodo()) {
             throw new AccesoDenegadoException("No tiene permisos para " + accion.descripcion());
@@ -91,7 +91,7 @@ public class AuthorizationService implements AuthorizationPort {
      * @return el Usuario autenticado y autorizado
      */
     @Override
-    public Usuario requirePermisoTienda(UUID authUserId, Tienda tienda, AccionAutorizada accion) {
+    public Usuario requirePermisoTienda(UUID authUserId, Tienda tienda, AuthorizedAction accion) {
         Usuario usuario = requireAuthenticated(authUserId);
         if (!usuario.puedeOperarTienda(tienda)) {
             throw new AccesoDenegadoException("No tiene permisos para " + accion.descripcion());
@@ -109,7 +109,7 @@ public class AuthorizationService implements AuthorizationPort {
      * @return el Usuario autenticado y autorizado
      */
      @Override
-     public Usuario requirePermisoCentroDistribucion(UUID authUserId, CentroDistribucion centroDistribucion, AccionAutorizada accion) {
+     public Usuario requirePermisoCentroDistribucion(UUID authUserId, CentroDistribucion centroDistribucion, AuthorizedAction accion) {
          Usuario usuario = requireAuthenticated(authUserId);
          if (!usuario.puedeOperarCentroDistribucion(centroDistribucion)) {
              throw new AccesoDenegadoException("No tiene permisos para " + accion.descripcion());

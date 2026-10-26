@@ -16,7 +16,7 @@ import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.domain.model.CentroDistribucion;
 import com.example.optiway.domain.model.Usuario;
 import com.example.optiway.application.port.out.AuthorizationPort;
-import com.example.optiway.infrastructure.security.AccionAutorizada;
+import com.example.optiway.infrastructure.security.AuthorizedAction;
 
 @Service
 public class CentroDistribucionService implements CrearCentroDistribucionUseCase, ObtenerCentrosDistribucionUseCase, AsignarEncargadoCDUseCase {
@@ -36,7 +36,7 @@ public class CentroDistribucionService implements CrearCentroDistribucionUseCase
 
     @Override
     public CentroDistribucionResponse crearCentroDistribucion(UUID authUserId, CrearCentroDistribucionCommand command) {
-        authorizationService.requireGestionLogistica(authUserId, AccionAutorizada.CREAR_CENTRO_DISTRIBUCION);
+        authorizationService.requireGestionLogistica(authUserId, AuthorizedAction.CREAR_CENTRO_DISTRIBUCION);
 
         String nombre = command.nombre().trim();
         String direccion = command.direccion().trim();
@@ -83,7 +83,7 @@ public class CentroDistribucionService implements CrearCentroDistribucionUseCase
 
     @Override
     public CentroDistribucionResponse asignarEncargado(UUID authUserId, Long centroId, Long encargadoId) {
-        authorizationService.requireGestionLogistica(authUserId, AccionAutorizada.ASIGNAR_ENCARGADO_CENTRO_DISTRIBUCION);
+        authorizationService.requireGestionLogistica(authUserId, AuthorizedAction.ASIGNAR_ENCARGADO_CENTRO_DISTRIBUCION);
 
         CentroDistribucion centro = centroDistribucionRepositoryPort.obtenerPorId(centroId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Centro de distribución no encontrado con ID: " + centroId));

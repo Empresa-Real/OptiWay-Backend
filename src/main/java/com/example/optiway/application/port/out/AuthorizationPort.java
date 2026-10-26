@@ -5,7 +5,7 @@ import java.util.UUID;
 import com.example.optiway.domain.model.CentroDistribucion;
 import com.example.optiway.domain.model.Tienda;
 import com.example.optiway.domain.model.Usuario;
-import com.example.optiway.infrastructure.security.AccionAutorizada;
+import com.example.optiway.infrastructure.security.AuthorizedAction;
 
 /**
  * Puerto de salida para la autorización. Los servicios de aplicación dependen de
@@ -20,7 +20,7 @@ public interface AuthorizationPort {
      *
      * @return el Usuario autenticado y autorizado
      */
-    Usuario requireAdministrador(UUID authUserId, AccionAutorizada accion);
+    Usuario requireAdministrador(UUID authUserId, AuthorizedAction accion);
 
     /**
      * Exige que el usuario autenticado pueda gestionar el dominio logístico
@@ -28,7 +28,7 @@ public interface AuthorizationPort {
      *
      * @return el Usuario autenticado y autorizado
      */
-    Usuario requireGestionLogistica(UUID authUserId, AccionAutorizada accion);
+    Usuario requireGestionLogistica(UUID authUserId, AuthorizedAction accion);
 
     /**
      * Exige únicamente que exista una identidad autenticada válida.
@@ -42,7 +42,7 @@ public interface AuthorizationPort {
      *
      * @return el Usuario autenticado y autorizado
      */
-    Usuario requirePermisoTienda(UUID authUserId, Tienda tienda, AccionAutorizada accion);
+    Usuario requirePermisoTienda(UUID authUserId, Tienda tienda, AuthorizedAction accion);
 
     /**
      * Exige permiso para operar el centro de distribución indicado (gestión global o encargado asignado).
@@ -50,5 +50,5 @@ public interface AuthorizationPort {
      * @return el Usuario autenticado y autorizado
      */
     Usuario requirePermisoCentroDistribucion(UUID authUserId, CentroDistribucion centroDistribucion,
-            AccionAutorizada accion);
+            AuthorizedAction accion);
 }

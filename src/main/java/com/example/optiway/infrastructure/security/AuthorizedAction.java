@@ -6,7 +6,7 @@ package com.example.optiway.infrastructure.security;
  * concatenar cadenas dispersas por los servicios. Añadir una acción nueva pasa
  * por declarar aquí su descripción, no por inventar un string en el servicio.
  */
-public enum AccionAutorizada {
+public enum AuthorizedAction {
 
     CREAR_USUARIO("crear usuarios"),
     LISTAR_USUARIOS("consultar la lista de usuarios"),
@@ -31,7 +31,7 @@ public enum AccionAutorizada {
 
     private final String descripcion;
 
-    AccionAutorizada(String descripcion) {
+    AuthorizedAction(String descripcion) {
         this.descripcion = descripcion;
     }
 

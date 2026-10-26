@@ -26,7 +26,7 @@ import com.example.optiway.domain.model.Rol;
 import com.example.optiway.domain.model.Usuario;
 import com.example.optiway.infrastructure.adapter.out.auth.SupabaseAuthException;
 import com.example.optiway.application.port.out.AuthorizationPort;
-import com.example.optiway.infrastructure.security.AccionAutorizada;
+import com.example.optiway.infrastructure.security.AuthorizedAction;
 
 @Service
 public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCase,
@@ -55,7 +55,7 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
 
     @Override
     public UsuarioResponse crearUsuario(UUID authUserId, CrearUsuarioCommand command) {
-        authorizationService.requireAdministrador(authUserId, AccionAutorizada.CREAR_USUARIO);
+        authorizationService.requireAdministrador(authUserId, AuthorizedAction.CREAR_USUARIO);
 
         String nombre = command.nombre().trim();
         String email = command.email().trim().toLowerCase();
@@ -76,7 +76,7 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
 
     @Override
     public List<UsuarioResponse> obtenerUsuarios(UUID authUserId) {
-        authorizationService.requireAdministrador(authUserId, AccionAutorizada.LISTAR_USUARIOS);
+        authorizationService.requireAdministrador(authUserId, AuthorizedAction.LISTAR_USUARIOS);
         var tiendas = tiendaRepositoryPort.findAll();
         var centros = centroDistribucionRepositoryPort.obtenerTodos();
 
@@ -154,7 +154,7 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
 
     @Override
     public void eliminarUsuario(UUID authUserId, Long id) {
-        authorizationService.requireAdministrador(authUserId, AccionAutorizada.ELIMINAR_USUARIO);
+        authorizationService.requireAdministrador(authUserId, AuthorizedAction.ELIMINAR_USUARIO);
         Usuario usuarioAEliminar = usuarioRepositoryPort.obtenerPorId(id)
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con ID: " + id));
 
@@ -191,7 +191,7 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
 
     @Override
     public UsuarioResponse actualizarRol(UUID authUserId, ActualizarRolCommand command) {
-        authorizationService.requireAdministrador(authUserId, AccionAutorizada.ACTUALIZAR_ROL);
+        authorizationService.requireAdministrador(authUserId, AuthorizedAction.ACTUALIZAR_ROL);
 
         Usuario usuario = usuarioRepositoryPort.obtenerPorId(command.usuarioId())
                 .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con ID: " + command.usuarioId()));
