@@ -1,7 +1,6 @@
 package com.example.optiway.application.service;
 
 import com.example.optiway.application.exception.ProductoDuplicadoException;
-import com.example.optiway.application.exception.RecursoNoEncontradoException;
 import com.example.optiway.application.port.in.CambiarEstadoProductoCommand;
 import com.example.optiway.application.port.in.CambiarEstadoProductoUseCase;
 import com.example.optiway.application.port.in.CrearProductoCommand;
@@ -17,7 +16,7 @@ import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.domain.model.Producto;
 import com.example.optiway.domain.model.Usuario;
 import com.example.optiway.application.port.out.AuthorizationPort;
-import com.example.optiway.infrastructure.security.AccionAutorizada;
+import com.example.optiway.infrastructure.security.AuthorizedAction;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -45,7 +44,7 @@ public class ProductoService implements CrearProductoUseCase, ObtenerProductosUs
 
     @Override
     public ProductoResponse crearProducto(UUID authUserId, CrearProductoCommand command) {
-        authorizationService.requireGestionLogistica(authUserId, AccionAutorizada.CREAR_PRODUCTO);
+        authorizationService.requireGestionLogistica(authUserId, AuthorizedAction.CREAR_PRODUCTO);
 
         String identificador = requerido(command.identificador(), "El identificador es obligatorio.")
                 .toUpperCase(Locale.ROOT);
@@ -84,7 +83,7 @@ public class ProductoService implements CrearProductoUseCase, ObtenerProductosUs
 
     @Override
     public ProductoResponse editarProducto(UUID authUserId, EditarProductoCommand command) {
-        Usuario usuario = authorizationService.requireGestionLogistica(authUserId, AccionAutorizada.EDITAR_PRODUCTO);
+        Usuario usuario = authorizationService.requireGestionLogistica(authUserId, AuthorizedAction.EDITAR_PRODUCTO);
         if (command.id() == null || command.id() <= 0) {
             throw new IllegalArgumentException("El ID del producto no es válido.");
         }
@@ -122,7 +121,7 @@ public class ProductoService implements CrearProductoUseCase, ObtenerProductosUs
 
     @Override
     public ProductoResponse cambiarEstadoProducto(UUID authUserId, CambiarEstadoProductoCommand command) {
-        authorizationService.requireGestionLogistica(authUserId, AccionAutorizada.CAMBIAR_ESTADO_PRODUCTO);
+        authorizationService.requireGestionLogistica(authUserId, AuthorizedAction.CAMBIAR_ESTADO_PRODUCTO);
         if (command.id() == null || command.id() <= 0) {
             throw new IllegalArgumentException("El ID del producto no es válido.");
         }

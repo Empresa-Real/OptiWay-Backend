@@ -19,7 +19,7 @@ import com.example.optiway.domain.model.IngresoMercancia;
 import com.example.optiway.domain.model.Inventario;
 import com.example.optiway.domain.model.Usuario;
 import com.example.optiway.application.port.out.AuthorizationPort;
-import com.example.optiway.infrastructure.security.AccionAutorizada;
+import com.example.optiway.infrastructure.security.AuthorizedAction;
 
 @Service
 public class IngresoMercanciaService implements RegistrarIngresoMercanciaUseCase {
@@ -71,7 +71,7 @@ public class IngresoMercanciaService implements RegistrarIngresoMercanciaUseCase
 
         // 2. Validar permisos del usuario sobre el centro de distribución
         Usuario usuario = authorizationService.requirePermisoCentroDistribucion(
-                authUserId, centro, AccionAutorizada.REGISTRAR_INGRESO);
+                authUserId, centro, AuthorizedAction.REGISTRAR_INGRESO);
 
         // 3. Verificar que exista el producto
         productoRepositoryPort.findById(command.productoId())

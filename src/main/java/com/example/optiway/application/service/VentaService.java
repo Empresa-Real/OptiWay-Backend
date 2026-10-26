@@ -14,7 +14,7 @@ import com.example.optiway.domain.model.Producto;
 import com.example.optiway.domain.model.Tienda;
 import com.example.optiway.domain.model.Venta;
 import com.example.optiway.application.port.out.AuthorizationPort;
-import com.example.optiway.infrastructure.security.AccionAutorizada;
+import com.example.optiway.infrastructure.security.AuthorizedAction;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -65,7 +65,7 @@ public class VentaService implements RegistrarVentaUseCase {
                         "La tienda con ID " + command.tiendaId() + " no fue encontrada."));
 
         // 2. Control de acceso y roles: la identidad siempre es obligatoria
-        authorizationService.requirePermisoTienda(authUserId, tienda, AccionAutorizada.REGISTRAR_VENTA);
+        authorizationService.requirePermisoTienda(authUserId, tienda, AuthorizedAction.REGISTRAR_VENTA);
 
         // 3. Validar existencia y estado del producto
         Producto producto = productoRepositoryPort.findById(command.productoId())

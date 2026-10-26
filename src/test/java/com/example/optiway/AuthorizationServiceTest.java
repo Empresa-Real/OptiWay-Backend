@@ -22,7 +22,7 @@ import com.example.optiway.domain.model.CentroDistribucion;
 import com.example.optiway.domain.model.Rol;
 import com.example.optiway.domain.model.Tienda;
 import com.example.optiway.domain.model.Usuario;
-import com.example.optiway.infrastructure.security.AccionAutorizada;
+import com.example.optiway.infrastructure.security.AuthorizedAction;
 import com.example.optiway.infrastructure.security.AuthorizationService;
 
 /**
@@ -132,7 +132,7 @@ class AuthorizationServiceTest {
         @DisplayName("Sin identidad lanza y nombra la acción")
         void sinIdentidad_lanza() {
             AccesoDenegadoException e = assertThrows(AccesoDenegadoException.class,
-                    () -> authorizationService.requireAdministrador(null, AccionAutorizada.CREAR_USUARIO));
+                    () -> authorizationService.requireAdministrador(null, AuthorizedAction.CREAR_USUARIO));
             assertEquals("Autenticación requerida para crear usuarios", e.getMessage());
         }
 
@@ -142,7 +142,7 @@ class AuthorizationServiceTest {
             UUID desconocida = UUID.randomUUID();
             when(usuarioRepositoryPort.obtenerPorAuthUserId(desconocida)).thenReturn(Optional.empty());
             assertThrows(AccesoDenegadoException.class,
-                    () -> authorizationService.requireAdministrador(desconocida, AccionAutorizada.CREAR_USUARIO));
+                    () -> authorizationService.requireAdministrador(desconocida, AuthorizedAction.CREAR_USUARIO));
         }
 
         @Test
@@ -150,7 +150,7 @@ class AuthorizationServiceTest {
         void planificador_noPasa() {
             autenticar(planificadorAuthId, planificador);
             AccesoDenegadoException e = assertThrows(AccesoDenegadoException.class,
-                    () -> authorizationService.requireAdministrador(planificadorAuthId, AccionAutorizada.LISTAR_USUARIOS));
+                    () -> authorizationService.requireAdministrador(planificadorAuthId, AuthorizedAction.LISTAR_USUARIOS));
             assertEquals("Solo un administrador puede consultar la lista de usuarios", e.getMessage());
         }
 
@@ -160,9 +160,9 @@ class AuthorizationServiceTest {
             autenticar(encargadoTiendaAuthId, encargadoTienda);
             autenticar(encargadoCdAuthId, encargadoCd);
             assertThrows(AccesoDenegadoException.class, () -> authorizationService
-                    .requireAdministrador(encargadoTiendaAuthId, AccionAutorizada.ELIMINAR_USUARIO));
+                    .requireAdministrador(encargadoTiendaAuthId, AuthorizedAction.ELIMINAR_USUARIO));
             assertThrows(AccesoDenegadoException.class, () -> authorizationService
-                    .requireAdministrador(encargadoCdAuthId, AccionAutorizada.ACTUALIZAR_ROL));
+                    .requireAdministrador(encargadoCdAuthId, AuthorizedAction.ACTUALIZAR_ROL));
         }
 
         @Test
@@ -170,7 +170,7 @@ class AuthorizationServiceTest {
         void admin_pasa() {
             autenticar(adminAuthId, admin);
             assertSame(admin, authorizationService
-                    .requireAdministrador(adminAuthId, AccionAutorizada.CREAR_USUARIO));
+                    .requireAdministrador(adminAuthId, AuthorizedAction.CREAR_USUARIO));
         }
     }
 
@@ -186,7 +186,7 @@ class AuthorizationServiceTest {
         @DisplayName("Sin identidad lanza")
         void sinIdentidad_lanza() {
             assertThrows(AccesoDenegadoException.class, () -> authorizationService
-                    .requireGestionLogistica(null, AccionAutorizada.CREAR_TIENDA));
+                    .requireGestionLogistica(null, AuthorizedAction.CREAR_TIENDA));
         }
 
         @Test
@@ -194,7 +194,7 @@ class AuthorizationServiceTest {
         void admin_pasa() {
             autenticar(adminAuthId, admin);
             assertSame(admin, authorizationService
-                    .requireGestionLogistica(adminAuthId, AccionAutorizada.CREAR_TIENDA));
+                    .requireGestionLogistica(adminAuthId, AuthorizedAction.CREAR_TIENDA));
         }
 
         @Test
@@ -202,7 +202,7 @@ class AuthorizationServiceTest {
         void planificador_pasa() {
             autenticar(planificadorAuthId, planificador);
             assertSame(planificador, authorizationService
-                    .requireGestionLogistica(planificadorAuthId, AccionAutorizada.CREAR_PRODUCTO));
+                    .requireGestionLogistica(planificadorAuthId, AuthorizedAction.CREAR_PRODUCTO));
         }
 
         @Test
@@ -210,7 +210,7 @@ class AuthorizationServiceTest {
         void encargadoTienda_noPasa() {
             autenticar(encargadoTiendaAuthId, encargadoTienda);
             AccesoDenegadoException e = assertThrows(AccesoDenegadoException.class, () -> authorizationService
-                    .requireGestionLogistica(encargadoTiendaAuthId, AccionAutorizada.EDITAR_PRODUCTO));
+                    .requireGestionLogistica(encargadoTiendaAuthId, AuthorizedAction.EDITAR_PRODUCTO));
             assertEquals("No tiene permisos para editar productos", e.getMessage());
         }
 
@@ -219,7 +219,7 @@ class AuthorizationServiceTest {
         void encargadoCd_noPasa() {
             autenticar(encargadoCdAuthId, encargadoCd);
             assertThrows(AccesoDenegadoException.class, () -> authorizationService
-                    .requireGestionLogistica(encargadoCdAuthId, AccionAutorizada.CREAR_CENTRO_DISTRIBUCION));
+                    .requireGestionLogistica(encargadoCdAuthId, AuthorizedAction.CREAR_CENTRO_DISTRIBUCION));
         }
     }
 
@@ -235,7 +235,7 @@ class AuthorizationServiceTest {
         @DisplayName("Sin identidad lanza")
         void sinIdentidad_lanza() {
             assertThrows(AccesoDenegadoException.class, () -> authorizationService.requirePermisoTienda(
-                    null, tienda(ENCARGADO_TIENDA_ID), AccionAutorizada.REGISTRAR_VENTA));
+                    null, tienda(ENCARGADO_TIENDA_ID), AuthorizedAction.REGISTRAR_VENTA));
         }
 
         @Test
@@ -243,7 +243,7 @@ class AuthorizationServiceTest {
         void admin_pasa() {
             autenticar(adminAuthId, admin);
             assertSame(admin, authorizationService.requirePermisoTienda(
-                    adminAuthId, tienda(OTRO_ENCARGADO_ID), AccionAutorizada.REGISTRAR_VENTA));
+                    adminAuthId, tienda(OTRO_ENCARGADO_ID), AuthorizedAction.REGISTRAR_VENTA));
         }
 
         @Test
@@ -251,7 +251,7 @@ class AuthorizationServiceTest {
         void planificador_pasa() {
             autenticar(planificadorAuthId, planificador);
             assertSame(planificador, authorizationService.requirePermisoTienda(
-                    planificadorAuthId, tienda(OTRO_ENCARGADO_ID), AccionAutorizada.CONSULTAR_INVENTARIO_TIENDA));
+                    planificadorAuthId, tienda(OTRO_ENCARGADO_ID), AuthorizedAction.CONSULTAR_INVENTARIO_TIENDA));
         }
 
         @Test
@@ -259,7 +259,7 @@ class AuthorizationServiceTest {
         void encargadoAsignado_pasa() {
             autenticar(encargadoTiendaAuthId, encargadoTienda);
             assertSame(encargadoTienda, authorizationService.requirePermisoTienda(
-                    encargadoTiendaAuthId, tienda(ENCARGADO_TIENDA_ID), AccionAutorizada.CONSULTAR_INVENTARIO_TIENDA));
+                    encargadoTiendaAuthId, tienda(ENCARGADO_TIENDA_ID), AuthorizedAction.CONSULTAR_INVENTARIO_TIENDA));
         }
 
         @Test
@@ -267,7 +267,7 @@ class AuthorizationServiceTest {
         void encargadoNoAsignado_noPasa() {
             autenticar(encargadoTiendaAuthId, encargadoTienda);
             assertThrows(AccesoDenegadoException.class, () -> authorizationService.requirePermisoTienda(
-                    encargadoTiendaAuthId, tienda(OTRO_ENCARGADO_ID), AccionAutorizada.CONSULTAR_INVENTARIO_TIENDA));
+                    encargadoTiendaAuthId, tienda(OTRO_ENCARGADO_ID), AuthorizedAction.CONSULTAR_INVENTARIO_TIENDA));
         }
 
         @Test
@@ -275,7 +275,7 @@ class AuthorizationServiceTest {
         void encargadoCd_noPasa() {
             autenticar(encargadoCdAuthId, encargadoCd);
             assertThrows(AccesoDenegadoException.class, () -> authorizationService.requirePermisoTienda(
-                    encargadoCdAuthId, tienda(ENCARGADO_CD_ID), AccionAutorizada.CONSULTAR_INVENTARIO_TIENDA));
+                    encargadoCdAuthId, tienda(ENCARGADO_CD_ID), AuthorizedAction.CONSULTAR_INVENTARIO_TIENDA));
         }
 
         @Test
@@ -283,7 +283,7 @@ class AuthorizationServiceTest {
         void encargadoSinAsignacion_noPasa() {
             autenticar(encargadoTiendaAuthId, encargadoTienda);
             assertThrows(AccesoDenegadoException.class, () -> authorizationService.requirePermisoTienda(
-                    encargadoTiendaAuthId, tienda(null), AccionAutorizada.CONSULTAR_INVENTARIO_TIENDA));
+                    encargadoTiendaAuthId, tienda(null), AuthorizedAction.CONSULTAR_INVENTARIO_TIENDA));
         }
     }
 
@@ -299,7 +299,7 @@ class AuthorizationServiceTest {
         @DisplayName("Sin identidad lanza")
         void sinIdentidad_lanza() {
             assertThrows(AccesoDenegadoException.class, () -> authorizationService.requirePermisoCentroDistribucion(
-                    null, centro(ENCARGADO_CD_ID), AccionAutorizada.REGISTRAR_INGRESO));
+                    null, centro(ENCARGADO_CD_ID), AuthorizedAction.REGISTRAR_INGRESO));
         }
 
         @Test
@@ -307,7 +307,7 @@ class AuthorizationServiceTest {
         void admin_pasa() {
             autenticar(adminAuthId, admin);
             assertSame(admin, authorizationService.requirePermisoCentroDistribucion(
-                    adminAuthId, centro(OTRO_ENCARGADO_ID), AccionAutorizada.REGISTRAR_INGRESO));
+                    adminAuthId, centro(OTRO_ENCARGADO_ID), AuthorizedAction.REGISTRAR_INGRESO));
         }
 
         @Test
@@ -315,7 +315,7 @@ class AuthorizationServiceTest {
         void planificador_pasa() {
             autenticar(planificadorAuthId, planificador);
             assertSame(planificador, authorizationService.requirePermisoCentroDistribucion(
-                    planificadorAuthId, centro(OTRO_ENCARGADO_ID), AccionAutorizada.CONSULTAR_INVENTARIO_CENTRO_DISTRIBUCION));
+                    planificadorAuthId, centro(OTRO_ENCARGADO_ID), AuthorizedAction.CONSULTAR_INVENTARIO_CENTRO_DISTRIBUCION));
         }
 
         @Test
@@ -323,7 +323,7 @@ class AuthorizationServiceTest {
         void encargadoAsignado_pasa() {
             autenticar(encargadoCdAuthId, encargadoCd);
             assertSame(encargadoCd, authorizationService.requirePermisoCentroDistribucion(
-                    encargadoCdAuthId, centro(ENCARGADO_CD_ID), AccionAutorizada.REGISTRAR_INGRESO));
+                    encargadoCdAuthId, centro(ENCARGADO_CD_ID), AuthorizedAction.REGISTRAR_INGRESO));
         }
 
         @Test
@@ -331,7 +331,7 @@ class AuthorizationServiceTest {
         void encargadoNoAsignado_noPasa() {
             autenticar(encargadoCdAuthId, encargadoCd);
             assertThrows(AccesoDenegadoException.class, () -> authorizationService.requirePermisoCentroDistribucion(
-                    encargadoCdAuthId, centro(OTRO_ENCARGADO_ID), AccionAutorizada.REGISTRAR_INGRESO));
+                    encargadoCdAuthId, centro(OTRO_ENCARGADO_ID), AuthorizedAction.REGISTRAR_INGRESO));
         }
 
         @Test
@@ -339,7 +339,7 @@ class AuthorizationServiceTest {
         void encargadoTienda_noPasa() {
             autenticar(encargadoTiendaAuthId, encargadoTienda);
             assertThrows(AccesoDenegadoException.class, () -> authorizationService.requirePermisoCentroDistribucion(
-                    encargadoTiendaAuthId, centro(ENCARGADO_TIENDA_ID), AccionAutorizada.REGISTRAR_INGRESO));
+                    encargadoTiendaAuthId, centro(ENCARGADO_TIENDA_ID), AuthorizedAction.REGISTRAR_INGRESO));
         }
     }
 }

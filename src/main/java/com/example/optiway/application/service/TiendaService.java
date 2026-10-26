@@ -16,7 +16,7 @@ import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.domain.model.Tienda;
 import com.example.optiway.domain.model.Usuario;
 import com.example.optiway.application.port.out.AuthorizationPort;
-import com.example.optiway.infrastructure.security.AccionAutorizada;
+import com.example.optiway.infrastructure.security.AuthorizedAction;
 
 @Service
 public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase, AsignarEncargadoTiendaUseCase {
@@ -36,7 +36,7 @@ public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase,
 
     @Override
     public TiendaResponse crearTienda(UUID authUserId, CrearTiendaCommand command) {
-        authorizationService.requireGestionLogistica(authUserId, AccionAutorizada.CREAR_TIENDA);
+        authorizationService.requireGestionLogistica(authUserId, AuthorizedAction.CREAR_TIENDA);
 
         String nombre = command.nombre().trim();
         String direccion = command.direccion().trim();
@@ -76,7 +76,7 @@ public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase,
 
     @Override
     public TiendaResponse asignarEncargado(UUID authUserId, Long tiendaId, Long encargadoId) {
-        authorizationService.requireGestionLogistica(authUserId, AccionAutorizada.ASIGNAR_ENCARGADO_TIENDA);
+        authorizationService.requireGestionLogistica(authUserId, AuthorizedAction.ASIGNAR_ENCARGADO_TIENDA);
 
         Tienda tienda = tiendaRepositoryPort.obtenerPorId(tiendaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Tienda no encontrada con ID: " + tiendaId));
