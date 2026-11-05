@@ -2,6 +2,7 @@ package com.example.optiway.application.service;
 
 import com.example.optiway.application.port.in.ObtenerInventarioCommand;
 import com.example.optiway.application.port.in.ObtenerInventarioUseCase;
+import com.example.optiway.application.port.in.AjustarInventarioCDUseCase;
 import com.example.optiway.application.port.in.dto.InventarioResponse;
 import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
 import com.example.optiway.application.port.out.InventarioRepositoryPort;
@@ -14,15 +15,18 @@ import com.example.optiway.domain.model.Tienda;
 import com.example.optiway.application.port.out.AuthorizationPort;
 import com.example.optiway.infrastructure.security.AuthorizedAction;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.time.LocalDateTime;
+import com.example.optiway.application.exception.RecursoNoEncontradoException;
 import java.util.stream.Collectors;
 
 @Service
-public class InventarioService implements ObtenerInventarioUseCase {
+public class InventarioService implements ObtenerInventarioUseCase, AjustarInventarioCDUseCase {
 
     private final InventarioRepositoryPort inventarioRepositoryPort;
     private final ProductoRepositoryPort productoRepositoryPort;
@@ -42,6 +46,26 @@ public class InventarioService implements ObtenerInventarioUseCase {
         this.tiendaRepositoryPort = tiendaRepositoryPort;
         this.centroDistribucionRepositoryPort = centroDistribucionRepositoryPort;
         this.authorizationService = authorizationService;
+    }
+
+    @Override
+    @Transactional
+    public InventarioResponse ajustarInventario(UUID authUserId, Long centroDistribucionId, Long productoId, Integer nuevaCantidad) {
+        if (nuevaCantidad == null || nuevaCantidad < 0) {
+            throw new IllegalArgumentException("nuevaCantidad debe ser mayor o igual a cero");
+        }
+        CentroDistribucion centro = centroDistribucionRepositoryPort.obtenerPorId(centroDistribucionId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("El centro de distribución no existe"));
+        var usuario = authorizationService.requireEncargadoDelCentro(
+                authUserId, centro, AuthorizedAction.AJUSTAR_INVENTARIO_CENTRO_DISTRIBUCION);
+        Inventario inventario = inventarioRepositoryPort.findByCentroDistribucionIdAndProductoId(centroDistribucionId, productoId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("No existe inventario para ese producto en el centro indicado"));
+        inventario.setCantidadActual(nuevaCantidad);
+        inventario.setFechaActualizacion(LocalDateTime.now());
+        inventario.setUsuarioActualizacionId(usuario.getId());
+        Inventario actualizado = inventarioRepositoryPort.save(inventario);
+        Producto producto = productoRepositoryPort.findById(productoId).orElse(null);
+        return InventarioResponse.from(actualizado, producto);
     }
 
     @Override
