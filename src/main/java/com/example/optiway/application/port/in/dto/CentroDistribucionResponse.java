@@ -26,7 +26,10 @@ public record CentroDistribucionResponse(
         Long encargadoId,
 
         @Schema(description = "Lista de IDs de las tiendas abastecidas por este centro", example = "[1, 2, 3]")
-        List<Long> tiendasAbastecidasIds
+        List<Long> tiendasAbastecidasIds,
+
+        @Schema(description = "Estado operativo del centro de distribución", example = "Activo")
+        String estado
 ) {
     public static CentroDistribucionResponse from(CentroDistribucion cd) {
         if (cd == null) {
@@ -39,7 +42,8 @@ public record CentroDistribucionResponse(
                 cd.getDireccion(),
                 cd.getCapacidad(),
                 cd.getEncargadoId(),
-                cd.getTiendasAbastecidasIds()
+                cd.getTiendasAbastecidasIds(),
+                cd.getEstado()
         );
     }
 }

@@ -9,6 +9,7 @@ public class CentroDistribucion {
     private String direccion;
     private Integer capacidad;
     private Long encargadoId;
+    private String estado = "Activo";
     private List<Long> tiendasAbastecidasIds; // IDs de las tiendas asociadas a su zona de cobertura
 
     public CentroDistribucion() {}
@@ -45,4 +46,6 @@ public class CentroDistribucion {
 
     public List<Long> getTiendasAbastecidasIds() { return tiendasAbastecidasIds; }
     public void setTiendasAbastecidasIds(List<Long> tiendasAbastecidasIds) { this.tiendasAbastecidasIds = tiendasAbastecidasIds; }
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
 }

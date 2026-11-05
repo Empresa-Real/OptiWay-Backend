@@ -4,12 +4,14 @@ import java.util.List;
 import java.util.UUID;
 
 import com.example.optiway.application.port.in.AsignarEncargadoCDUseCase;
+import com.example.optiway.application.port.in.CambiarEstadoCentroDistribucionUseCase;
 import com.example.optiway.application.port.in.CrearCentroDistribucionUseCase;
 import com.example.optiway.application.port.in.ObtenerCentrosDistribucionUseCase;
 import com.example.optiway.application.port.in.RegistrarIngresoMercanciaUseCase;
 import com.example.optiway.application.port.in.dto.CentroDistribucionResponse;
 import com.example.optiway.application.port.in.dto.IngresoMercanciaResponse;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.AsignarEncargadoRequest;
+import com.example.optiway.infrastructure.adapter.in.rest.dto.CambiarEstadoCDRequest;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.CrearCentroDistribucionRequest;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.RegistrarIngresoMercanciaRequest;
 import com.example.optiway.infrastructure.security.AuthUserId;
@@ -19,6 +21,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -36,16 +39,19 @@ public class CentroDistribucionController {
     private final ObtenerCentrosDistribucionUseCase obtenerCentrosDistribucionUseCase;
     private final AsignarEncargadoCDUseCase asignarEncargadoCDUseCase;
     private final RegistrarIngresoMercanciaUseCase registrarIngresoMercanciaUseCase;
+    private final CambiarEstadoCentroDistribucionUseCase cambiarEstadoCentroDistribucionUseCase;
 
     public CentroDistribucionController(
             CrearCentroDistribucionUseCase crearCentroDistribucionUseCase,
             ObtenerCentrosDistribucionUseCase obtenerCentrosDistribucionUseCase,
             AsignarEncargadoCDUseCase asignarEncargadoCDUseCase,
-            RegistrarIngresoMercanciaUseCase registrarIngresoMercanciaUseCase) {
+            RegistrarIngresoMercanciaUseCase registrarIngresoMercanciaUseCase,
+            CambiarEstadoCentroDistribucionUseCase cambiarEstadoCentroDistribucionUseCase) {
         this.crearCentroDistribucionUseCase = crearCentroDistribucionUseCase;
         this.obtenerCentrosDistribucionUseCase = obtenerCentrosDistribucionUseCase;
         this.asignarEncargadoCDUseCase = asignarEncargadoCDUseCase;
         this.registrarIngresoMercanciaUseCase = registrarIngresoMercanciaUseCase;
+        this.cambiarEstadoCentroDistribucionUseCase = cambiarEstadoCentroDistribucionUseCase;
     }
 
     @PostMapping
@@ -61,6 +67,16 @@ public class CentroDistribucionController {
     @Operation(summary = "Listar centros de distribución", description = "Retorna los centros de distribución disponibles para el usuario según su rol.")
     public List<CentroDistribucionResponse> listar(@AuthUserId UUID authUserId) {
         return obtenerCentrosDistribucionUseCase.obtenerCentrosDistribucion(authUserId);
+    }
+
+    @PatchMapping("/{id}/estado")
+    @Operation(summary = "Cambiar estado del centro de distribución", description = "Activa o desactiva un CD. Requiere ADMINISTRADOR; si abastece tiendas, la desactivación requiere confirmación.")
+    public CentroDistribucionResponse cambiarEstado(
+            @AuthUserId UUID authUserId,
+            @PathVariable Long id,
+            @RequestBody CambiarEstadoCDRequest request) {
+        return cambiarEstadoCentroDistribucionUseCase.cambiarEstado(
+                authUserId, id, request.activo(), request.confirmarConTiendasAsignadas());
     }
 
     @PutMapping("/{id}/encargado")
