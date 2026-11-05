@@ -2,15 +2,20 @@ package com.example.optiway.infrastructure.adapter.in.rest;
 
 import com.example.optiway.application.port.in.ObtenerInventarioCommand;
 import com.example.optiway.application.port.in.ObtenerInventarioUseCase;
+import com.example.optiway.application.port.in.AjustarInventarioCDUseCase;
 import com.example.optiway.application.port.in.dto.InventarioResponse;
 import com.example.optiway.infrastructure.security.AuthUserId;
+import com.example.optiway.infrastructure.adapter.in.rest.dto.AjustarInventarioCDRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestBody;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.UUID;
@@ -21,11 +26,14 @@ import java.util.UUID;
 public class InventarioController {
 
     private final ObtenerInventarioUseCase obtenerInventarioUseCase;
+    private final AjustarInventarioCDUseCase ajustarInventarioCDUseCase;
 
     public InventarioController(
-            ObtenerInventarioUseCase obtenerInventarioUseCase) {
+            ObtenerInventarioUseCase obtenerInventarioUseCase,
+            AjustarInventarioCDUseCase ajustarInventarioCDUseCase) {
 
         this.obtenerInventarioUseCase = obtenerInventarioUseCase;
+        this.ajustarInventarioCDUseCase = ajustarInventarioCDUseCase;
     }
 
     @GetMapping
@@ -58,5 +66,14 @@ public class InventarioController {
         return obtenerInventarioUseCase.obtenerInventario(
                 authUserId,
                 new ObtenerInventarioCommand(null, centroDistribucionId, nombre, categoria, productoId));
+    }
+
+    @PatchMapping("/centro-distribucion/ajustar")
+    @Operation(summary = "Ajustar inventario del centro de distribución", description = "Reemplaza la cantidad actual y registra fecha y encargado responsable. Solo el encargado asignado puede ajustar su CD.")
+    public InventarioResponse ajustarInventarioCD(
+            @AuthUserId UUID authUserId,
+            @Valid @RequestBody AjustarInventarioCDRequest request) {
+        return ajustarInventarioCDUseCase.ajustarInventario(
+                authUserId, request.centroDistribucionId(), request.productoId(), request.nuevaCantidad());
     }
 }
