@@ -17,6 +17,7 @@ public enum AuthorizedAction {
     ASIGNAR_ENCARGADO_TIENDA("asignar encargados a tiendas"),
     OPERAR_TIENDA("operar la tienda especificada"),
     CONSULTAR_INVENTARIO_TIENDA("consultar el inventario de esta tienda"),
+    AJUSTAR_INVENTARIO_TIENDA("ajustar el inventario de esta tienda"),
     REGISTRAR_VENTA("registrar ventas en la tienda especificada"),
 
     CREAR_CENTRO_DISTRIBUCION("crear Centros de Distribución"),
