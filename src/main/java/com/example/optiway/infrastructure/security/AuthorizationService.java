@@ -116,4 +116,16 @@ public class AuthorizationService implements AuthorizationPort {
          }
          return usuario;
      }
+    @Override
+    public Usuario requirePlanificador(UUID authUserId, AuthorizedAction accion) {
+        Usuario usuario = requireAuthenticated(authUserId);
+
+        if (usuario.getRol() != com.example.optiway.domain.model.Rol.PLANIFICADOR) {
+            throw new AccesoDenegadoException(
+                    "Solo un PLANIFICADOR puede " + accion.descripcion()
+            );
+        }
+
+        return usuario;
+    }
 }

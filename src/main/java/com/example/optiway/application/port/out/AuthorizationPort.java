@@ -51,4 +51,5 @@ public interface AuthorizationPort {
      */
     Usuario requirePermisoCentroDistribucion(UUID authUserId, CentroDistribucion centroDistribucion,
             AuthorizedAction accion);
+    Usuario requirePlanificador(UUID authUserId, AuthorizedAction accion);
 }
