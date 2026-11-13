@@ -54,4 +54,7 @@ public interface AuthorizationPort {
 
     /** Exige que el usuario autenticado sea el encargado de CD asignado al centro. */
     Usuario requireEncargadoDelCentro(UUID authUserId, CentroDistribucion centroDistribucion, AuthorizedAction accion);
+
+    /** Exige que el usuario autenticado tenga rol PLANIFICADOR. */
+    Usuario requirePlanificador(UUID authUserId, AuthorizedAction accion);
 }

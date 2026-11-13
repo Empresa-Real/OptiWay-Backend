@@ -30,7 +30,9 @@ public enum AuthorizedAction {
 
     CREAR_PRODUCTO("crear productos"),
     EDITAR_PRODUCTO("editar productos"),
-    CAMBIAR_ESTADO_PRODUCTO("activar o desactivar productos");
+    CAMBIAR_ESTADO_PRODUCTO("activar o desactivar productos"),
+    CREAR_RECOMENDACION_REPOSICION("crear recomendaciones de reposición"),
+    LISTAR_RECOMENDACIONES_REPOSICION("consultar recomendaciones de reposición");
 
     private final String descripcion;
 
