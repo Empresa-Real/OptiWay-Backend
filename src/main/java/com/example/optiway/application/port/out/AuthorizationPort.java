@@ -51,4 +51,7 @@ public interface AuthorizationPort {
      */
     Usuario requirePermisoCentroDistribucion(UUID authUserId, CentroDistribucion centroDistribucion,
             AuthorizedAction accion);
+
+    /** Exige que el usuario autenticado sea el encargado de CD asignado al centro. */
+    Usuario requireEncargadoDelCentro(UUID authUserId, CentroDistribucion centroDistribucion, AuthorizedAction accion);
 }

@@ -12,6 +12,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "inventarios")
@@ -38,6 +39,12 @@ public class InventarioJpaEntity {
 
     @Column(name = "stock_minimo", nullable = false)
     private Integer stockMinimo;
+
+    @Column(name = "fecha_actualizacion")
+    private LocalDateTime fechaActualizacion;
+
+    @Column(name = "usuario_actualizacion_id")
+    private Long usuarioActualizacionId;
 
     public InventarioJpaEntity() {
     }
@@ -126,4 +133,9 @@ public class InventarioJpaEntity {
     public void setStockMinimo(Integer stockMinimo) {
         this.stockMinimo = stockMinimo;
     }
+
+    public LocalDateTime getFechaActualizacion() { return fechaActualizacion; }
+    public void setFechaActualizacion(LocalDateTime fechaActualizacion) { this.fechaActualizacion = fechaActualizacion; }
+    public Long getUsuarioActualizacionId() { return usuarioActualizacionId; }
+    public void setUsuarioActualizacionId(Long usuarioActualizacionId) { this.usuarioActualizacionId = usuarioActualizacionId; }
 }

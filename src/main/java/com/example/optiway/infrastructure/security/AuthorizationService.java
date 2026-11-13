@@ -116,4 +116,14 @@ public class AuthorizationService implements AuthorizationPort {
          }
          return usuario;
      }
+
+     @Override
+     public Usuario requireEncargadoDelCentro(UUID authUserId, CentroDistribucion centroDistribucion, AuthorizedAction accion) {
+         Usuario usuario = requireAuthenticated(authUserId);
+         if (!usuario.esEncargadoDe(centroDistribucion)) {
+             throw new com.example.optiway.application.exception.AccesoDenegadoException(
+                     "Solo el ENCARGADO_CD asignado puede " + accion.descripcion());
+         }
+         return usuario;
+     }
 }
