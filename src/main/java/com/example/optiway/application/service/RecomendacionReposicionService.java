@@ -82,6 +82,11 @@ public class RecomendacionReposicionService implements
                 .orElseThrow(() -> new RecursoNoEncontradoException(
                         "No se encontró el Centro de Distribución de origen."));
 
+        if (!centro.isActivo()) {
+            throw new IllegalArgumentException(
+                    "No se puede crear una recomendación desde un Centro de Distribución inactivo.");
+        }
+
         Tienda tienda = tiendaRepositoryPort.obtenerPorId(command.tiendaDestinoId())
                 .orElseThrow(() -> new RecursoNoEncontradoException(
                         "No se encontró la tienda de destino."));

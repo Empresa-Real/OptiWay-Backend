@@ -48,4 +48,8 @@ public class CentroDistribucion {
     public void setTiendasAbastecidasIds(List<Long> tiendasAbastecidasIds) { this.tiendasAbastecidasIds = tiendasAbastecidasIds; }
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
+
+    public boolean isActivo() {
+        return !"Inactivo".equalsIgnoreCase(this.estado);
+    }
 }

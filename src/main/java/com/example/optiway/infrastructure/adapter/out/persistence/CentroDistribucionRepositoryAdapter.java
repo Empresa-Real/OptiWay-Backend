@@ -6,12 +6,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import org.springframework.stereotype.Component;
-
 import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
 import com.example.optiway.domain.model.CentroDistribucion;
 
