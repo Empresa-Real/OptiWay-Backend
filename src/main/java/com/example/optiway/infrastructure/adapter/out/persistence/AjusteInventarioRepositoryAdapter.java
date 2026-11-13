@@ -1,4 +1,3 @@
-
 package com.example.optiway.infrastructure.adapter.out.persistence;
 
 import com.example.optiway.application.port.out.AjusteInventarioRepositoryPort;
@@ -36,6 +35,13 @@ public class AjusteInventarioRepositoryAdapter
             ));
         }
 
+        if (ajuste.getCentroDistribucionId() != null) {
+            entity.setCentroDistribucion(entityManager.getReference(
+                    CentroDistribucionJpaEntity.class,
+                    ajuste.getCentroDistribucionId()
+            ));
+        }
+
         if (ajuste.getProductoId() != null) {
             entity.setProducto(entityManager.getReference(
                     ProductoJpaEntity.class,
@@ -68,6 +74,14 @@ public class AjusteInventarioRepositoryAdapter
                 .toList();
     }
 
+    @Override
+    public List<AjusteInventario> findByCentroDistribucionId(Long centroDistribucionId) {
+        return repository.findByCentroDistribucion_Id(centroDistribucionId)
+                .stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
     private AjusteInventario toDomain(
             AjusteInventarioJpaEntity entity) {
 
@@ -75,6 +89,7 @@ public class AjusteInventarioRepositoryAdapter
 
         ajuste.setId(entity.getId());
         ajuste.setTiendaId(entity.getTiendaId());
+        ajuste.setCentroDistribucionId(entity.getCentroDistribucionId());
         ajuste.setProductoId(entity.getProductoId());
         ajuste.setCantidadAnterior(entity.getCantidadAnterior());
         ajuste.setDiferencia(entity.getDiferencia());

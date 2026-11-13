@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 public record AjusteInventarioResponse(
         Long id,
         Long tiendaId,
+        Long centroDistribucionId,
         Long productoId,
         Integer cantidadAnterior,
         Integer diferencia,
@@ -17,6 +18,7 @@ public record AjusteInventarioResponse(
         return new AjusteInventarioResponse(
                 ajuste.getId(),
                 ajuste.getTiendaId(),
+                ajuste.getCentroDistribucionId(),
                 ajuste.getProductoId(),
                 ajuste.getCantidadAnterior(),
                 ajuste.getDiferencia(),

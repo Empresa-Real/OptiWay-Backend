@@ -1,4 +1,3 @@
-
 package com.example.optiway.domain.model;
 
 import java.time.LocalDateTime;
@@ -7,6 +6,7 @@ public class AjusteInventario {
 
     private Long id;
     private Long tiendaId;
+    private Long centroDistribucionId;
     private Long productoId;
     private Integer cantidadAnterior;
     private Integer diferencia;
@@ -20,6 +20,7 @@ public class AjusteInventario {
     public AjusteInventario(
             Long id,
             Long tiendaId,
+            Long centroDistribucionId,
             Long productoId,
             Integer cantidadAnterior,
             Integer diferencia,
@@ -29,6 +30,7 @@ public class AjusteInventario {
     ) {
         this.id = id;
         this.tiendaId = tiendaId;
+        this.centroDistribucionId = centroDistribucionId;
         this.productoId = productoId;
         this.cantidadAnterior = cantidadAnterior;
         this.diferencia = diferencia;
@@ -51,6 +53,14 @@ public class AjusteInventario {
 
     public void setTiendaId(Long tiendaId) {
         this.tiendaId = tiendaId;
+    }
+
+    public Long getCentroDistribucionId() {
+        return centroDistribucionId;
+    }
+
+    public void setCentroDistribucionId(Long centroDistribucionId) {
+        this.centroDistribucionId = centroDistribucionId;
     }
 
     public Long getProductoId() {

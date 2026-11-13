@@ -15,13 +15,19 @@ public class AjusteInventarioJpaEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "tienda_id",
-            nullable = false,
             foreignKey = @ForeignKey(name = "fk_ajustes_tienda")
     )
     private TiendaJpaEntity tienda;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "centro_distribucion_id",
+            foreignKey = @ForeignKey(name = "fk_ajustes_cd")
+    )
+    private CentroDistribucionJpaEntity centroDistribucion;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
@@ -80,6 +86,18 @@ public class AjusteInventarioJpaEntity {
 
     public Long getTiendaId() {
         return tienda != null ? tienda.getId() : null;
+    }
+
+    public CentroDistribucionJpaEntity getCentroDistribucion() {
+        return centroDistribucion;
+    }
+
+    public void setCentroDistribucion(CentroDistribucionJpaEntity centroDistribucion) {
+        this.centroDistribucion = centroDistribucion;
+    }
+
+    public Long getCentroDistribucionId() {
+        return centroDistribucion != null ? centroDistribucion.getId() : null;
     }
 
     public Long getProductoId() {

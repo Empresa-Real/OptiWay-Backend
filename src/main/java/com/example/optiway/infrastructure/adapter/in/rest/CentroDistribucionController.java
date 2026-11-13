@@ -3,13 +3,17 @@ package com.example.optiway.infrastructure.adapter.in.rest;
 import java.util.List;
 import java.util.UUID;
 
+import com.example.optiway.application.port.in.AjustarInventarioCommand;
+import com.example.optiway.application.port.in.AjustarInventarioUseCase;
 import com.example.optiway.application.port.in.AsignarEncargadoCDUseCase;
 import com.example.optiway.application.port.in.CambiarEstadoCentroDistribucionUseCase;
 import com.example.optiway.application.port.in.CrearCentroDistribucionUseCase;
 import com.example.optiway.application.port.in.ObtenerCentrosDistribucionUseCase;
 import com.example.optiway.application.port.in.RegistrarIngresoMercanciaUseCase;
+import com.example.optiway.application.port.in.dto.AjusteInventarioResponse;
 import com.example.optiway.application.port.in.dto.CentroDistribucionResponse;
 import com.example.optiway.application.port.in.dto.IngresoMercanciaResponse;
+import com.example.optiway.infrastructure.adapter.in.rest.dto.AjustarInventarioRequest;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.AsignarEncargadoRequest;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.CambiarEstadoCDRequest;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.CrearCentroDistribucionRequest;
@@ -40,18 +44,21 @@ public class CentroDistribucionController {
     private final AsignarEncargadoCDUseCase asignarEncargadoCDUseCase;
     private final RegistrarIngresoMercanciaUseCase registrarIngresoMercanciaUseCase;
     private final CambiarEstadoCentroDistribucionUseCase cambiarEstadoCentroDistribucionUseCase;
+    private final AjustarInventarioUseCase ajustarInventarioUseCase;
 
     public CentroDistribucionController(
             CrearCentroDistribucionUseCase crearCentroDistribucionUseCase,
             ObtenerCentrosDistribucionUseCase obtenerCentrosDistribucionUseCase,
             AsignarEncargadoCDUseCase asignarEncargadoCDUseCase,
             RegistrarIngresoMercanciaUseCase registrarIngresoMercanciaUseCase,
-            CambiarEstadoCentroDistribucionUseCase cambiarEstadoCentroDistribucionUseCase) {
+            CambiarEstadoCentroDistribucionUseCase cambiarEstadoCentroDistribucionUseCase,
+            AjustarInventarioUseCase ajustarInventarioUseCase) {
         this.crearCentroDistribucionUseCase = crearCentroDistribucionUseCase;
         this.obtenerCentrosDistribucionUseCase = obtenerCentrosDistribucionUseCase;
         this.asignarEncargadoCDUseCase = asignarEncargadoCDUseCase;
         this.registrarIngresoMercanciaUseCase = registrarIngresoMercanciaUseCase;
         this.cambiarEstadoCentroDistribucionUseCase = cambiarEstadoCentroDistribucionUseCase;
+        this.ajustarInventarioUseCase = ajustarInventarioUseCase;
     }
 
     @PostMapping
@@ -99,5 +106,17 @@ public class CentroDistribucionController {
             @PathVariable("id") Long centroDistribucionId,
             @Valid @RequestBody RegistrarIngresoMercanciaRequest request) {
         return registrarIngresoMercanciaUseCase.registrarIngreso(authUserId, request.toCommand(centroDistribucionId));
+    }
+
+    @PatchMapping("/{id}/inventario")
+    @Operation(summary = "Ajustar inventario del centro de distribución", description = "Ajusta la cantidad registrada al conteo físico del centro de distribución y conserva el historial del ajuste. Alias corto: PATCH /api/cd/{id}/inventario.")
+    public AjusteInventarioResponse ajustarInventario(
+            @AuthUserId UUID authUserId,
+            @Parameter(description = "ID numérico (Long) del centro de distribución", example = "1")
+            @PathVariable("id") Long centroDistribucionId,
+            @Valid @RequestBody AjustarInventarioRequest request) {
+        return ajustarInventarioUseCase.ajustarInventario(
+                authUserId,
+                new AjustarInventarioCommand(null, centroDistribucionId, request.productoId(), request.nuevaCantidad()));
     }
 }
