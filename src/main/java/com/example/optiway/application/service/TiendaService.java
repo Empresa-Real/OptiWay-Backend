@@ -111,9 +111,9 @@ public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase,
         return TiendaResponse.from(tiendaRepositoryPort.save(tienda));
     }
 
-    @Override
+@Override
     public TiendaResponse cambiarEstado(UUID authUserId, Long tiendaId, CambiarEstadoTiendaRequest request) {
-        authorizationService.requireGestionLogistica(authUserId, AuthorizedAction.ASIGNAR_ENCARGADO_TIENDA); // O la acción correspondiente a gestión de tiendas
+        authorizationService.requireAdministrador(authUserId, AuthorizedAction.CAMBIAR_ESTADO_TIENDA);
 
         Tienda tienda = tiendaRepositoryPort.obtenerPorId(tiendaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Tienda no encontrada con ID: " + tiendaId));
@@ -134,7 +134,7 @@ public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase,
 
         return TiendaResponse.from(tiendaActualizada);
     }
-
+    
     @Override
     public boolean tieneOrdenesEnTransitoOEnviadas(Long tiendaId) {
         return false; 

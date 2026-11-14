@@ -8,49 +8,109 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.optiway.application.exception.AccesoDenegadoException;
+import com.example.optiway.application.exception.RecursoNoEncontradoException;
 import com.example.optiway.application.port.in.SolicitarReposicionUseCase;
 import com.example.optiway.application.port.in.dto.SolicitudReposicionResponse;
 import com.example.optiway.application.port.out.AuthorizationPort;
+import com.example.optiway.application.port.out.ProductoRepositoryPort;
+import com.example.optiway.application.port.out.SolicitudReposicionRepositoryPort;
+import com.example.optiway.application.port.out.TiendaRepositoryPort;
+import com.example.optiway.domain.model.Producto;
+import com.example.optiway.domain.model.SolicitudReposicion;
+import com.example.optiway.domain.model.Tienda;
+import com.example.optiway.domain.model.Usuario;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.CrearSolicitudReposicionRequest;
+import com.example.optiway.infrastructure.security.AuthorizedAction;
 
 @Service
 public class ReposicionService implements SolicitarReposicionUseCase {
 
+    private final SolicitudReposicionRepositoryPort solicitudRepositoryPort;
+    private final TiendaRepositoryPort tiendaRepositoryPort;
+    private final ProductoRepositoryPort productoRepositoryPort;
     private final AuthorizationPort authorizationService;
-    // Inyecta aquí tus repositorios necesarios (ej. SolicitudReposicionRepositoryPort, ProductoRepositoryPort, etc.)
 
-    public ReposicionService(AuthorizationPort authorizationService) {
+    public ReposicionService(
+            SolicitudReposicionRepositoryPort solicitudRepositoryPort,
+            TiendaRepositoryPort tiendaRepositoryPort,
+            ProductoRepositoryPort productoRepositoryPort,
+            AuthorizationPort authorizationService) {
+        this.solicitudRepositoryPort = solicitudRepositoryPort;
+        this.tiendaRepositoryPort = tiendaRepositoryPort;
+        this.productoRepositoryPort = productoRepositoryPort;
         this.authorizationService = authorizationService;
     }
 
     @Override
     public SolicitudReposicionResponse crearSolicitud(UUID authUserId, Long tiendaId, CrearSolicitudReposicionRequest request) {
-        // Validar rol ENCARGADO_TIENDA o permisos equivalentes
-        // authorizationService.requireEncargadoTienda(authUserId, ...);
-
-        if (request.getCantidad() == null || request.getCantidad() < 1) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La cantidad debe ser mayor o igual a 1");
+        if (request == null || request.getProductoId() == null || request.getCantidad() == null || request.getCantidad() < 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "productoId y cantidad (>= 1) son obligatorios.");
         }
 
-        // TODO:Guardar en base de datos mediante repositorio y retornar respuesta real
+        Tienda tienda = tiendaRepositoryPort.obtenerPorId(tiendaId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Tienda no encontrada con ID: " + tiendaId));
+
+        Usuario usuario = authorizationService.requirePermisoTienda(authUserId, tienda, AuthorizedAction.SOLICITAR_REPOSICION);
+        if (!usuario.esEncargadoTienda()) {
+            throw new AccesoDenegadoException("Solo un encargado de tienda puede solicitar reposición manual.");
+        }
+
+        if (Boolean.FALSE.equals(tienda.getActivo())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede solicitar reposición para una tienda inactiva.");
+        }
+
+        Producto producto = productoRepositoryPort.findById(request.getProductoId())
+                .orElseThrow(() -> new RecursoNoEncontradoException("Producto no encontrado con ID: " + request.getProductoId()));
+
+        SolicitudReposicion nuevaSolicitud = new SolicitudReposicion(
+                null,
+                tienda.getId(),
+                producto.getId(),
+                request.getCantidad(),
+                "PENDIENTE",
+                usuario.getId(),
+                LocalDateTime.now()
+        );
+
+        SolicitudReposicion guardada = solicitudRepositoryPort.save(nuevaSolicitud);
+
         return new SolicitudReposicionResponse(
-            1L, 
-            tiendaId, 
-            request.getProductoId(), 
-            "Producto Ejemplo", 
-            request.getCantidad(), 
-            "PENDIENTE", 
-            authUserId, 
-            LocalDateTime.now()
+                guardada.getId(),
+                guardada.getTiendaId(),
+                guardada.getProductoId(),
+                producto.getNombre(),
+                guardada.getCantidad(),
+                guardada.getEstado(),
+                guardada.getUsuarioId(),
+                guardada.getFechaSolicitud()
         );
     }
 
     @Override
     public List<SolicitudReposicionResponse> obtenerTodasLasSolicitudes(UUID authUserId) {
-        // Validar rol PLANIFICADOR
-        // authorizationService.requirePlanificador(authUserId, ...);
+        Usuario usuario = authorizationService.requireGestionLogistica(authUserId, AuthorizedAction.LISTAR_SOLICITUDES_REPOSICION);
+        if (usuario.esAdministrador()) {
+            throw new AccesoDenegadoException("Solo un planificador puede consultar las solicitudes de reposición.");
+        }
 
-        // TODO: Retornar listado desde base de datos para el Planificador
-        return List.of();
+        return solicitudRepositoryPort.findAll().stream()
+                .map(solicitud -> {
+                    String nombreProducto = productoRepositoryPort.findById(solicitud.getProductoId())
+                            .map(Producto::getNombre)
+                            .orElse("Producto #" + solicitud.getProductoId());
+
+                    return new SolicitudReposicionResponse(
+                            solicitud.getId(),
+                            solicitud.getTiendaId(),
+                            solicitud.getProductoId(),
+                            nombreProducto,
+                            solicitud.getCantidad(),
+                            solicitud.getEstado(),
+                            solicitud.getUsuarioId(),
+                            solicitud.getFechaSolicitud()
+                    );
+                })
+                .toList();
     }
 }
