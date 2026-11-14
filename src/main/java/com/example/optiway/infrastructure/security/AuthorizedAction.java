@@ -18,19 +18,24 @@ public enum AuthorizedAction {
     CAMBIAR_ESTADO_TIENDA("activar o desactivar tiendas"),
     OPERAR_TIENDA("operar la tienda especificada"),
     CONSULTAR_INVENTARIO_TIENDA("consultar el inventario de esta tienda"),
+    AJUSTAR_INVENTARIO_TIENDA("ajustar el inventario de esta tienda"),
     REGISTRAR_VENTA("registrar ventas en la tienda especificada"),
     SOLICITAR_REPOSICION("solicitar reposición manual de inventario"),
     LISTAR_SOLICITUDES_REPOSICION("consultar las solicitudes de reposición"),
     
     CREAR_CENTRO_DISTRIBUCION("crear Centros de Distribución"),
     ASIGNAR_ENCARGADO_CENTRO_DISTRIBUCION("asignar encargados a Centros de Distribución"),
+    CAMBIAR_ESTADO_CENTRO_DISTRIBUCION("cambiar el estado de Centros de Distribución"),
     OPERAR_CENTRO_DISTRIBUCION("operar el Centro de Distribución especificado"),
     CONSULTAR_INVENTARIO_CENTRO_DISTRIBUCION("consultar el inventario de este centro de distribución"),
+    AJUSTAR_INVENTARIO_CENTRO_DISTRIBUCION("ajustar el inventario de su centro de distribución"),
     REGISTRAR_INGRESO("registrar ingresos en este Centro de Distribución"),
 
     CREAR_PRODUCTO("crear productos"),
     EDITAR_PRODUCTO("editar productos"),
-    CAMBIAR_ESTADO_PRODUCTO("activar o desactivar productos");
+    CAMBIAR_ESTADO_PRODUCTO("activar o desactivar productos"),
+    CREAR_RECOMENDACION_REPOSICION("crear recomendaciones de reposición"),
+    LISTAR_RECOMENDACIONES_REPOSICION("consultar recomendaciones de reposición");
 
     private final String descripcion;
 

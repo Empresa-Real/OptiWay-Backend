@@ -46,6 +46,8 @@ public class InventarioRepositoryAdapter implements InventarioRepositoryPort {
         }
         entity.setCantidadActual(inventario.getCantidadActual());
         entity.setStockMinimo(inventario.getStockMinimo() != null ? inventario.getStockMinimo() : 0);
+        entity.setFechaActualizacion(inventario.getFechaActualizacion());
+        entity.setUsuarioActualizacionId(inventario.getUsuarioActualizacionId());
 
         InventarioJpaEntity savedEntity =
                 inventarioJpaRepository.save(entity);
@@ -89,6 +91,8 @@ public class InventarioRepositoryAdapter implements InventarioRepositoryPort {
         inventario.setProductoId(entity.getProductoId());
         inventario.setCantidadActual(entity.getCantidadActual());
         inventario.setStockMinimo(entity.getStockMinimo());
+        inventario.setFechaActualizacion(entity.getFechaActualizacion());
+        inventario.setUsuarioActualizacionId(entity.getUsuarioActualizacionId());
         return inventario;
     }
 
