@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
-
 import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
 import com.example.optiway.domain.model.CentroDistribucion;
 
@@ -66,6 +65,7 @@ public class CentroDistribucionRepositoryAdapter implements CentroDistribucionRe
         entity.setNombre(domain.getNombre());
         entity.setDireccion(domain.getDireccion());
         entity.setCapacidad(domain.getCapacidad());
+        entity.setEstado(domain.getEstado() != null ? domain.getEstado() : "Activo");
         if (domain.getEncargadoId() != null) {
             entity.setEncargado(entityManager.getReference(UsuarioJpaEntity.class, domain.getEncargadoId()));
         } else {
@@ -82,14 +82,9 @@ public class CentroDistribucionRepositoryAdapter implements CentroDistribucionRe
                 ? entity.getTiendasAbastecidas().stream().map(TiendaJpaEntity::getId).collect(Collectors.toList())
                 : List.of();
 
-        return new CentroDistribucion(
-                entity.getId(),
-                entity.getCodigo(),
-                entity.getNombre(),
-                entity.getDireccion(),
-                entity.getCapacidad(),
-                entity.getEncargadoId(),
-                tiendaIds
-        );
+        CentroDistribucion centro = new CentroDistribucion(entity.getId(), entity.getCodigo(), entity.getNombre(),
+                entity.getDireccion(), entity.getCapacidad(), entity.getEncargadoId(), tiendaIds);
+        centro.setEstado(entity.getEstado() != null ? entity.getEstado() : "Activo");
+        return centro;
     }
 }
