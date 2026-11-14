@@ -15,11 +15,14 @@ public enum AuthorizedAction {
 
     CREAR_TIENDA("crear tiendas"),
     ASIGNAR_ENCARGADO_TIENDA("asignar encargados a tiendas"),
+    CAMBIAR_ESTADO_TIENDA("activar o desactivar tiendas"),
     OPERAR_TIENDA("operar la tienda especificada"),
     CONSULTAR_INVENTARIO_TIENDA("consultar el inventario de esta tienda"),
     AJUSTAR_INVENTARIO_TIENDA("ajustar el inventario de esta tienda"),
     REGISTRAR_VENTA("registrar ventas en la tienda especificada"),
-
+    SOLICITAR_REPOSICION("solicitar reposición manual de inventario"),
+    LISTAR_SOLICITUDES_REPOSICION("consultar las solicitudes de reposición"),
+    
     CREAR_CENTRO_DISTRIBUCION("crear Centros de Distribución"),
     ASIGNAR_ENCARGADO_CENTRO_DISTRIBUCION("asignar encargados a Centros de Distribución"),
     CAMBIAR_ESTADO_CENTRO_DISTRIBUCION("cambiar el estado de Centros de Distribución"),
