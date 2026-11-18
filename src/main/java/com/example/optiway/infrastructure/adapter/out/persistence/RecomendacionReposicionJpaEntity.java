@@ -2,6 +2,9 @@ package com.example.optiway.infrastructure.adapter.out.persistence;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -39,6 +42,23 @@ public class RecomendacionReposicionJpaEntity {
 
     @Column(nullable = false)
     private LocalDateTime fechaCreacion;
+
+    @OnDelete(action = OnDeleteAction.SET_NULL)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "resuelto_por", foreignKey = @ForeignKey(name = "fk_recomendaciones_resuelto_por"))
+    private UsuarioJpaEntity resueltoPor;
+
+    @Column(length = 30)
+    private String accionTomada;
+
+    private LocalDateTime fechaResolucion;
+
+    @Column(length = 500)
+    private String motivoRechazo;
+
+    private Integer cantidadPropuesta;
+
+    private Long centroDistribucionPropuestoId;
 
     public RecomendacionReposicionJpaEntity() {
     }
@@ -78,5 +98,35 @@ public class RecomendacionReposicionJpaEntity {
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
     public void setFechaCreacion(LocalDateTime fechaCreacion) {
         this.fechaCreacion = fechaCreacion;
+    }
+
+    public UsuarioJpaEntity getResueltoPor() { return resueltoPor; }
+    public void setResueltoPor(UsuarioJpaEntity resueltoPor) {
+        this.resueltoPor = resueltoPor;
+    }
+
+    public String getAccionTomada() { return accionTomada; }
+    public void setAccionTomada(String accionTomada) {
+        this.accionTomada = accionTomada;
+    }
+
+    public LocalDateTime getFechaResolucion() { return fechaResolucion; }
+    public void setFechaResolucion(LocalDateTime fechaResolucion) {
+        this.fechaResolucion = fechaResolucion;
+    }
+
+    public String getMotivoRechazo() { return motivoRechazo; }
+    public void setMotivoRechazo(String motivoRechazo) {
+        this.motivoRechazo = motivoRechazo;
+    }
+
+    public Integer getCantidadPropuesta() { return cantidadPropuesta; }
+    public void setCantidadPropuesta(Integer cantidadPropuesta) {
+        this.cantidadPropuesta = cantidadPropuesta;
+    }
+
+    public Long getCentroDistribucionPropuestoId() { return centroDistribucionPropuestoId; }
+    public void setCentroDistribucionPropuestoId(Long centroDistribucionPropuestoId) {
+        this.centroDistribucionPropuestoId = centroDistribucionPropuestoId;
     }
 }
