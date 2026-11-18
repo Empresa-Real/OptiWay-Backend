@@ -8,8 +8,6 @@ public interface RecomendacionReposicionRepositoryPort {
 
     RecomendacionReposicion guardar(RecomendacionReposicion recomendacion);
 
-    Optional<RecomendacionReposicion> obtenerPorId(Long id);
-
     Optional<RecomendacionReposicion> obtenerPorIdParaActualizar(Long id);
 
     List<RecomendacionReposicion> obtenerTodas();

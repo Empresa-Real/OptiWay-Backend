@@ -81,7 +81,7 @@ public class RecomendacionReposicionController {
     @PatchMapping("/{id}/aprobar")
     @Operation(
             summary = "Aprobar o ajustar y aprobar recomendación",
-            description = "Aprueba una recomendación en estado PROPUESTA (opcionalmente ajustando cantidad o CD origen) y genera una Orden de Reposición en estado APROBADA. Requiere rol PLANIFICADOR."
+            description = "Aprueba una recomendación en estado PROPUESTA (el cuerpo es opcional; si se envía, permite ajustar cantidad o CD origen) y retorna 200 OK con la Orden de Reposición generada en estado APROBADA. Requiere rol PLANIFICADOR."
     )
     public OrdenReposicionResponse aprobar(
             @AuthUserId UUID authUserId,

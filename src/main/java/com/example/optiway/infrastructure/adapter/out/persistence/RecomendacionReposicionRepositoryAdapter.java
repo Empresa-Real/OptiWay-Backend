@@ -79,14 +79,10 @@ public class RecomendacionReposicionRepositoryAdapter
         entity.setAccionTomada(recomendacion.getAccionTomada());
         entity.setFechaResolucion(recomendacion.getFechaResolucion());
         entity.setMotivoRechazo(recomendacion.getMotivoRechazo());
+        entity.setCantidadPropuesta(recomendacion.getCantidadPropuesta());
+        entity.setCentroDistribucionPropuestoId(recomendacion.getCentroDistribucionPropuestoId());
 
         return toDomain(repository.save(entity));
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Optional<RecomendacionReposicion> obtenerPorId(Long id) {
-        return repository.findById(id).map(this::toDomain);
     }
 
     @Override
@@ -125,6 +121,8 @@ public class RecomendacionReposicionRepositoryAdapter
         domain.setAccionTomada(entity.getAccionTomada());
         domain.setFechaResolucion(entity.getFechaResolucion());
         domain.setMotivoRechazo(entity.getMotivoRechazo());
+        domain.setCantidadPropuesta(entity.getCantidadPropuesta());
+        domain.setCentroDistribucionPropuestoId(entity.getCentroDistribucionPropuestoId());
 
         return domain;
     }

@@ -56,6 +56,10 @@ public class RecomendacionReposicionJpaEntity {
     @Column(length = 500)
     private String motivoRechazo;
 
+    private Integer cantidadPropuesta;
+
+    private Long centroDistribucionPropuestoId;
+
     public RecomendacionReposicionJpaEntity() {
     }
 
@@ -114,5 +118,15 @@ public class RecomendacionReposicionJpaEntity {
     public String getMotivoRechazo() { return motivoRechazo; }
     public void setMotivoRechazo(String motivoRechazo) {
         this.motivoRechazo = motivoRechazo;
+    }
+
+    public Integer getCantidadPropuesta() { return cantidadPropuesta; }
+    public void setCantidadPropuesta(Integer cantidadPropuesta) {
+        this.cantidadPropuesta = cantidadPropuesta;
+    }
+
+    public Long getCentroDistribucionPropuestoId() { return centroDistribucionPropuestoId; }
+    public void setCentroDistribucionPropuestoId(Long centroDistribucionPropuestoId) {
+        this.centroDistribucionPropuestoId = centroDistribucionPropuestoId;
     }
 }

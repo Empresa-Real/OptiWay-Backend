@@ -155,6 +155,9 @@ public class RecomendacionReposicionService implements
                 throw new IllegalArgumentException("La cantidad ajustada debe ser mayor que cero.");
             }
             if (!Objects.equals(recomendacion.getCantidad(), command.cantidadAjustada())) {
+                if (recomendacion.getCantidadPropuesta() == null) {
+                    recomendacion.setCantidadPropuesta(recomendacion.getCantidad());
+                }
                 recomendacion.setCantidad(command.cantidadAjustada());
                 ajustada = true;
             }
@@ -165,6 +168,9 @@ public class RecomendacionReposicionService implements
                 throw new IllegalArgumentException("El ID del Centro de Distribución debe ser válido.");
             }
             if (!Objects.equals(recomendacion.getCentroDistribucionOrigenId(), command.centroDistribucionOrigenId())) {
+                if (recomendacion.getCentroDistribucionPropuestoId() == null) {
+                    recomendacion.setCentroDistribucionPropuestoId(recomendacion.getCentroDistribucionOrigenId());
+                }
                 recomendacion.setCentroDistribucionOrigenId(command.centroDistribucionOrigenId());
                 ajustada = true;
                 origenCambiado = true;
@@ -179,17 +185,15 @@ public class RecomendacionReposicionService implements
                 recomendacion.getProductoId(),
                 recomendacion.getCantidad());
 
-        if (origenCambiado) {
-            boolean fueraDeCobertura = esFueraDeCobertura(centro, recomendacion.getTiendaDestinoId());
-            if (fueraDeCobertura && !Boolean.TRUE.equals(command.confirmarFueraDeCobertura())) {
-                throw new ResponseStatusException(
-                        HttpStatus.CONFLICT,
-                        "La tienda no pertenece a la zona de cobertura del nuevo Centro de Distribución "
-                                + "seleccionado. Confirme la operación enviando confirmarFueraDeCobertura: true "
-                                + "o seleccione otro Centro de Distribución.");
-            }
-            recomendacion.setFueraDeCobertura(fueraDeCobertura);
+        boolean fueraDeCobertura = esFueraDeCobertura(centro, recomendacion.getTiendaDestinoId());
+        if (origenCambiado && fueraDeCobertura && !Boolean.TRUE.equals(command.confirmarFueraDeCobertura())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "La tienda no pertenece a la zona de cobertura del nuevo Centro de Distribución "
+                            + "seleccionado. Confirme la operación enviando confirmarFueraDeCobertura: true "
+                            + "o seleccione otro Centro de Distribución.");
         }
+        recomendacion.setFueraDeCobertura(fueraDeCobertura);
 
         LocalDateTime ahora = LocalDateTime.now();
         recomendacion.setEstado(ESTADO_APROBADA);
@@ -228,10 +232,15 @@ public class RecomendacionReposicionService implements
             throw new IllegalArgumentException("El motivo de rechazo es obligatorio.");
         }
 
+        String motivoLimpio = command.motivo().trim();
+        if (motivoLimpio.length() > 500) {
+            throw new IllegalArgumentException("El motivo de rechazo no puede superar los 500 caracteres.");
+        }
+
         RecomendacionReposicion recomendacion = obtenerPropuestaPendiente(command.recomendacionId());
 
         recomendacion.setEstado(ESTADO_RECHAZADA);
-        recomendacion.setMotivoRechazo(command.motivo().trim());
+        recomendacion.setMotivoRechazo(motivoLimpio);
         recomendacion.setResueltoPorUsuarioId(usuario.getAuthUserId());
         recomendacion.setAccionTomada("RECHAZADA");
         recomendacion.setFechaResolucion(LocalDateTime.now());
@@ -354,7 +363,9 @@ public class RecomendacionReposicionService implements
                 recomendacion.getResueltoPorUsuarioId(),
                 recomendacion.getAccionTomada(),
                 recomendacion.getFechaResolucion(),
-                recomendacion.getMotivoRechazo()
+                recomendacion.getMotivoRechazo(),
+                recomendacion.getCantidadPropuesta(),
+                recomendacion.getCentroDistribucionPropuestoId()
         );
     }
 }

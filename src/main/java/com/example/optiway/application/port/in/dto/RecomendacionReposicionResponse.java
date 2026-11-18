@@ -17,6 +17,8 @@ public record RecomendacionReposicionResponse(
         UUID resueltoPorUsuarioId,
         String accionTomada,
         LocalDateTime fechaResolucion,
-        String motivoRechazo
+        String motivoRechazo,
+        Integer cantidadPropuesta,
+        Long centroDistribucionPropuestoId
 ) {
 }

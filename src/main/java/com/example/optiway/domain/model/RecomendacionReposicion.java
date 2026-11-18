@@ -19,6 +19,8 @@ public class RecomendacionReposicion {
     private String accionTomada;
     private LocalDateTime fechaResolucion;
     private String motivoRechazo;
+    private Integer cantidadPropuesta;
+    private Long centroDistribucionPropuestoId;
 
     public RecomendacionReposicion() {
     }
@@ -133,5 +135,21 @@ public class RecomendacionReposicion {
 
     public void setMotivoRechazo(String motivoRechazo) {
         this.motivoRechazo = motivoRechazo;
+    }
+
+    public Integer getCantidadPropuesta() {
+        return cantidadPropuesta;
+    }
+
+    public void setCantidadPropuesta(Integer cantidadPropuesta) {
+        this.cantidadPropuesta = cantidadPropuesta;
+    }
+
+    public Long getCentroDistribucionPropuestoId() {
+        return centroDistribucionPropuestoId;
+    }
+
+    public void setCentroDistribucionPropuestoId(Long centroDistribucionPropuestoId) {
+        this.centroDistribucionPropuestoId = centroDistribucionPropuestoId;
     }
 }
