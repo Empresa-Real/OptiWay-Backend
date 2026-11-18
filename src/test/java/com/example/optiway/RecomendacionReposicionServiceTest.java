@@ -248,10 +248,11 @@ class RecomendacionReposicionServiceTest {
     @Test
     void aprobarRecomendacion_SinAjustes_DebeAprobarYCrearOrden() {
         RecomendacionReposicion propuesta = crearPropuestaBase(1L, "PROPUESTA");
+        prepararEntidadesActivasParaAprobacion(centroId, centro, inventario);
 
         when(authorizationPort.requirePlanificador(authUserId, AuthorizedAction.APROBAR_RECOMENDACION_REPOSICION))
                 .thenReturn(planificador);
-        when(recomendacionRepositoryPort.obtenerPorId(1L)).thenReturn(Optional.of(propuesta));
+        when(recomendacionRepositoryPort.obtenerPorIdParaActualizar(1L)).thenReturn(Optional.of(propuesta));
         when(recomendacionRepositoryPort.guardar(any(RecomendacionReposicion.class))).thenAnswer(i -> i.getArgument(0));
         when(ordenRepositoryPort.guardar(any(OrdenReposicion.class))).thenAnswer(i -> {
             OrdenReposicion o = i.getArgument(0);
@@ -259,7 +260,7 @@ class RecomendacionReposicionServiceTest {
             return o;
         });
 
-        OrdenReposicionResponse orden = service.aprobar(authUserId, new AprobarRecomendacionCommand(1L, null, null));
+        OrdenReposicionResponse orden = service.aprobar(authUserId, new AprobarRecomendacionCommand(1L, null, null, null));
 
         assertEquals(99L, orden.id());
         assertEquals(1L, orden.recomendacionId());
@@ -272,18 +273,47 @@ class RecomendacionReposicionServiceTest {
     }
 
     @Test
+    void aprobarRecomendacion_SinAjustesCuandoStockBajo_DebeLanzarExcepcionYSinCrearOrden() {
+        RecomendacionReposicion propuesta = crearPropuestaBase(10L, "PROPUESTA");
+        inventario.setCantidadActual(10);
+        prepararEntidadesActivasParaAprobacion(centroId, centro, inventario);
+
+        when(authorizationPort.requirePlanificador(authUserId, AuthorizedAction.APROBAR_RECOMENDACION_REPOSICION))
+                .thenReturn(planificador);
+        when(recomendacionRepositoryPort.obtenerPorIdParaActualizar(10L)).thenReturn(Optional.of(propuesta));
+
+        assertThrows(StockInsuficienteException.class, () ->
+                service.aprobar(authUserId, new AprobarRecomendacionCommand(10L, null, null, null)));
+        verify(ordenRepositoryPort, never()).guardar(any());
+        verify(recomendacionRepositoryPort, never()).guardar(any());
+    }
+
+    @Test
+    void aprobarRecomendacion_CuandoProductoOTiendaEstaInactivo_DebeLanzarExcepcion() {
+        RecomendacionReposicion propuesta = crearPropuestaBase(11L, "PROPUESTA");
+        producto.setActivo(false);
+
+        when(authorizationPort.requirePlanificador(authUserId, AuthorizedAction.APROBAR_RECOMENDACION_REPOSICION))
+                .thenReturn(planificador);
+        when(recomendacionRepositoryPort.obtenerPorIdParaActualizar(11L)).thenReturn(Optional.of(propuesta));
+        when(productoRepositoryPort.findById(productoId)).thenReturn(Optional.of(producto));
+
+        assertThrows(IllegalArgumentException.class, () ->
+                service.aprobar(authUserId, new AprobarRecomendacionCommand(11L, null, null, null)));
+        verify(ordenRepositoryPort, never()).guardar(any());
+    }
+
+    @Test
     void aprobarRecomendacion_ConAjusteDeCantidadYCD_DebeRevalidarStockYCrearOrdenAjustada() {
         Long nuevoCdId = 25L;
         CentroDistribucion nuevoCd = new CentroDistribucion(nuevoCdId, "CD-025", "CD Sur", "Calle 5", 3000, 201L, List.of(tiendaId));
         Inventario inventarioNuevoCd = new Inventario(2L, null, nuevoCdId, productoId, 60, 5);
         RecomendacionReposicion propuesta = crearPropuestaBase(2L, "PROPUESTA");
+        prepararEntidadesActivasParaAprobacion(nuevoCdId, nuevoCd, inventarioNuevoCd);
 
         when(authorizationPort.requirePlanificador(authUserId, AuthorizedAction.APROBAR_RECOMENDACION_REPOSICION))
                 .thenReturn(planificador);
-        when(recomendacionRepositoryPort.obtenerPorId(2L)).thenReturn(Optional.of(propuesta));
-        when(centroRepositoryPort.obtenerPorId(nuevoCdId)).thenReturn(Optional.of(nuevoCd));
-        when(inventarioRepositoryPort.findByCentroDistribucionIdAndProductoId(nuevoCdId, productoId))
-                .thenReturn(Optional.of(inventarioNuevoCd));
+        when(recomendacionRepositoryPort.obtenerPorIdParaActualizar(2L)).thenReturn(Optional.of(propuesta));
         when(recomendacionRepositoryPort.guardar(any(RecomendacionReposicion.class))).thenAnswer(i -> i.getArgument(0));
         when(ordenRepositoryPort.guardar(any(OrdenReposicion.class))).thenAnswer(i -> {
             OrdenReposicion o = i.getArgument(0);
@@ -291,7 +321,7 @@ class RecomendacionReposicionServiceTest {
             return o;
         });
 
-        OrdenReposicionResponse orden = service.aprobar(authUserId, new AprobarRecomendacionCommand(2L, 40, nuevoCdId));
+        OrdenReposicionResponse orden = service.aprobar(authUserId, new AprobarRecomendacionCommand(2L, 40, nuevoCdId, false));
 
         assertEquals(40, orden.cantidad());
         assertEquals(nuevoCdId, orden.centroDistribucionOrigenId());
@@ -300,19 +330,36 @@ class RecomendacionReposicionServiceTest {
     }
 
     @Test
-    void aprobarRecomendacion_CuandoStockAjustadoEsInsuficiente_DebeLanzarExcepcionYSinCrearOrden() {
-        RecomendacionReposicion propuesta = crearPropuestaBase(3L, "PROPUESTA");
-        inventario.setCantidadActual(10);
+    void aprobarRecomendacion_NuevoCDFueraDeCoberturaSinConfirmar_DebeLanzarConflicto409() {
+        Long nuevoCdId = 26L;
+        CentroDistribucion nuevoCd = new CentroDistribucion(nuevoCdId, "CD-026", "CD Este", "Calle 9", 3000, 202L, List.of(999L));
+        Inventario inventarioNuevoCd = new Inventario(3L, null, nuevoCdId, productoId, 60, 5);
+        RecomendacionReposicion propuesta = crearPropuestaBase(12L, "PROPUESTA");
+        prepararEntidadesActivasParaAprobacion(nuevoCdId, nuevoCd, inventarioNuevoCd);
 
         when(authorizationPort.requirePlanificador(authUserId, AuthorizedAction.APROBAR_RECOMENDACION_REPOSICION))
                 .thenReturn(planificador);
-        when(recomendacionRepositoryPort.obtenerPorId(3L)).thenReturn(Optional.of(propuesta));
-        when(centroRepositoryPort.obtenerPorId(centroId)).thenReturn(Optional.of(centro));
-        when(inventarioRepositoryPort.findByCentroDistribucionIdAndProductoId(centroId, productoId))
-                .thenReturn(Optional.of(inventario));
+        when(recomendacionRepositoryPort.obtenerPorIdParaActualizar(12L)).thenReturn(Optional.of(propuesta));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
+                service.aprobar(authUserId, new AprobarRecomendacionCommand(12L, null, nuevoCdId, false)));
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+        verify(ordenRepositoryPort, never()).guardar(any());
+        verify(recomendacionRepositoryPort, never()).guardar(any());
+    }
+
+    @Test
+    void aprobarRecomendacion_CuandoStockAjustadoEsInsuficiente_DebeLanzarExcepcionYSinCrearOrden() {
+        RecomendacionReposicion propuesta = crearPropuestaBase(3L, "PROPUESTA");
+        inventario.setCantidadActual(10);
+        prepararEntidadesActivasParaAprobacion(centroId, centro, inventario);
+
+        when(authorizationPort.requirePlanificador(authUserId, AuthorizedAction.APROBAR_RECOMENDACION_REPOSICION))
+                .thenReturn(planificador);
+        when(recomendacionRepositoryPort.obtenerPorIdParaActualizar(3L)).thenReturn(Optional.of(propuesta));
 
         assertThrows(StockInsuficienteException.class, () ->
-                service.aprobar(authUserId, new AprobarRecomendacionCommand(3L, 50, null)));
+                service.aprobar(authUserId, new AprobarRecomendacionCommand(3L, 50, null, null)));
         verify(ordenRepositoryPort, never()).guardar(any());
     }
 
@@ -322,10 +369,10 @@ class RecomendacionReposicionServiceTest {
 
         when(authorizationPort.requirePlanificador(authUserId, AuthorizedAction.APROBAR_RECOMENDACION_REPOSICION))
                 .thenReturn(planificador);
-        when(recomendacionRepositoryPort.obtenerPorId(4L)).thenReturn(Optional.of(aprobada));
+        when(recomendacionRepositoryPort.obtenerPorIdParaActualizar(4L)).thenReturn(Optional.of(aprobada));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                service.aprobar(authUserId, new AprobarRecomendacionCommand(4L, null, null)));
+                service.aprobar(authUserId, new AprobarRecomendacionCommand(4L, null, null, null)));
         assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
         verify(ordenRepositoryPort, never()).guardar(any());
     }
@@ -334,10 +381,10 @@ class RecomendacionReposicionServiceTest {
     void aprobarRecomendacion_CuandoNoExiste_DebeLanzar404() {
         when(authorizationPort.requirePlanificador(authUserId, AuthorizedAction.APROBAR_RECOMENDACION_REPOSICION))
                 .thenReturn(planificador);
-        when(recomendacionRepositoryPort.obtenerPorId(999L)).thenReturn(Optional.empty());
+        when(recomendacionRepositoryPort.obtenerPorIdParaActualizar(999L)).thenReturn(Optional.empty());
 
         assertThrows(RecursoNoEncontradoException.class, () ->
-                service.aprobar(authUserId, new AprobarRecomendacionCommand(999L, null, null)));
+                service.aprobar(authUserId, new AprobarRecomendacionCommand(999L, null, null, null)));
     }
 
     @Test
@@ -346,7 +393,7 @@ class RecomendacionReposicionServiceTest {
 
         when(authorizationPort.requirePlanificador(authUserId, AuthorizedAction.RECHAZAR_RECOMENDACION_REPOSICION))
                 .thenReturn(planificador);
-        when(recomendacionRepositoryPort.obtenerPorId(5L)).thenReturn(Optional.of(propuesta));
+        when(recomendacionRepositoryPort.obtenerPorIdParaActualizar(5L)).thenReturn(Optional.of(propuesta));
         when(recomendacionRepositoryPort.guardar(any(RecomendacionReposicion.class))).thenAnswer(i -> i.getArgument(0));
 
         RecomendacionReposicionResponse res = service.rechazar(
@@ -368,6 +415,15 @@ class RecomendacionReposicionServiceTest {
         assertThrows(IllegalArgumentException.class, () ->
                 service.rechazar(authUserId, new RechazarRecomendacionCommand(5L, "   ")));
         verify(recomendacionRepositoryPort, never()).guardar(any());
+    }
+
+    private void prepararEntidadesActivasParaAprobacion(
+            Long cdObjetivoId, CentroDistribucion cdObjetivo, Inventario invObjetivo) {
+        when(productoRepositoryPort.findById(productoId)).thenReturn(Optional.of(producto));
+        when(tiendaRepositoryPort.obtenerPorId(tiendaId)).thenReturn(Optional.of(tienda));
+        when(centroRepositoryPort.obtenerPorId(cdObjetivoId)).thenReturn(Optional.of(cdObjetivo));
+        when(inventarioRepositoryPort.findByCentroDistribucionIdAndProductoId(cdObjetivoId, productoId))
+                .thenReturn(Optional.of(invObjetivo));
     }
 
     private RecomendacionReposicion crearPropuestaBase(Long id, String estado) {
