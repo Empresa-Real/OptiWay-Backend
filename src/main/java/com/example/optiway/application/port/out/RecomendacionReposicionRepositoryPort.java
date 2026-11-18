@@ -10,5 +10,7 @@ public interface RecomendacionReposicionRepositoryPort {
 
     Optional<RecomendacionReposicion> obtenerPorId(Long id);
 
+    Optional<RecomendacionReposicion> obtenerPorIdParaActualizar(Long id);
+
     List<RecomendacionReposicion> obtenerTodas();
 }

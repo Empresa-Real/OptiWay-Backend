@@ -85,23 +85,8 @@ public class RecomendacionReposicionService implements
 
         validarCommand(command);
 
-        Producto producto = productoRepositoryPort.findById(command.productoId())
-                .orElseThrow(() -> new RecursoNoEncontradoException(
-                        "No se encontró el producto indicado."));
-
-        if (!producto.isActivo()) {
-            throw new IllegalArgumentException(
-                    "No se puede recomendar la reposición de un producto inactivo.");
-        }
-
-        Tienda tienda = tiendaRepositoryPort.obtenerPorId(command.tiendaDestinoId())
-                .orElseThrow(() -> new RecursoNoEncontradoException(
-                        "No se encontró la tienda de destino."));
-
-        if (!tienda.isActivo()) {
-            throw new IllegalArgumentException(
-                    "No se puede crear una recomendación para una tienda inactiva.");
-        }
+        Producto producto = validarProductoActivo(command.productoId());
+        Tienda tienda = validarTiendaActiva(command.tiendaDestinoId());
 
         CentroDistribucion centro = validarCentroYDisponibilidad(
                 command.centroDistribucionOrigenId(), producto.getId(), command.cantidad());
@@ -163,6 +148,7 @@ public class RecomendacionReposicionService implements
         RecomendacionReposicion recomendacion = obtenerPropuestaPendiente(command.recomendacionId());
 
         boolean ajustada = false;
+        boolean origenCambiado = false;
 
         if (command.cantidadAjustada() != null) {
             if (command.cantidadAjustada() <= 0) {
@@ -181,16 +167,28 @@ public class RecomendacionReposicionService implements
             if (!Objects.equals(recomendacion.getCentroDistribucionOrigenId(), command.centroDistribucionOrigenId())) {
                 recomendacion.setCentroDistribucionOrigenId(command.centroDistribucionOrigenId());
                 ajustada = true;
+                origenCambiado = true;
             }
         }
 
-        if (ajustada) {
-            CentroDistribucion centro = validarCentroYDisponibilidad(
-                    recomendacion.getCentroDistribucionOrigenId(),
-                    recomendacion.getProductoId(),
-                    recomendacion.getCantidad());
-            recomendacion.setFueraDeCobertura(
-                    esFueraDeCobertura(centro, recomendacion.getTiendaDestinoId()));
+        validarProductoActivo(recomendacion.getProductoId());
+        validarTiendaActiva(recomendacion.getTiendaDestinoId());
+
+        CentroDistribucion centro = validarCentroYDisponibilidad(
+                recomendacion.getCentroDistribucionOrigenId(),
+                recomendacion.getProductoId(),
+                recomendacion.getCantidad());
+
+        if (origenCambiado) {
+            boolean fueraDeCobertura = esFueraDeCobertura(centro, recomendacion.getTiendaDestinoId());
+            if (fueraDeCobertura && !Boolean.TRUE.equals(command.confirmarFueraDeCobertura())) {
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "La tienda no pertenece a la zona de cobertura del nuevo Centro de Distribución "
+                                + "seleccionado. Confirme la operación enviando confirmarFueraDeCobertura: true "
+                                + "o seleccione otro Centro de Distribución.");
+            }
+            recomendacion.setFueraDeCobertura(fueraDeCobertura);
         }
 
         LocalDateTime ahora = LocalDateTime.now();
@@ -242,7 +240,8 @@ public class RecomendacionReposicionService implements
     }
 
     private RecomendacionReposicion obtenerPropuestaPendiente(Long recomendacionId) {
-        RecomendacionReposicion recomendacion = recomendacionRepositoryPort.obtenerPorId(recomendacionId)
+        RecomendacionReposicion recomendacion = recomendacionRepositoryPort
+                .obtenerPorIdParaActualizar(recomendacionId)
                 .orElseThrow(() -> new RecursoNoEncontradoException(
                         "No se encontró la recomendación de reposición con ID: " + recomendacionId));
 
@@ -253,6 +252,32 @@ public class RecomendacionReposicionService implements
         }
 
         return recomendacion;
+    }
+
+    private Producto validarProductoActivo(Long productoId) {
+        Producto producto = productoRepositoryPort.findById(productoId)
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "No se encontró el producto indicado."));
+
+        if (!producto.isActivo()) {
+            throw new IllegalArgumentException(
+                    "No se puede operar con un producto inactivo.");
+        }
+
+        return producto;
+    }
+
+    private Tienda validarTiendaActiva(Long tiendaId) {
+        Tienda tienda = tiendaRepositoryPort.obtenerPorId(tiendaId)
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "No se encontró la tienda de destino."));
+
+        if (!tienda.isActivo()) {
+            throw new IllegalArgumentException(
+                    "No se puede operar con una tienda inactiva.");
+        }
+
+        return tienda;
     }
 
     private CentroDistribucion validarCentroYDisponibilidad(

@@ -90,6 +90,11 @@ public class RecomendacionReposicionRepositoryAdapter
     }
 
     @Override
+    public Optional<RecomendacionReposicion> obtenerPorIdParaActualizar(Long id) {
+        return repository.findByIdForUpdate(id).map(this::toDomain);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public List<RecomendacionReposicion> obtenerTodas() {
         return repository.findAll().stream()

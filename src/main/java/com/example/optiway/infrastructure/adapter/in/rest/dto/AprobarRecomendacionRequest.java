@@ -8,13 +8,16 @@ public record AprobarRecomendacionRequest(
         Integer cantidadAjustada,
 
         @Positive(message = "El ID del Centro de Distribución de origen debe ser positivo.")
-        Long centroDistribucionOrigenId
+        Long centroDistribucionOrigenId,
+
+        Boolean confirmarFueraDeCobertura
 ) {
     public AprobarRecomendacionCommand toCommand(Long recomendacionId) {
         return new AprobarRecomendacionCommand(
                 recomendacionId,
                 cantidadAjustada,
-                centroDistribucionOrigenId
+                centroDistribucionOrigenId,
+                confirmarFueraDeCobertura
         );
     }
 }

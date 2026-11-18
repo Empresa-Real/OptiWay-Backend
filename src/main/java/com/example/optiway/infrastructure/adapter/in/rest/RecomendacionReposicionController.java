@@ -91,7 +91,7 @@ public class RecomendacionReposicionController {
 
         AprobarRecomendacionCommand command = request != null
                 ? request.toCommand(id)
-                : new AprobarRecomendacionCommand(id, null, null);
+                : new AprobarRecomendacionCommand(id, null, null, null);
         return aprobarUseCase.aprobar(authUserId, command);
     }
 

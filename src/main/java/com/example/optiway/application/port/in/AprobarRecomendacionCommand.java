@@ -3,6 +3,7 @@ package com.example.optiway.application.port.in;
 public record AprobarRecomendacionCommand(
         Long recomendacionId,
         Integer cantidadAjustada,
-        Long centroDistribucionOrigenId
+        Long centroDistribucionOrigenId,
+        Boolean confirmarFueraDeCobertura
 ) {
 }
