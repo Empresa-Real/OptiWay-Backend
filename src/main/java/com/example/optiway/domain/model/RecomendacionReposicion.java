@@ -15,6 +15,10 @@ public class RecomendacionReposicion {
     private boolean fueraDeCobertura;
     private UUID creadoPor;
     private LocalDateTime fechaCreacion;
+    private UUID resueltoPorUsuarioId;
+    private String accionTomada;
+    private LocalDateTime fechaResolucion;
+    private String motivoRechazo;
 
     public RecomendacionReposicion() {
     }
@@ -97,5 +101,37 @@ public class RecomendacionReposicion {
 
     public void setFechaCreacion(LocalDateTime fechaCreacion) {
         this.fechaCreacion = fechaCreacion;
+    }
+
+    public UUID getResueltoPorUsuarioId() {
+        return resueltoPorUsuarioId;
+    }
+
+    public void setResueltoPorUsuarioId(UUID resueltoPorUsuarioId) {
+        this.resueltoPorUsuarioId = resueltoPorUsuarioId;
+    }
+
+    public String getAccionTomada() {
+        return accionTomada;
+    }
+
+    public void setAccionTomada(String accionTomada) {
+        this.accionTomada = accionTomada;
+    }
+
+    public LocalDateTime getFechaResolucion() {
+        return fechaResolucion;
+    }
+
+    public void setFechaResolucion(LocalDateTime fechaResolucion) {
+        this.fechaResolucion = fechaResolucion;
+    }
+
+    public String getMotivoRechazo() {
+        return motivoRechazo;
+    }
+
+    public void setMotivoRechazo(String motivoRechazo) {
+        this.motivoRechazo = motivoRechazo;
     }
 }

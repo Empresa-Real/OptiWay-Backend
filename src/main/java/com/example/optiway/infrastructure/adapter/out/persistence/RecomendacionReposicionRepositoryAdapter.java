@@ -1,6 +1,7 @@
 package com.example.optiway.infrastructure.adapter.out.persistence;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Component;
@@ -35,8 +36,11 @@ public class RecomendacionReposicionRepositoryAdapter
     public RecomendacionReposicion guardar(
             RecomendacionReposicion recomendacion) {
 
-        RecomendacionReposicionJpaEntity entity =
-                new RecomendacionReposicionJpaEntity();
+        RecomendacionReposicionJpaEntity entity = recomendacion.getId() != null
+                ? repository.findById(recomendacion.getId())
+                        .orElseThrow(() -> new RecursoNoEncontradoException(
+                                "Recomendación de reposición no encontrada con ID: " + recomendacion.getId()))
+                : new RecomendacionReposicionJpaEntity();
 
         entity.setProducto(entityManager.getReference(
                 ProductoJpaEntity.class, recomendacion.getProductoId()));
@@ -50,18 +54,39 @@ public class RecomendacionReposicionRepositoryAdapter
         entity.setTiendaDestino(entityManager.getReference(
                 TiendaJpaEntity.class, recomendacion.getTiendaDestinoId()));
 
-        UUID authUserId = recomendacion.getCreadoPor();
+        if (entity.getCreador() == null) {
+            UUID authUserId = recomendacion.getCreadoPor();
+            UsuarioJpaEntity creador = usuarioRepository.findByAuthUserId(authUserId)
+                    .orElseThrow(() -> new RecursoNoEncontradoException(
+                            "No se encontró el usuario que crea la recomendación."));
+            entity.setCreador(creador);
+        }
 
-        UsuarioJpaEntity creador = usuarioRepository.findByAuthUserId(authUserId)
-                .orElseThrow(() -> new RecursoNoEncontradoException(
-                        "No se encontró el usuario que crea la recomendación."));
-
-        entity.setCreador(creador);
         entity.setEstado(recomendacion.getEstado());
         entity.setFueraDeCobertura(recomendacion.isFueraDeCobertura());
         entity.setFechaCreacion(recomendacion.getFechaCreacion());
 
+        if (recomendacion.getResueltoPorUsuarioId() != null) {
+            UsuarioJpaEntity resolutor = usuarioRepository.findByAuthUserId(
+                            recomendacion.getResueltoPorUsuarioId())
+                    .orElseThrow(() -> new RecursoNoEncontradoException(
+                            "No se encontró el usuario que resuelve la recomendación."));
+            entity.setResueltoPor(resolutor);
+        } else {
+            entity.setResueltoPor(null);
+        }
+
+        entity.setAccionTomada(recomendacion.getAccionTomada());
+        entity.setFechaResolucion(recomendacion.getFechaResolucion());
+        entity.setMotivoRechazo(recomendacion.getMotivoRechazo());
+
         return toDomain(repository.save(entity));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<RecomendacionReposicion> obtenerPorId(Long id) {
+        return repository.findById(id).map(this::toDomain);
     }
 
     @Override
@@ -89,6 +114,12 @@ public class RecomendacionReposicionRepositoryAdapter
                 entity.getFueraDeCobertura()));
         domain.setCreadoPor(entity.getCreador().getAuthUserId());
         domain.setFechaCreacion(entity.getFechaCreacion());
+        domain.setResueltoPorUsuarioId(entity.getResueltoPor() != null
+                ? entity.getResueltoPor().getAuthUserId()
+                : null);
+        domain.setAccionTomada(entity.getAccionTomada());
+        domain.setFechaResolucion(entity.getFechaResolucion());
+        domain.setMotivoRechazo(entity.getMotivoRechazo());
 
         return domain;
     }

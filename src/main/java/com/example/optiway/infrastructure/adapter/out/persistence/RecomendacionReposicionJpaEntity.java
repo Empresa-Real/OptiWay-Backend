@@ -40,6 +40,18 @@ public class RecomendacionReposicionJpaEntity {
     @Column(nullable = false)
     private LocalDateTime fechaCreacion;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "resuelto_por")
+    private UsuarioJpaEntity resueltoPor;
+
+    @Column(length = 30)
+    private String accionTomada;
+
+    private LocalDateTime fechaResolucion;
+
+    @Column(length = 500)
+    private String motivoRechazo;
+
     public RecomendacionReposicionJpaEntity() {
     }
 
@@ -78,5 +90,25 @@ public class RecomendacionReposicionJpaEntity {
     public LocalDateTime getFechaCreacion() { return fechaCreacion; }
     public void setFechaCreacion(LocalDateTime fechaCreacion) {
         this.fechaCreacion = fechaCreacion;
+    }
+
+    public UsuarioJpaEntity getResueltoPor() { return resueltoPor; }
+    public void setResueltoPor(UsuarioJpaEntity resueltoPor) {
+        this.resueltoPor = resueltoPor;
+    }
+
+    public String getAccionTomada() { return accionTomada; }
+    public void setAccionTomada(String accionTomada) {
+        this.accionTomada = accionTomada;
+    }
+
+    public LocalDateTime getFechaResolucion() { return fechaResolucion; }
+    public void setFechaResolucion(LocalDateTime fechaResolucion) {
+        this.fechaResolucion = fechaResolucion;
+    }
+
+    public String getMotivoRechazo() { return motivoRechazo; }
+    public void setMotivoRechazo(String motivoRechazo) {
+        this.motivoRechazo = motivoRechazo;
     }
 }

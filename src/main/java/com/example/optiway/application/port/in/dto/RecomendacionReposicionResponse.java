@@ -13,6 +13,10 @@ public record RecomendacionReposicionResponse(
         String estado,
         boolean fueraDeCobertura,
         UUID creadoPor,
-        LocalDateTime fechaCreacion
+        LocalDateTime fechaCreacion,
+        UUID resueltoPorUsuarioId,
+        String accionTomada,
+        LocalDateTime fechaResolucion,
+        String motivoRechazo
 ) {
 }
