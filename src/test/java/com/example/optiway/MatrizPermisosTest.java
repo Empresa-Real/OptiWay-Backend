@@ -20,17 +20,21 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.example.optiway.application.port.in.AprobarRecomendacionCommand;
 import com.example.optiway.application.port.in.CrearCentroDistribucionCommand;
 import com.example.optiway.application.port.in.CrearProductoCommand;
 import com.example.optiway.application.port.in.CrearTiendaCommand;
 import com.example.optiway.application.port.in.ObtenerInventarioCommand;
+import com.example.optiway.application.port.in.RechazarRecomendacionCommand;
 import com.example.optiway.application.port.in.RegistrarIngresoCommand;
 import com.example.optiway.application.port.in.RegistrarVentaCommand;
 import com.example.optiway.application.port.out.AuthPort;
 import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
 import com.example.optiway.application.port.out.IngresoMercanciaRepositoryPort;
 import com.example.optiway.application.port.out.InventarioRepositoryPort;
+import com.example.optiway.application.port.out.OrdenReposicionRepositoryPort;
 import com.example.optiway.application.port.out.ProductoRepositoryPort;
+import com.example.optiway.application.port.out.RecomendacionReposicionRepositoryPort;
 import com.example.optiway.application.port.out.TiendaRepositoryPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.application.port.out.VentaRepositoryPort;
@@ -40,12 +44,15 @@ import com.example.optiway.application.service.CentroDistribucionService;
 import com.example.optiway.application.service.IngresoMercanciaService;
 import com.example.optiway.application.service.InventarioService;
 import com.example.optiway.application.service.ProductoService;
+import com.example.optiway.application.service.RecomendacionReposicionService;
 import com.example.optiway.application.service.TiendaService;
 import com.example.optiway.application.service.UsuarioService;
 import com.example.optiway.application.service.VentaService;
 import com.example.optiway.domain.model.CentroDistribucion;
 import com.example.optiway.domain.model.Inventario;
+import com.example.optiway.domain.model.OrdenReposicion;
 import com.example.optiway.domain.model.Producto;
+import com.example.optiway.domain.model.RecomendacionReposicion;
 import com.example.optiway.domain.model.Rol;
 import com.example.optiway.domain.model.Tienda;
 import com.example.optiway.domain.model.Usuario;
@@ -61,8 +68,8 @@ import com.example.optiway.infrastructure.security.AuthorizationService;
  *
  * <p>Reglas de negocio:
  * <ul>
- *   <li>ADMINISTRADOR: gestiona todo, incluidos usuarios y roles.</li>
- *   <li>PLANIFICADOR: gestiona todo el dominio logístico salvo usuarios y roles.</li>
+ *   <li>ADMINISTRADOR: gestiona todo, incluidos usuarios y roles (excepto decisiones de planificación de reposición HU-20/HU-21, exclusivas de PLANIFICADOR).</li>
+ *   <li>PLANIFICADOR: gestiona todo el dominio logístico salvo usuarios y roles, y es el único rol autorizado para crear, aprobar y rechazar recomendaciones de reposición.</li>
  *   <li>ENCARGADO_TIENDA: sólo opera la tienda que tiene asignada.</li>
  *   <li>ENCARGADO_CD: sólo opera el centro de distribución que tiene asignado.</li>
  * </ul>
@@ -85,6 +92,8 @@ class MatrizPermisosTest {
     @Mock private InventarioRepositoryPort inventarioRepositoryPort;
     @Mock private VentaRepositoryPort ventaRepositoryPort;
     @Mock private IngresoMercanciaRepositoryPort ingresoMercanciaRepositoryPort;
+    @Mock private RecomendacionReposicionRepositoryPort recomendacionReposicionRepositoryPort;
+    @Mock private OrdenReposicionRepositoryPort ordenReposicionRepositoryPort;
     @Mock private AuthPort authPort;
 
     private AuthorizationService authorizationService;
@@ -95,6 +104,7 @@ class MatrizPermisosTest {
     private VentaService ventaService;
     private IngresoMercanciaService ingresoMercanciaService;
     private InventarioService inventarioService;
+    private RecomendacionReposicionService recomendacionReposicionService;
 
     private UUID adminAuthId;
     private UUID planificadorAuthId;
@@ -120,6 +130,10 @@ class MatrizPermisosTest {
         inventarioService = new InventarioService(
                 inventarioRepositoryPort, productoRepositoryPort, tiendaRepositoryPort,
                 centroDistribucionRepositoryPort, authorizationService);
+        recomendacionReposicionService = new RecomendacionReposicionService(
+                authorizationService, productoRepositoryPort, centroDistribucionRepositoryPort,
+                tiendaRepositoryPort, inventarioRepositoryPort,
+                recomendacionReposicionRepositoryPort, ordenReposicionRepositoryPort);
 
         adminAuthId = UUID.randomUUID();
         planificadorAuthId = UUID.randomUUID();
@@ -533,6 +547,89 @@ class MatrizPermisosTest {
         @DisplayName("Sin identidad no se puede listar tiendas")
         void sinIdentidad_noPuedeListar() {
             assertThrows(AccesoDenegadoException.class, () -> tiendaService.obtenerTiendas(null));
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Recomendaciones de reposición (HU-20 / HU-21): sólo PLANIFICADOR
+    // ------------------------------------------------------------------
+
+    @Nested
+    @DisplayName("Matriz: aprobar y rechazar recomendaciones (sólo PLANIFICADOR)")
+    class RecomendacionesReposicion {
+
+        private RecomendacionReposicion propuestaPendiente() {
+            RecomendacionReposicion rec = new RecomendacionReposicion();
+            rec.setId(1L);
+            rec.setProductoId(PRODUCTO_ID);
+            rec.setNombreProducto("Producto");
+            rec.setCantidad(10);
+            rec.setCentroDistribucionOrigenId(CD_ID);
+            rec.setTiendaDestinoId(TIENDA_ID);
+            rec.setEstado("PROPUESTA");
+            return rec;
+        }
+
+        @Test
+        @DisplayName("PLANIFICADOR puede aprobar recomendación")
+        void planificador_puedeAprobar() {
+            lenient().when(recomendacionReposicionRepositoryPort.obtenerPorIdParaActualizar(1L))
+                    .thenReturn(Optional.of(propuestaPendiente()));
+            lenient().when(recomendacionReposicionRepositoryPort.guardar(any()))
+                    .thenAnswer(i -> i.getArgument(0));
+            lenient().when(ordenReposicionRepositoryPort.guardar(any()))
+                    .thenAnswer(i -> i.getArgument(0));
+
+            assertDoesNotThrow(() -> recomendacionReposicionService.aprobar(
+                    planificadorAuthId, new AprobarRecomendacionCommand(1L, null, null, null)));
+        }
+
+        @Test
+        @DisplayName("PLANIFICADOR puede rechazar recomendación")
+        void planificador_puedeRechazar() {
+            lenient().when(recomendacionReposicionRepositoryPort.obtenerPorIdParaActualizar(1L))
+                    .thenReturn(Optional.of(propuestaPendiente()));
+            lenient().when(recomendacionReposicionRepositoryPort.guardar(any()))
+                    .thenAnswer(i -> i.getArgument(0));
+
+            assertDoesNotThrow(() -> recomendacionReposicionService.rechazar(
+                    planificadorAuthId, new RechazarRecomendacionCommand(1L, "Motivo válido")));
+        }
+
+        @Test
+        @DisplayName("ADMIN no puede aprobar ni rechazar recomendaciones")
+        void admin_noPuedeAprobarNiRechazar() {
+            assertThrows(AccesoDenegadoException.class, () -> recomendacionReposicionService.aprobar(
+                    adminAuthId, new AprobarRecomendacionCommand(1L, null, null, null)));
+            assertThrows(AccesoDenegadoException.class, () -> recomendacionReposicionService.rechazar(
+                    adminAuthId, new RechazarRecomendacionCommand(1L, "Motivo")));
+        }
+
+        @Test
+        @DisplayName("ENCARGADO_TIENDA no puede aprobar ni rechazar recomendaciones")
+        void encargadoTienda_noPuedeAprobarNiRechazar() {
+            assertThrows(AccesoDenegadoException.class, () -> recomendacionReposicionService.aprobar(
+                    encargadoTiendaAuthId, new AprobarRecomendacionCommand(1L, null, null, null)));
+            assertThrows(AccesoDenegadoException.class, () -> recomendacionReposicionService.rechazar(
+                    encargadoTiendaAuthId, new RechazarRecomendacionCommand(1L, "Motivo")));
+        }
+
+        @Test
+        @DisplayName("ENCARGADO_CD no puede aprobar ni rechazar recomendaciones")
+        void encargadoCd_noPuedeAprobarNiRechazar() {
+            assertThrows(AccesoDenegadoException.class, () -> recomendacionReposicionService.aprobar(
+                    encargadoCdAuthId, new AprobarRecomendacionCommand(1L, null, null, null)));
+            assertThrows(AccesoDenegadoException.class, () -> recomendacionReposicionService.rechazar(
+                    encargadoCdAuthId, new RechazarRecomendacionCommand(1L, "Motivo")));
+        }
+
+        @Test
+        @DisplayName("Sin identidad no se puede aprobar ni rechazar recomendaciones")
+        void sinIdentidad_noPuedeAprobarNiRechazar() {
+            assertThrows(AccesoDenegadoException.class, () -> recomendacionReposicionService.aprobar(
+                    null, new AprobarRecomendacionCommand(1L, null, null, null)));
+            assertThrows(AccesoDenegadoException.class, () -> recomendacionReposicionService.rechazar(
+                    null, new RechazarRecomendacionCommand(1L, "Motivo")));
         }
     }
 }

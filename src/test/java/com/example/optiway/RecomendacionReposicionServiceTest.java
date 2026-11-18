@@ -326,6 +326,8 @@ class RecomendacionReposicionServiceTest {
         assertEquals(40, orden.cantidad());
         assertEquals(nuevoCdId, orden.centroDistribucionOrigenId());
         assertEquals("AJUSTADA_Y_APROBADA", propuesta.getAccionTomada());
+        assertEquals(25, propuesta.getCantidadPropuesta());
+        assertEquals(centroId, propuesta.getCentroDistribucionPropuestoId());
         assertFalse(propuesta.isFueraDeCobertura());
     }
 
@@ -408,12 +410,14 @@ class RecomendacionReposicionServiceTest {
     }
 
     @Test
-    void rechazarRecomendacion_SinMotivo_DebeLanzar400() {
+    void rechazarRecomendacion_SinMotivoOMuyLargo_DebeLanzar400() {
         when(authorizationPort.requirePlanificador(authUserId, AuthorizedAction.RECHAZAR_RECOMENDACION_REPOSICION))
                 .thenReturn(planificador);
 
         assertThrows(IllegalArgumentException.class, () ->
                 service.rechazar(authUserId, new RechazarRecomendacionCommand(5L, "   ")));
+        assertThrows(IllegalArgumentException.class, () ->
+                service.rechazar(authUserId, new RechazarRecomendacionCommand(5L, "a".repeat(501))));
         verify(recomendacionRepositoryPort, never()).guardar(any());
     }
 
