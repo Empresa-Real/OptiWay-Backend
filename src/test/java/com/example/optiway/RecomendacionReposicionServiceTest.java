@@ -17,18 +17,24 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.optiway.application.exception.RecursoNoEncontradoException;
 import com.example.optiway.application.exception.StockInsuficienteException;
+import com.example.optiway.application.port.in.AprobarRecomendacionCommand;
 import com.example.optiway.application.port.in.CrearRecomendacionReposicionCommand;
+import com.example.optiway.application.port.in.RechazarRecomendacionCommand;
+import com.example.optiway.application.port.in.dto.OrdenReposicionResponse;
 import com.example.optiway.application.port.in.dto.RecomendacionReposicionResponse;
 import com.example.optiway.application.port.out.AuthorizationPort;
 import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
 import com.example.optiway.application.port.out.InventarioRepositoryPort;
+import com.example.optiway.application.port.out.OrdenReposicionRepositoryPort;
 import com.example.optiway.application.port.out.ProductoRepositoryPort;
 import com.example.optiway.application.port.out.RecomendacionReposicionRepositoryPort;
 import com.example.optiway.application.port.out.TiendaRepositoryPort;
 import com.example.optiway.application.service.RecomendacionReposicionService;
 import com.example.optiway.domain.model.CentroDistribucion;
 import com.example.optiway.domain.model.Inventario;
+import com.example.optiway.domain.model.OrdenReposicion;
 import com.example.optiway.domain.model.Producto;
 import com.example.optiway.domain.model.RecomendacionReposicion;
 import com.example.optiway.domain.model.Rol;
@@ -57,6 +63,9 @@ class RecomendacionReposicionServiceTest {
     @Mock
     private RecomendacionReposicionRepositoryPort recomendacionRepositoryPort;
 
+    @Mock
+    private OrdenReposicionRepositoryPort ordenRepositoryPort;
+
     private RecomendacionReposicionService service;
 
     private final UUID authUserId = UUID.randomUUID();
@@ -79,7 +88,8 @@ class RecomendacionReposicionServiceTest {
                 centroRepositoryPort,
                 tiendaRepositoryPort,
                 inventarioRepositoryPort,
-                recomendacionRepositoryPort
+                recomendacionRepositoryPort,
+                ordenRepositoryPort
         );
 
         planificador = new Usuario(
@@ -233,5 +243,144 @@ class RecomendacionReposicionServiceTest {
         assertTrue(resultado.fueraDeCobertura());
 
         verify(recomendacionRepositoryPort).guardar(any(RecomendacionReposicion.class));
+    }
+
+    @Test
+    void aprobarRecomendacion_SinAjustes_DebeAprobarYCrearOrden() {
+        RecomendacionReposicion propuesta = crearPropuestaBase(1L, "PROPUESTA");
+
+        when(authorizationPort.requirePlanificador(authUserId, AuthorizedAction.APROBAR_RECOMENDACION_REPOSICION))
+                .thenReturn(planificador);
+        when(recomendacionRepositoryPort.obtenerPorId(1L)).thenReturn(Optional.of(propuesta));
+        when(recomendacionRepositoryPort.guardar(any(RecomendacionReposicion.class))).thenAnswer(i -> i.getArgument(0));
+        when(ordenRepositoryPort.guardar(any(OrdenReposicion.class))).thenAnswer(i -> {
+            OrdenReposicion o = i.getArgument(0);
+            o.setId(99L);
+            return o;
+        });
+
+        OrdenReposicionResponse orden = service.aprobar(authUserId, new AprobarRecomendacionCommand(1L, null, null));
+
+        assertEquals(99L, orden.id());
+        assertEquals(1L, orden.recomendacionId());
+        assertEquals(25, orden.cantidad());
+        assertEquals("APROBADA", orden.estado());
+        assertEquals("APROBADA", propuesta.getEstado());
+        assertEquals("APROBADA", propuesta.getAccionTomada());
+        assertEquals(authUserId, propuesta.getResueltoPorUsuarioId());
+        assertNotNull(propuesta.getFechaResolucion());
+    }
+
+    @Test
+    void aprobarRecomendacion_ConAjusteDeCantidadYCD_DebeRevalidarStockYCrearOrdenAjustada() {
+        Long nuevoCdId = 25L;
+        CentroDistribucion nuevoCd = new CentroDistribucion(nuevoCdId, "CD-025", "CD Sur", "Calle 5", 3000, 201L, List.of(tiendaId));
+        Inventario inventarioNuevoCd = new Inventario(2L, null, nuevoCdId, productoId, 60, 5);
+        RecomendacionReposicion propuesta = crearPropuestaBase(2L, "PROPUESTA");
+
+        when(authorizationPort.requirePlanificador(authUserId, AuthorizedAction.APROBAR_RECOMENDACION_REPOSICION))
+                .thenReturn(planificador);
+        when(recomendacionRepositoryPort.obtenerPorId(2L)).thenReturn(Optional.of(propuesta));
+        when(centroRepositoryPort.obtenerPorId(nuevoCdId)).thenReturn(Optional.of(nuevoCd));
+        when(inventarioRepositoryPort.findByCentroDistribucionIdAndProductoId(nuevoCdId, productoId))
+                .thenReturn(Optional.of(inventarioNuevoCd));
+        when(recomendacionRepositoryPort.guardar(any(RecomendacionReposicion.class))).thenAnswer(i -> i.getArgument(0));
+        when(ordenRepositoryPort.guardar(any(OrdenReposicion.class))).thenAnswer(i -> {
+            OrdenReposicion o = i.getArgument(0);
+            o.setId(100L);
+            return o;
+        });
+
+        OrdenReposicionResponse orden = service.aprobar(authUserId, new AprobarRecomendacionCommand(2L, 40, nuevoCdId));
+
+        assertEquals(40, orden.cantidad());
+        assertEquals(nuevoCdId, orden.centroDistribucionOrigenId());
+        assertEquals("AJUSTADA_Y_APROBADA", propuesta.getAccionTomada());
+        assertFalse(propuesta.isFueraDeCobertura());
+    }
+
+    @Test
+    void aprobarRecomendacion_CuandoStockAjustadoEsInsuficiente_DebeLanzarExcepcionYSinCrearOrden() {
+        RecomendacionReposicion propuesta = crearPropuestaBase(3L, "PROPUESTA");
+        inventario.setCantidadActual(10);
+
+        when(authorizationPort.requirePlanificador(authUserId, AuthorizedAction.APROBAR_RECOMENDACION_REPOSICION))
+                .thenReturn(planificador);
+        when(recomendacionRepositoryPort.obtenerPorId(3L)).thenReturn(Optional.of(propuesta));
+        when(centroRepositoryPort.obtenerPorId(centroId)).thenReturn(Optional.of(centro));
+        when(inventarioRepositoryPort.findByCentroDistribucionIdAndProductoId(centroId, productoId))
+                .thenReturn(Optional.of(inventario));
+
+        assertThrows(StockInsuficienteException.class, () ->
+                service.aprobar(authUserId, new AprobarRecomendacionCommand(3L, 50, null)));
+        verify(ordenRepositoryPort, never()).guardar(any());
+    }
+
+    @Test
+    void aprobarRecomendacion_CuandoNoEstaEnPropuesta_DebeLanzarConflicto409() {
+        RecomendacionReposicion aprobada = crearPropuestaBase(4L, "APROBADA");
+
+        when(authorizationPort.requirePlanificador(authUserId, AuthorizedAction.APROBAR_RECOMENDACION_REPOSICION))
+                .thenReturn(planificador);
+        when(recomendacionRepositoryPort.obtenerPorId(4L)).thenReturn(Optional.of(aprobada));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
+                service.aprobar(authUserId, new AprobarRecomendacionCommand(4L, null, null)));
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+        verify(ordenRepositoryPort, never()).guardar(any());
+    }
+
+    @Test
+    void aprobarRecomendacion_CuandoNoExiste_DebeLanzar404() {
+        when(authorizationPort.requirePlanificador(authUserId, AuthorizedAction.APROBAR_RECOMENDACION_REPOSICION))
+                .thenReturn(planificador);
+        when(recomendacionRepositoryPort.obtenerPorId(999L)).thenReturn(Optional.empty());
+
+        assertThrows(RecursoNoEncontradoException.class, () ->
+                service.aprobar(authUserId, new AprobarRecomendacionCommand(999L, null, null)));
+    }
+
+    @Test
+    void rechazarRecomendacion_ConMotivoValido_DebeGuardarMotivoYSinCrearOrden() {
+        RecomendacionReposicion propuesta = crearPropuestaBase(5L, "PROPUESTA");
+
+        when(authorizationPort.requirePlanificador(authUserId, AuthorizedAction.RECHAZAR_RECOMENDACION_REPOSICION))
+                .thenReturn(planificador);
+        when(recomendacionRepositoryPort.obtenerPorId(5L)).thenReturn(Optional.of(propuesta));
+        when(recomendacionRepositoryPort.guardar(any(RecomendacionReposicion.class))).thenAnswer(i -> i.getArgument(0));
+
+        RecomendacionReposicionResponse res = service.rechazar(
+                authUserId, new RechazarRecomendacionCommand(5L, "  Sobre-stock en tienda  "));
+
+        assertEquals("RECHAZADA", res.estado());
+        assertEquals("Sobre-stock en tienda", res.motivoRechazo());
+        assertEquals("RECHAZADA", res.accionTomada());
+        assertEquals(authUserId, res.resueltoPorUsuarioId());
+        assertNotNull(res.fechaResolucion());
+        verify(ordenRepositoryPort, never()).guardar(any());
+    }
+
+    @Test
+    void rechazarRecomendacion_SinMotivo_DebeLanzar400() {
+        when(authorizationPort.requirePlanificador(authUserId, AuthorizedAction.RECHAZAR_RECOMENDACION_REPOSICION))
+                .thenReturn(planificador);
+
+        assertThrows(IllegalArgumentException.class, () ->
+                service.rechazar(authUserId, new RechazarRecomendacionCommand(5L, "   ")));
+        verify(recomendacionRepositoryPort, never()).guardar(any());
+    }
+
+    private RecomendacionReposicion crearPropuestaBase(Long id, String estado) {
+        RecomendacionReposicion rec = new RecomendacionReposicion();
+        rec.setId(id);
+        rec.setProductoId(productoId);
+        rec.setNombreProducto("Arroz Diana");
+        rec.setCantidad(25);
+        rec.setCentroDistribucionOrigenId(centroId);
+        rec.setTiendaDestinoId(tiendaId);
+        rec.setEstado(estado);
+        rec.setFueraDeCobertura(false);
+        rec.setCreadoPor(authUserId);
+        return rec;
     }
 }
