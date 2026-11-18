@@ -2,6 +2,9 @@ package com.example.optiway.infrastructure.adapter.out.persistence;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -34,8 +37,9 @@ public class OrdenReposicionJpaEntity {
     @Column(nullable = false, length = 30)
     private String estado;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "creado_por", nullable = false)
+    @OnDelete(action = OnDeleteAction.SET_NULL)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "creado_por", foreignKey = @ForeignKey(name = "fk_ordenes_creador"))
     private UsuarioJpaEntity creador;
 
     @Column(nullable = false)

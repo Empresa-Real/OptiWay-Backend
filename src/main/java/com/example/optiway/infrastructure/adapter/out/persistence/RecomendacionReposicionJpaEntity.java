@@ -2,6 +2,9 @@ package com.example.optiway.infrastructure.adapter.out.persistence;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -40,8 +43,9 @@ public class RecomendacionReposicionJpaEntity {
     @Column(nullable = false)
     private LocalDateTime fechaCreacion;
 
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "resuelto_por")
+    @JoinColumn(name = "resuelto_por", foreignKey = @ForeignKey(name = "fk_recomendaciones_resuelto_por"))
     private UsuarioJpaEntity resueltoPor;
 
     @Column(length = 30)

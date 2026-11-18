@@ -45,10 +45,14 @@ public class OrdenReposicionRepositoryAdapter implements OrdenReposicionReposito
         entity.setEstado(orden.getEstado());
 
         UUID authUserId = orden.getCreadoPor();
-        UsuarioJpaEntity creador = usuarioRepository.findByAuthUserId(authUserId)
-                .orElseThrow(() -> new RecursoNoEncontradoException(
-                        "No se encontró el usuario que genera la orden de reposición."));
-        entity.setCreador(creador);
+        if (authUserId != null) {
+            UsuarioJpaEntity creador = usuarioRepository.findByAuthUserId(authUserId)
+                    .orElseThrow(() -> new RecursoNoEncontradoException(
+                            "No se encontró el usuario que genera la orden de reposición."));
+            entity.setCreador(creador);
+        } else {
+            entity.setCreador(null);
+        }
         entity.setFechaCreacion(orden.getFechaCreacion());
 
         return toDomain(repository.save(entity));
@@ -64,7 +68,7 @@ public class OrdenReposicionRepositoryAdapter implements OrdenReposicionReposito
         orden.setCentroDistribucionOrigenId(entity.getCentroDistribucionOrigen().getId());
         orden.setTiendaDestinoId(entity.getTiendaDestino().getId());
         orden.setEstado(entity.getEstado());
-        orden.setCreadoPor(entity.getCreador().getAuthUserId());
+        orden.setCreadoPor(entity.getCreador() != null ? entity.getCreador().getAuthUserId() : null);
         orden.setFechaCreacion(entity.getFechaCreacion());
         return orden;
     }
