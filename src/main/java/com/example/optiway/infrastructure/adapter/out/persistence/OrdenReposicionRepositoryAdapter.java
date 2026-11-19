@@ -1,5 +1,6 @@
 package com.example.optiway.infrastructure.adapter.out.persistence;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.stereotype.Component;
@@ -56,6 +57,16 @@ public class OrdenReposicionRepositoryAdapter implements OrdenReposicionReposito
         entity.setFechaCreacion(orden.getFechaCreacion());
 
         return toDomain(repository.save(entity));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existeOrdenEnTransitoOEnviadaPorTienda(Long tiendaId) {
+        if (tiendaId == null) {
+            return false;
+        }
+        return repository.existsByTiendaDestino_IdAndEstadoIn(
+                tiendaId, List.of("EN_TRANSITO", "ENVIADO", "ENVIADA"));
     }
 
     private OrdenReposicion toDomain(OrdenReposicionJpaEntity entity) {

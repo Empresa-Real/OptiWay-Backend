@@ -73,6 +73,11 @@ public class IngresoMercanciaService implements RegistrarIngresoMercanciaUseCase
         Usuario usuario = authorizationService.requirePermisoCentroDistribucion(
                 authUserId, centro, AuthorizedAction.REGISTRAR_INGRESO);
 
+        if (!centro.isActivo()) {
+            throw new IllegalArgumentException(
+                    "El centro de distribución con ID " + command.centroDistribucionId() + " se encuentra inactivo y no puede recibir mercancía.");
+        }
+
         // 3. Verificar que exista el producto
         productoRepositoryPort.findById(command.productoId())
                 .orElseThrow(() -> new RecursoNoEncontradoException(
@@ -90,9 +95,9 @@ public class IngresoMercanciaService implements RegistrarIngresoMercanciaUseCase
             }
         }
 
-        // 5. Buscar o inicializar inventario del producto en el centro
+        // 5. Buscar o inicializar inventario del producto en el centro (con bloqueo pesimista)
         Inventario inventario = inventarioRepositoryPort
-                .findByCentroDistribucionIdAndProductoId(centro.getId(), command.productoId())
+                .findByCentroDistribucionIdAndProductoIdForUpdate(centro.getId(), command.productoId())
                 .orElseGet(() -> {
                     Inventario nuevo = new Inventario();
                     nuevo.setCentroDistribucionId(centro.getId());

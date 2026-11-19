@@ -70,7 +70,7 @@ public class AjustarInventarioService implements AjustarInventarioUseCase {
             verificarProductoExiste(command.productoId());
 
             inventario = inventarioRepository
-                    .findByTiendaIdAndProductoId(command.tiendaId(), command.productoId())
+                    .findByTiendaIdAndProductoIdForUpdate(command.tiendaId(), command.productoId())
                     .orElseThrow(() -> new RecursoNoEncontradoException(
                             "El producto no está registrado en el inventario de esta tienda."));
         } else {
@@ -84,7 +84,7 @@ public class AjustarInventarioService implements AjustarInventarioUseCase {
             verificarProductoExiste(command.productoId());
 
             inventario = inventarioRepository
-                    .findByCentroDistribucionIdAndProductoId(command.centroDistribucionId(), command.productoId())
+                    .findByCentroDistribucionIdAndProductoIdForUpdate(command.centroDistribucionId(), command.productoId())
                     .orElseThrow(() -> new RecursoNoEncontradoException(
                             "El producto no está registrado en el inventario de este centro de distribución."));
         }

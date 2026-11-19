@@ -83,6 +83,18 @@ public class InventarioRepositoryAdapter implements InventarioRepositoryPort {
                 .map(this::toDomain);
     }
 
+    @Override
+    public Optional<Inventario> findByTiendaIdAndProductoIdForUpdate(Long tiendaId, Long productoId) {
+        return inventarioJpaRepository.findByTiendaIdAndProductoIdForUpdate(tiendaId, productoId)
+                .map(this::toDomain);
+    }
+
+    @Override
+    public Optional<Inventario> findByCentroDistribucionIdAndProductoIdForUpdate(Long centroDistribucionId, Long productoId) {
+        return inventarioJpaRepository.findByCentroDistribucionIdAndProductoIdForUpdate(centroDistribucionId, productoId)
+                .map(this::toDomain);
+    }
+
     private Inventario toDomain(InventarioJpaEntity entity) {
         Inventario inventario = new Inventario();
         inventario.setId(entity.getId());

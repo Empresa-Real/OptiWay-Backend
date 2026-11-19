@@ -81,9 +81,12 @@ public class CentroDistribucionController {
     public CentroDistribucionResponse cambiarEstado(
             @AuthUserId UUID authUserId,
             @PathVariable Long id,
-            @RequestBody CambiarEstadoCDRequest request) {
+            @Valid @RequestBody CambiarEstadoCDRequest request) {
         return cambiarEstadoCentroDistribucionUseCase.cambiarEstado(
-                authUserId, id, request.activo(), request.confirmarConTiendasAsignadas());
+                authUserId,
+                id,
+                Boolean.TRUE.equals(request.activo()),
+                Boolean.TRUE.equals(request.confirmarConTiendasAsignadas()));
     }
 
     @PutMapping("/{id}/encargado")

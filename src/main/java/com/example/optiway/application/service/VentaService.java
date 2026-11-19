@@ -67,6 +67,11 @@ public class VentaService implements RegistrarVentaUseCase {
         // 2. Control de acceso y roles: la identidad siempre es obligatoria
         authorizationService.requirePermisoTienda(authUserId, tienda, AuthorizedAction.REGISTRAR_VENTA);
 
+        if (!tienda.isActivo()) {
+            throw new IllegalArgumentException(
+                    "La tienda con ID " + command.tiendaId() + " se encuentra inactiva y no puede registrar ventas.");
+        }
+
         // 3. Validar existencia y estado del producto
         Producto producto = productoRepositoryPort.findById(command.productoId())
                 .orElseThrow(() -> new RecursoNoEncontradoException(
@@ -77,8 +82,8 @@ public class VentaService implements RegistrarVentaUseCase {
                     "El producto con ID " + command.productoId() + " se encuentra inactivo y no puede comercializarse.");
         }
 
-        // 4. Validar existencia del producto en el inventario de la tienda
-        Inventario inventario = inventarioRepositoryPort.findByTiendaIdAndProductoId(command.tiendaId(), command.productoId())
+        // 4. Validar existencia del producto en el inventario de la tienda (con bloqueo para evitar sobreventa)
+        Inventario inventario = inventarioRepositoryPort.findByTiendaIdAndProductoIdForUpdate(command.tiendaId(), command.productoId())
                 .orElseThrow(() -> new RecursoNoEncontradoException(
                         "El producto con ID " + command.productoId() + " no está registrado en el inventario de la tienda."));
 

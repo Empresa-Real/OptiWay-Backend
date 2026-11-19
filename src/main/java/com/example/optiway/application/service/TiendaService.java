@@ -14,6 +14,7 @@ import com.example.optiway.application.port.in.CrearTiendaCommand;
 import com.example.optiway.application.port.in.CrearTiendaUseCase;
 import com.example.optiway.application.port.in.ObtenerTiendasUseCase;
 import com.example.optiway.application.port.in.dto.TiendaResponse;
+import com.example.optiway.application.port.out.OrdenReposicionRepositoryPort;
 import com.example.optiway.application.port.out.TiendaRepositoryPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.domain.model.Tienda;
@@ -21,6 +22,7 @@ import com.example.optiway.domain.model.Usuario;
 import com.example.optiway.application.port.out.AuthorizationPort;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.CambiarEstadoTiendaRequest;
 import com.example.optiway.infrastructure.security.AuthorizedAction;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Service
 public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase, AsignarEncargadoTiendaUseCase, CambiarEstadoTiendaUseCase {
@@ -28,14 +30,25 @@ public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase,
     private final TiendaRepositoryPort tiendaRepositoryPort;
     private final UsuarioRepositoryPort usuarioRepositoryPort;
     private final AuthorizationPort authorizationService;
-    
+    private final OrdenReposicionRepositoryPort ordenReposicionRepositoryPort;
+
     public TiendaService(
             TiendaRepositoryPort tiendaRepositoryPort,
             UsuarioRepositoryPort usuarioRepositoryPort,
             AuthorizationPort authorizationService) {
+        this(tiendaRepositoryPort, usuarioRepositoryPort, authorizationService, null);
+    }
+
+    @Autowired
+    public TiendaService(
+            TiendaRepositoryPort tiendaRepositoryPort,
+            UsuarioRepositoryPort usuarioRepositoryPort,
+            AuthorizationPort authorizationService,
+            OrdenReposicionRepositoryPort ordenReposicionRepositoryPort) {
         this.tiendaRepositoryPort = tiendaRepositoryPort;
         this.usuarioRepositoryPort = usuarioRepositoryPort;
         this.authorizationService = authorizationService;
+        this.ordenReposicionRepositoryPort = ordenReposicionRepositoryPort;
     }
 
     @Override
@@ -137,7 +150,8 @@ public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase,
     
     @Override
     public boolean tieneOrdenesEnTransitoOEnviadas(Long tiendaId) {
-        return false; 
+        return ordenReposicionRepositoryPort != null
+                && ordenReposicionRepositoryPort.existeOrdenEnTransitoOEnviadaPorTienda(tiendaId);
     }
 
 
