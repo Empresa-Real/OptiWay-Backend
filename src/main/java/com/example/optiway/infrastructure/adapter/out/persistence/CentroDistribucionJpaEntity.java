@@ -38,6 +38,9 @@ public class CentroDistribucionJpaEntity {
     @Column(nullable = false)
     private Integer capacidad;
 
+    @Column
+    private String estado = "Activo";
+
     @OnDelete(action = OnDeleteAction.SET_NULL)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "encargado_id", foreignKey = @ForeignKey(name = "fk_centros_encargado"))
@@ -67,6 +70,8 @@ public class CentroDistribucionJpaEntity {
 
     public Integer getCapacidad() { return capacidad; }
     public void setCapacidad(Integer capacidad) { this.capacidad = capacidad; }
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
 
     public UsuarioJpaEntity getEncargado() { return encargado; }
     public void setEncargado(UsuarioJpaEntity encargado) { this.encargado = encargado; }

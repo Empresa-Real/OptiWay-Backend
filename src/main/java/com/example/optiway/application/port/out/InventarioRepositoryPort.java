@@ -20,5 +20,13 @@ public interface InventarioRepositoryPort {
 
     Optional<Inventario> findByCentroDistribucionIdAndProductoId(Long centroDistribucionId, Long productoId);
 
+    default Optional<Inventario> findByTiendaIdAndProductoIdForUpdate(Long tiendaId, Long productoId) {
+        return findByTiendaIdAndProductoId(tiendaId, productoId);
+    }
+
+    default Optional<Inventario> findByCentroDistribucionIdAndProductoIdForUpdate(Long centroDistribucionId, Long productoId) {
+        return findByCentroDistribucionIdAndProductoId(centroDistribucionId, productoId);
+    }
+
     boolean existeStockActivoDeProducto(Long productoId);
 }

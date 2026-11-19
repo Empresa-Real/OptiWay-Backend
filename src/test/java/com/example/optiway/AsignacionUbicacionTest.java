@@ -1,4 +1,4 @@
-package com.example.optiway.application.service;
+package com.example.optiway;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -27,6 +27,8 @@ import com.example.optiway.domain.model.Rol;
 import com.example.optiway.domain.model.Tienda;
 import com.example.optiway.domain.model.Usuario;
 import com.example.optiway.infrastructure.security.AuthorizationService;
+import com.example.optiway.application.service.TiendaService;
+import com.example.optiway.application.service.CentroDistribucionService;
 
 @ExtendWith(MockitoExtension.class)
 class AsignacionUbicacionTest {

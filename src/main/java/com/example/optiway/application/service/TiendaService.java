@@ -3,35 +3,52 @@ package com.example.optiway.application.service;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.example.optiway.application.exception.RecursoNoEncontradoException;
 import com.example.optiway.application.port.in.AsignarEncargadoTiendaUseCase;
+import com.example.optiway.application.port.in.CambiarEstadoTiendaUseCase;
 import com.example.optiway.application.port.in.CrearTiendaCommand;
 import com.example.optiway.application.port.in.CrearTiendaUseCase;
 import com.example.optiway.application.port.in.ObtenerTiendasUseCase;
 import com.example.optiway.application.port.in.dto.TiendaResponse;
+import com.example.optiway.application.port.out.OrdenReposicionRepositoryPort;
 import com.example.optiway.application.port.out.TiendaRepositoryPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.domain.model.Tienda;
 import com.example.optiway.domain.model.Usuario;
 import com.example.optiway.application.port.out.AuthorizationPort;
+import com.example.optiway.infrastructure.adapter.in.rest.dto.CambiarEstadoTiendaRequest;
 import com.example.optiway.infrastructure.security.AuthorizedAction;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Service
-public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase, AsignarEncargadoTiendaUseCase {
+public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase, AsignarEncargadoTiendaUseCase, CambiarEstadoTiendaUseCase {
 
     private final TiendaRepositoryPort tiendaRepositoryPort;
     private final UsuarioRepositoryPort usuarioRepositoryPort;
     private final AuthorizationPort authorizationService;
+    private final OrdenReposicionRepositoryPort ordenReposicionRepositoryPort;
 
     public TiendaService(
             TiendaRepositoryPort tiendaRepositoryPort,
             UsuarioRepositoryPort usuarioRepositoryPort,
             AuthorizationPort authorizationService) {
+        this(tiendaRepositoryPort, usuarioRepositoryPort, authorizationService, null);
+    }
+
+    @Autowired
+    public TiendaService(
+            TiendaRepositoryPort tiendaRepositoryPort,
+            UsuarioRepositoryPort usuarioRepositoryPort,
+            AuthorizationPort authorizationService,
+            OrdenReposicionRepositoryPort ordenReposicionRepositoryPort) {
         this.tiendaRepositoryPort = tiendaRepositoryPort;
         this.usuarioRepositoryPort = usuarioRepositoryPort;
         this.authorizationService = authorizationService;
+        this.ordenReposicionRepositoryPort = ordenReposicionRepositoryPort;
     }
 
     @Override
@@ -81,6 +98,11 @@ public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase,
         Tienda tienda = tiendaRepositoryPort.obtenerPorId(tiendaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Tienda no encontrada con ID: " + tiendaId));
 
+        // Regla de negocio HU-08: Bloquear operaciones si la tienda está inactiva
+        if (tienda.getActivo() != null && !tienda.getActivo()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede operar sobre una tienda inactiva.");
+        }
+
         if (encargadoId != null) {
             Usuario encargado = usuarioRepositoryPort.obtenerPorId(encargadoId)
                     .orElseThrow(() -> new RecursoNoEncontradoException("Usuario encargado no encontrado con ID: " + encargadoId));
@@ -101,4 +123,36 @@ public class TiendaService implements CrearTiendaUseCase, ObtenerTiendasUseCase,
         tienda.setEncargadoId(encargadoId);
         return TiendaResponse.from(tiendaRepositoryPort.save(tienda));
     }
+
+@Override
+    public TiendaResponse cambiarEstado(UUID authUserId, Long tiendaId, CambiarEstadoTiendaRequest request) {
+        authorizationService.requireAdministrador(authUserId, AuthorizedAction.CAMBIAR_ESTADO_TIENDA);
+
+        Tienda tienda = tiendaRepositoryPort.obtenerPorId(tiendaId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Tienda no encontrada con ID: " + tiendaId));
+
+        if (Boolean.FALSE.equals(request.getActivo())) {
+            boolean tieneOrdenes = tieneOrdenesEnTransitoOEnviadas(tiendaId);
+
+            if (tieneOrdenes && !Boolean.TRUE.equals(request.getConfirmarConOrdenesEnTransito())) {
+                throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, 
+                    "La tienda tiene órdenes de reposición en tránsito o enviadas. Se requiere confirmación."
+                );
+            }
+        }
+
+        tienda.setActivo(request.getActivo());
+        Tienda tiendaActualizada = tiendaRepositoryPort.save(tienda);
+
+        return TiendaResponse.from(tiendaActualizada);
+    }
+    
+    @Override
+    public boolean tieneOrdenesEnTransitoOEnviadas(Long tiendaId) {
+        return ordenReposicionRepositoryPort != null
+                && ordenReposicionRepositoryPort.existeOrdenEnTransitoOEnviadaPorTienda(tiendaId);
+    }
+
+
 }

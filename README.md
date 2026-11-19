@@ -1,7 +1,7 @@
 # OptiWay — Backend EBP06
 
 <div align="center">
-<img alt="Java" src="https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white" /> <img alt="Spring Boot" src="https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F?logo=springboot&logoColor=whit" /> <img alt="Spring Security" src="https://img.shields.io/badge/Spring%20Security-7-6DB33F?logo=springsecurity&logoColor=white" /> <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-15+-4169E1?logo=postgresql&logoColor=white" /> <img alt="Supabase" src="https://img.shields.io/badge/Supabase-Cloud-3ECF8E?logo=supabase&logoColor=white" /> <a href="https://optiway-backend.onrender.com"><img alt="Render" src="https://img.shields.io/badge/Render-Desplegado-46E3B7?logo=render&logoColor=black" /></a> <img alt="Apache Maven" src="https://img.shields.io/badge/Apache%20Maven-3.9+-C71A36?logo=apachemaven&logoColor=white" />
+<img alt="Java" src="https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white" /> <img alt="Spring Boot" src="https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F?logo=springboot&logoColor=whit" /> <img alt="Spring Security" src="https://img.shields.io/badge/Spring%20Security-7-6DB33F?logo=springsecurity&logoColor=white" /> <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-15+-4169E1?logo=postgresql&logoColor=white" /> <img alt="Supabase" src="https://img.shields.io/badge/Supabase-Cloud-3ECF8E?logo=supabase&logoColor=white" /> <a href="https://opti-way-frontend.vercel.app/"><img alt="Frontend Vercel" src="https://img.shields.io/badge/Frontend-Vercel-000000?logo=vercel&logoColor=white" /></a> <a href="https://optiway-backend.onrender.com"><img alt="Render" src="https://img.shields.io/badge/Backend-Render-46E3B7?logo=render&logoColor=black" /></a> <img alt="Apache Maven" src="https://img.shields.io/badge/Apache%20Maven-3.9+-C71A36?logo=apachemaven&logoColor=white" />
 
 <img alt="API REST" src="https://img.shields.io/badge/API-REST-FF6C37?logo=postman&logoColor=white" /> <img alt="Arquitecture" src="https://img.shields.io/badge/Arquitectura-Hexagonal-6C5CE7" /> <a href="https://optiway-backend.onrender.com/swagger-ui.html"><img alt="Swagger UI" src="https://img.shields.io/badge/Swagger-Probar%20la%20API-85EA2D?logo=swagger&logoColor=black" /></a> <a href="https://optiway-backend.onrender.com/graph"><img alt="Graphify" src="https://img.shields.io/badge/Graphify-Ver%20grafo-6C5CE7" /></a>
 </div>
@@ -11,6 +11,12 @@
 Sistema backend para la plataforma **OptiWay**, diseñado para la gestión y optimización de la cadena de distribución logística, administración de centros de distribución (CD), gestión de tiendas comerciales, control de inventarios, registro de ingresos de mercancía y control de acceso granular basado en roles.
 
 Desarrollado bajo los principios de **Arquitectura Hexagonal (Puertos y Adaptadores)** y **Clean Architecture** sobre el ecosistema Spring Boot y PostgreSQL (Supabase).
+
+### Enlaces de Despliegue
+
+* **Frontend Web (Vercel):** [https://opti-way-frontend.vercel.app/](https://opti-way-frontend.vercel.app/)
+* **Backend API REST (Render):** [https://optiway-backend.onrender.com/](https://optiway-backend.onrender.com/)
+* **Swagger UI (Documentación interactiva):** [https://optiway-backend.onrender.com/swagger-ui.html](https://optiway-backend.onrender.com/swagger-ui.html)
 
 
 ## Características
@@ -130,6 +136,17 @@ Para una explicación a fondo del flujo de capas, consulta [`docs/Hexagonal-Arqu
 La referencia completa de la API (métodos, roles requeridos, códigos de estado y ejemplos) está en [`docs/Swagger_OpenAPI.md`](docs/Swagger_OpenAPI.md). Para probarla directamente, entra a [Swagger UI del backend desplegado](https://optiway-backend.onrender.com/swagger-ui.html) o, en local, a [`http://localhost:8080/swagger-ui.html`](http://localhost:8080/swagger-ui.html).
 
 
+## Credenciales de Desarrollo y Pruebas
+
+
+| Rol | Correo Electrónico | Contraseña | Alcance / Permisos |
+|---|---|---|---|
+| **Administrador** | `admin@empresa.com` | `admin123` | Acceso global: administración de usuarios, catálogo maestro, tiendas y centros de distribución. |
+| **Planificador** | `ana@empresa.com` | `admin123` | Consulta de inventario consolidado y supervisión de la red de abastecimiento. |
+| **Encargado de Tienda** | `carlos@empresa.com` | `tienda123` | Consulta de inventario local y registro de ventas en su tienda asignada. |
+| **Encargado de CD** | `roberto@empresa.com` | `cd123 ` *(con espacio final)* | Consulta de inventario y registro de ingreso de mercancía en su centro de distribución asignado. |
+
+
 ## Instalación y Ejecución
 
 ### Requisitos previos
@@ -173,7 +190,7 @@ También se puede ejecutar la misma suite contra la base real de **Supabase**, v
 
 ```powershell
 $env:SPRING_DATASOURCE_URL="jdbc:postgresql://aws-0-us-west-2.pooler.supabase.com:6543/postgres?prepareThreshold=0"
-$env:SPRING_DATASOURCE_USERNAME="postgres.cehzzcvnkiuvkabglrzp"
+$env:SPRING_DATASOURCE_USERNAME=$env:DB_USER
 $env:SPRING_DATASOURCE_PASSWORD=$env:DB_PASSWORD
 $env:SPRING_DATASOURCE_DRIVER_CLASS_NAME="org.postgresql.Driver"
 $env:SPRING_JPA_HIBERNATE_DDL_AUTO="validate"

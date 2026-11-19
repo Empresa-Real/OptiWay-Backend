@@ -1,5 +1,7 @@
 package com.example.optiway.domain.model;
 
+import java.time.LocalDateTime;
+
 public class Inventario {
 
     private Long id;
@@ -8,6 +10,8 @@ public class Inventario {
     private Long productoId;
     private Integer cantidadActual;
     private Integer stockMinimo;
+    private LocalDateTime fechaActualizacion;
+    private Long usuarioActualizacionId;
 
     public Inventario() {}
 
@@ -52,6 +56,10 @@ public class Inventario {
 
     public Integer getStockMinimo() { return stockMinimo; }
     public void setStockMinimo(Integer stockMinimo) { this.stockMinimo = stockMinimo; }
+    public LocalDateTime getFechaActualizacion() { return fechaActualizacion; }
+    public void setFechaActualizacion(LocalDateTime fechaActualizacion) { this.fechaActualizacion = fechaActualizacion; }
+    public Long getUsuarioActualizacionId() { return usuarioActualizacionId; }
+    public void setUsuarioActualizacionId(Long usuarioActualizacionId) { this.usuarioActualizacionId = usuarioActualizacionId; }
 
     /**
      * Calcula si el nivel de existencias actual está por debajo del umbral mínimo requerido.

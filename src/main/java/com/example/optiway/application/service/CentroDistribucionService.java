@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.optiway.application.exception.RecursoNoEncontradoException;
 import com.example.optiway.application.port.in.AsignarEncargadoCDUseCase;
+import com.example.optiway.application.port.in.CambiarEstadoCentroDistribucionUseCase;
 import com.example.optiway.application.port.in.CrearCentroDistribucionCommand;
 import com.example.optiway.application.port.in.CrearCentroDistribucionUseCase;
 import com.example.optiway.application.port.in.ObtenerCentrosDistribucionUseCase;
@@ -19,7 +20,7 @@ import com.example.optiway.application.port.out.AuthorizationPort;
 import com.example.optiway.infrastructure.security.AuthorizedAction;
 
 @Service
-public class CentroDistribucionService implements CrearCentroDistribucionUseCase, ObtenerCentrosDistribucionUseCase, AsignarEncargadoCDUseCase {
+public class CentroDistribucionService implements CrearCentroDistribucionUseCase, ObtenerCentrosDistribucionUseCase, AsignarEncargadoCDUseCase, CambiarEstadoCentroDistribucionUseCase {
 
     private final CentroDistribucionRepositoryPort centroDistribucionRepositoryPort;
     private final UsuarioRepositoryPort usuarioRepositoryPort;
@@ -106,6 +107,21 @@ public class CentroDistribucionService implements CrearCentroDistribucionUseCase
         }
 
         centro.setEncargadoId(encargadoId);
+        return CentroDistribucionResponse.from(centroDistribucionRepositoryPort.guardar(centro));
+    }
+
+    @Override
+    public CentroDistribucionResponse cambiarEstado(UUID authUserId, Long centroId, boolean activo, boolean confirmarConTiendasAsignadas) {
+        authorizationService.requireAdministrador(authUserId, AuthorizedAction.CAMBIAR_ESTADO_CENTRO_DISTRIBUCION);
+        CentroDistribucion centro = centroDistribucionRepositoryPort.obtenerPorId(centroId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Centro de distribución no encontrado con ID: " + centroId));
+        if (!activo && centro.getTiendasAbastecidasIds() != null
+                && !centro.getTiendasAbastecidasIds().isEmpty() && !confirmarConTiendasAsignadas) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.CONFLICT,
+                    "El centro tiene tiendas asignadas. Confirme la desactivación con confirmarConTiendasAsignadas=true.");
+        }
+        centro.setEstado(activo ? "Activo" : "Inactivo");
         return CentroDistribucionResponse.from(centroDistribucionRepositoryPort.guardar(centro));
     }
 }
