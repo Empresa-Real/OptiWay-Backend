@@ -50,15 +50,34 @@ class RecomendacionReposicionRollbackIntegrationTest {
     @MockitoSpyBean
     private OrdenReposicionRepositoryPort ordenRepositoryPort;
 
+    private Long createdRecomendacionId;
+    private Long createdInventarioId;
+    private Long createdCentroId;
+    private Long createdTiendaId;
+    private Long createdProductoId;
+    private Long createdUsuarioId;
+
     @AfterEach
     void limpiar() {
-        ordenRepository.deleteAll();
-        recomendacionRepository.deleteAll();
-        inventarioRepository.deleteAll();
-        centroRepository.deleteAll();
-        tiendaRepository.deleteAll();
-        productoRepository.deleteAll();
-        usuarioRepository.deleteAll();
+        if (createdRecomendacionId != null) {
+            ordenRepository.deleteByRecomendacion_Id(createdRecomendacionId);
+            recomendacionRepository.deleteById(createdRecomendacionId);
+        }
+        if (createdInventarioId != null) {
+            inventarioRepository.deleteById(createdInventarioId);
+        }
+        if (createdCentroId != null) {
+            centroRepository.deleteById(createdCentroId);
+        }
+        if (createdTiendaId != null) {
+            tiendaRepository.deleteById(createdTiendaId);
+        }
+        if (createdProductoId != null) {
+            productoRepository.deleteById(createdProductoId);
+        }
+        if (createdUsuarioId != null) {
+            usuarioRepository.deleteById(createdUsuarioId);
+        }
     }
 
     @Test
@@ -70,6 +89,7 @@ class RecomendacionReposicionRollbackIntegrationTest {
         planificador.setEmail("rollback-" + planificadorAuthId + "@optiway.com");
         planificador.setRol(Rol.PLANIFICADOR);
         planificador = usuarioRepository.save(planificador);
+        createdUsuarioId = planificador.getId();
 
         ProductoJpaEntity producto = new ProductoJpaEntity();
         producto.setIdentificador("PRD-RB-" + UUID.randomUUID().toString().substring(0, 6));
@@ -79,6 +99,7 @@ class RecomendacionReposicionRollbackIntegrationTest {
         producto.setUnidadMedida("Unidad");
         producto.setActivo(true);
         producto = productoRepository.save(producto);
+        createdProductoId = producto.getId();
 
         TiendaJpaEntity tienda = new TiendaJpaEntity();
         tienda.setCodigo("TND-RB-" + UUID.randomUUID().toString().substring(0, 6));
@@ -87,6 +108,7 @@ class RecomendacionReposicionRollbackIntegrationTest {
         tienda.setCiudad("Medellín");
         tienda.setActivo(true);
         tienda = tiendaRepository.save(tienda);
+        createdTiendaId = tienda.getId();
 
         CentroDistribucionJpaEntity centro = new CentroDistribucionJpaEntity();
         centro.setCodigo("CD-RB-" + UUID.randomUUID().toString().substring(0, 6));
@@ -96,13 +118,15 @@ class RecomendacionReposicionRollbackIntegrationTest {
         centro.setEstado("Activo");
         centro.setTiendasAbastecidas(List.of(tienda));
         centro = centroRepository.save(centro);
+        createdCentroId = centro.getId();
 
         InventarioJpaEntity inventario = new InventarioJpaEntity();
         inventario.setCentroDistribucion(centro);
         inventario.setProducto(producto);
         inventario.setCantidadActual(100);
         inventario.setStockMinimo(10);
-        inventarioRepository.save(inventario);
+        inventario = inventarioRepository.save(inventario);
+        createdInventarioId = inventario.getId();
 
         RecomendacionReposicionJpaEntity propuesta = new RecomendacionReposicionJpaEntity();
         propuesta.setProducto(producto);
@@ -114,6 +138,7 @@ class RecomendacionReposicionRollbackIntegrationTest {
         propuesta.setCreador(planificador);
         propuesta.setFechaCreacion(LocalDateTime.now());
         propuesta = recomendacionRepository.save(propuesta);
+        createdRecomendacionId = propuesta.getId();
 
         Long recomendacionId = propuesta.getId();
 
@@ -135,6 +160,6 @@ class RecomendacionReposicionRollbackIntegrationTest {
         assertNull(trasRollback.getAccionTomada());
         assertNull(trasRollback.getResueltoPor());
         assertNull(trasRollback.getFechaResolucion());
-        assertEquals(0, ordenRepository.count());
+        assertEquals(0, ordenRepository.countByRecomendacion_Id(recomendacionId));
     }
 }

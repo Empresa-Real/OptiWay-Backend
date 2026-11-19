@@ -156,7 +156,11 @@ class MatrizPermisosTest {
                 new Producto(PRODUCTO_ID, "PRD-001", "Producto", "Cat", BigDecimal.TEN, "Unidad", true)));
         lenient().when(inventarioRepositoryPort.findByTiendaIdAndProductoId(TIENDA_ID, PRODUCTO_ID))
                 .thenReturn(Optional.of(new Inventario(1L, TIENDA_ID, null, PRODUCTO_ID, 100, 5)));
+        lenient().when(inventarioRepositoryPort.findByTiendaIdAndProductoIdForUpdate(TIENDA_ID, PRODUCTO_ID))
+                .thenReturn(Optional.of(new Inventario(1L, TIENDA_ID, null, PRODUCTO_ID, 100, 5)));
         lenient().when(inventarioRepositoryPort.findByCentroDistribucionIdAndProductoId(CD_ID, PRODUCTO_ID))
+                .thenReturn(Optional.of(new Inventario(2L, null, CD_ID, PRODUCTO_ID, 100, 5)));
+        lenient().when(inventarioRepositoryPort.findByCentroDistribucionIdAndProductoIdForUpdate(CD_ID, PRODUCTO_ID))
                 .thenReturn(Optional.of(new Inventario(2L, null, CD_ID, PRODUCTO_ID, 100, 5)));
         lenient().when(inventarioRepositoryPort.findByTiendaId(TIENDA_ID)).thenReturn(List.of());
         lenient().when(inventarioRepositoryPort.findByCentroDistribucionId(CD_ID)).thenReturn(List.of());

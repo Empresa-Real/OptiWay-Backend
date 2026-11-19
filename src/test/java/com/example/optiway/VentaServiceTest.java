@@ -84,7 +84,7 @@ class VentaServiceTest {
         when(tiendaRepositoryPort.obtenerPorId(tiendaId)).thenReturn(Optional.of(tienda));
         when(usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)).thenReturn(Optional.of(usuario));
         when(productoRepositoryPort.findById(productoId)).thenReturn(Optional.of(producto));
-        when(inventarioRepositoryPort.findByTiendaIdAndProductoId(tiendaId, productoId)).thenReturn(Optional.of(inventario));
+        when(inventarioRepositoryPort.findByTiendaIdAndProductoIdForUpdate(tiendaId, productoId)).thenReturn(Optional.of(inventario));
         when(ventaRepositoryPort.guardar(any(Venta.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         RegistrarVentaCommand command = new RegistrarVentaCommand(tiendaId, productoId, 3, LocalDateTime.now());
@@ -116,7 +116,7 @@ class VentaServiceTest {
         when(tiendaRepositoryPort.obtenerPorId(tiendaId)).thenReturn(Optional.of(tienda));
         when(usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)).thenReturn(Optional.of(admin));
         when(productoRepositoryPort.findById(productoId)).thenReturn(Optional.of(producto));
-        when(inventarioRepositoryPort.findByTiendaIdAndProductoId(tiendaId, productoId)).thenReturn(Optional.of(inventario));
+        when(inventarioRepositoryPort.findByTiendaIdAndProductoIdForUpdate(tiendaId, productoId)).thenReturn(Optional.of(inventario));
 
         RegistrarVentaCommand command = new RegistrarVentaCommand(tiendaId, productoId, 5, LocalDateTime.now());
 

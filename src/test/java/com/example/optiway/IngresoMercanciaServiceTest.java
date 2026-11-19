@@ -84,7 +84,7 @@ class IngresoMercanciaServiceTest {
         when(usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)).thenReturn(Optional.of(usuario));
         when(centroDistribucionRepositoryPort.obtenerPorId(centroId)).thenReturn(Optional.of(centro));
         when(productoRepositoryPort.findById(productoId)).thenReturn(Optional.of(producto));
-        when(inventarioRepositoryPort.findByCentroDistribucionIdAndProductoId(centroId, productoId))
+        when(inventarioRepositoryPort.findByCentroDistribucionIdAndProductoIdForUpdate(centroId, productoId))
                 .thenReturn(Optional.of(inventarioExistente));
 
         when(ingresoRepositoryPort.guardar(any(IngresoMercancia.class)))
@@ -121,7 +121,7 @@ class IngresoMercanciaServiceTest {
         when(usuarioRepositoryPort.obtenerPorAuthUserId(authUserId)).thenReturn(Optional.of(usuario));
         when(centroDistribucionRepositoryPort.obtenerPorId(centroId)).thenReturn(Optional.of(centro));
         when(productoRepositoryPort.findById(productoId)).thenReturn(Optional.of(producto));
-        when(inventarioRepositoryPort.findByCentroDistribucionIdAndProductoId(centroId, productoId))
+        when(inventarioRepositoryPort.findByCentroDistribucionIdAndProductoIdForUpdate(centroId, productoId))
                 .thenReturn(Optional.empty());
         when(ingresoRepositoryPort.guardar(any(IngresoMercancia.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));

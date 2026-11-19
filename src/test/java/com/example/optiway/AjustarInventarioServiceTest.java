@@ -82,7 +82,7 @@ class AjustarInventarioServiceTest {
         when(authorizationPort.requirePermisoTienda(authUserId, tienda, AuthorizedAction.AJUSTAR_INVENTARIO_TIENDA))
                 .thenReturn(encargadoTienda);
         when(productoRepository.findById(productoId)).thenReturn(Optional.of(producto));
-        when(inventarioRepository.findByTiendaIdAndProductoId(tiendaId, productoId))
+        when(inventarioRepository.findByTiendaIdAndProductoIdForUpdate(tiendaId, productoId))
                 .thenReturn(Optional.of(inventario));
         when(inventarioRepository.save(any(Inventario.class))).thenAnswer(inv -> inv.getArgument(0));
         when(ajusteRepository.guardar(any(AjusteInventario.class))).thenAnswer(inv -> {
@@ -114,7 +114,7 @@ class AjustarInventarioServiceTest {
         when(authorizationPort.requireEncargadoDelCentro(authUserId, centro, AuthorizedAction.AJUSTAR_INVENTARIO_CENTRO_DISTRIBUCION))
                 .thenReturn(encargadoCD);
         when(productoRepository.findById(productoId)).thenReturn(Optional.of(producto));
-        when(inventarioRepository.findByCentroDistribucionIdAndProductoId(cdId, productoId))
+        when(inventarioRepository.findByCentroDistribucionIdAndProductoIdForUpdate(cdId, productoId))
                 .thenReturn(Optional.of(inventario));
         when(inventarioRepository.save(any(Inventario.class))).thenAnswer(inv -> inv.getArgument(0));
         when(ajusteRepository.guardar(any(AjusteInventario.class))).thenAnswer(inv -> {
