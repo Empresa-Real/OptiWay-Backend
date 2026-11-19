@@ -117,13 +117,14 @@ class RecomendacionReposicionRollbackIntegrationTest {
 
         Long recomendacionId = propuesta.getId();
 
-        doThrow(new RuntimeException("Fallo simulado al persistir orden"))
+        RuntimeException falloSimulado = new RuntimeException("Fallo simulado al persistir orden");
+        doThrow(falloSimulado)
                 .when(ordenRepositoryPort).guardar(any());
 
-        assertThrows(RuntimeException.class, () ->
+        org.junit.jupiter.api.Assertions.assertSame(falloSimulado, assertThrows(RuntimeException.class, () ->
                 aprobarUseCase.aprobar(
                         planificadorAuthId,
-                        new AprobarRecomendacionCommand(recomendacionId, 30, null, null)));
+                        new AprobarRecomendacionCommand(recomendacionId, 30, null, null))));
 
         RecomendacionReposicionJpaEntity trasRollback =
                 recomendacionRepository.findById(recomendacionId).orElseThrow();
