@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -233,5 +234,52 @@ class RecomendacionReposicionServiceTest {
         assertTrue(resultado.fueraDeCobertura());
 
         verify(recomendacionRepositoryPort).guardar(any(RecomendacionReposicion.class));
+    }
+
+    @Test
+    void consultarRecomendaciones_CuandoUsuarioEsPlanificador_DebeRetornarRecomendaciones() {
+        when(authorizationPort.requirePlanificador(
+                authUserId, AuthorizedAction.LISTAR_RECOMENDACIONES_REPOSICION
+        )).thenReturn(planificador);
+
+        LocalDateTime fecha = LocalDateTime.now();
+
+        RecomendacionReposicion recomendacion = new RecomendacionReposicion();
+        recomendacion.setId(1L);
+        recomendacion.setProductoId(productoId);
+        recomendacion.setNombreProducto("Arroz Diana");
+        recomendacion.setCantidad(25);
+        recomendacion.setCentroDistribucionOrigenId(centroId);
+        recomendacion.setTiendaDestinoId(tiendaId);
+        recomendacion.setEstado("PROPUESTA");
+        recomendacion.setFueraDeCobertura(false);
+        recomendacion.setCreadoPor(authUserId);
+        recomendacion.setFechaCreacion(fecha);
+
+        when(recomendacionRepositoryPort.obtenerTodas())
+                .thenReturn(List.of(recomendacion));
+
+        List<RecomendacionReposicionResponse> resultado =
+                service.consultar(authUserId);
+
+        assertEquals(1, resultado.size());
+
+        RecomendacionReposicionResponse response = resultado.get(0);
+
+        assertEquals(1L, response.id());
+        assertEquals(productoId, response.productoId());
+        assertEquals("Arroz Diana", response.nombreProducto());
+        assertEquals(25, response.cantidad());
+        assertEquals(centroId, response.centroDistribucionOrigenId());
+        assertEquals(tiendaId, response.tiendaDestinoId());
+        assertEquals("PROPUESTA", response.estado());
+        assertFalse(response.fueraDeCobertura());
+        assertEquals(authUserId, response.creadoPor());
+        assertEquals(fecha, response.fechaCreacion());
+
+        verify(authorizationPort).requirePlanificador(
+                authUserId, AuthorizedAction.LISTAR_RECOMENDACIONES_REPOSICION
+        );
+        verify(recomendacionRepositoryPort).obtenerTodas();
     }
 }
