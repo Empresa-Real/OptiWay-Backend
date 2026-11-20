@@ -16,6 +16,8 @@ import com.example.optiway.domain.model.Inventario;
 import com.example.optiway.domain.model.Tienda;
 import com.example.optiway.domain.model.Usuario;
 import com.example.optiway.infrastructure.security.AuthorizedAction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +26,8 @@ import java.util.UUID;
 
 @Service
 public class AjustarInventarioService implements AjustarInventarioUseCase {
+
+    private static final Logger log = LoggerFactory.getLogger(AjustarInventarioService.class);
 
     private final AjusteInventarioRepositoryPort ajusteRepository;
     private final InventarioRepositoryPort inventarioRepository;
@@ -113,6 +117,9 @@ public class AjustarInventarioService implements AjustarInventarioUseCase {
         );
 
         AjusteInventario ajusteGuardado = ajusteRepository.guardar(ajuste);
+        log.info("Ajuste de inventario registrado. Ubicacion: {}, productoId: {}, cantidadAnterior: {}, cantidadNueva: {}",
+                esTienda ? "TIENDA" : "CENTRO_DISTRIBUCION",
+                command.productoId(), cantidadAnterior, cantidadNueva);
         return AjusteInventarioResponse.from(ajusteGuardado);
     }
 

@@ -3,6 +3,8 @@ package com.example.optiway.application.service;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +25,8 @@ import com.example.optiway.infrastructure.security.AuthorizedAction;
 
 @Service
 public class IngresoMercanciaService implements RegistrarIngresoMercanciaUseCase {
+
+    private static final Logger log = LoggerFactory.getLogger(IngresoMercanciaService.class);
 
     private final IngresoMercanciaRepositoryPort ingresoRepositoryPort;
     private final InventarioRepositoryPort inventarioRepositoryPort;
@@ -120,6 +124,9 @@ public class IngresoMercanciaService implements RegistrarIngresoMercanciaUseCase
         ingreso.setUsuarioId(usuario.getId());
         ingreso.setFechaIngreso(LocalDateTime.now());
 
-        return IngresoMercanciaResponse.from(ingresoRepositoryPort.guardar(ingreso));
+        IngresoMercancia ingresoGuardado = ingresoRepositoryPort.guardar(ingreso);
+        log.info("Ingreso de mercancía registrado. centroDistribucionId: {}, productoId: {}, cantidad: {}",
+                centro.getId(), command.productoId(), command.cantidad());
+        return IngresoMercanciaResponse.from(ingresoGuardado);
     }
 }

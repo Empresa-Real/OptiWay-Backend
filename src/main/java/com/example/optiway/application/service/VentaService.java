@@ -15,6 +15,8 @@ import com.example.optiway.domain.model.Tienda;
 import com.example.optiway.domain.model.Venta;
 import com.example.optiway.application.port.out.AuthorizationPort;
 import com.example.optiway.infrastructure.security.AuthorizedAction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +25,8 @@ import java.util.UUID;
 
 @Service
 public class VentaService implements RegistrarVentaUseCase {
+
+    private static final Logger log = LoggerFactory.getLogger(VentaService.class);
 
     private final VentaRepositoryPort ventaRepositoryPort;
     private final InventarioRepositoryPort inventarioRepositoryPort;
@@ -107,6 +111,9 @@ public class VentaService implements RegistrarVentaUseCase {
                 command.fechaHora() != null ? command.fechaHora() : LocalDateTime.now()
         );
 
-        return VentaResponse.from(ventaRepositoryPort.guardar(venta));
+        Venta ventaGuardada = ventaRepositoryPort.guardar(venta);
+        log.info("Venta registrada. tiendaId: {}, productoId: {}, cantidad: {}",
+                command.tiendaId(), command.productoId(), command.cantidad());
+        return VentaResponse.from(ventaGuardada);
     }
 }

@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +46,8 @@ public class RecomendacionReposicionService implements
         ConsultarRecomendacionesReposicionUseCase,
         AprobarRecomendacionUseCase,
         RechazarRecomendacionUseCase {
+
+    private static final Logger log = LoggerFactory.getLogger(RecomendacionReposicionService.class);
 
     private static final String ESTADO_PROPUESTA = "PROPUESTA";
     private static final String ESTADO_APROBADA = "APROBADA";
@@ -117,6 +121,10 @@ public class RecomendacionReposicionService implements
         RecomendacionReposicion guardada =
                 recomendacionRepositoryPort.guardar(recomendacion);
 
+        log.info("Recomendación de reposición creada. recomendacionId: {}, productoId: {}, cantidad: {}, centroOrigenId: {}, tiendaDestinoId: {}",
+                guardada.getId(), guardada.getProductoId(), guardada.getCantidad(),
+                guardada.getCentroDistribucionOrigenId(), guardada.getTiendaDestinoId());
+
         return toResponse(guardada);
     }
 
@@ -127,8 +135,13 @@ public class RecomendacionReposicionService implements
         authorizationPort.requirePlanificador(
                 authUserId, AuthorizedAction.LISTAR_RECOMENDACIONES_REPOSICION);
 
-        return recomendacionRepositoryPort.obtenerTodas()
-                .stream()
+        List<RecomendacionReposicion> recomendaciones =
+                recomendacionRepositoryPort.obtenerTodas();
+
+        log.debug("Consulta de recomendaciones de reposición ejecutada. total: {}",
+                recomendaciones.size());
+
+        return recomendaciones.stream()
                 .map(this::toResponse)
                 .toList();
     }
@@ -213,7 +226,14 @@ public class RecomendacionReposicionService implements
         orden.setCreadoPor(usuario.getAuthUserId());
         orden.setFechaCreacion(ahora);
 
-        return OrdenReposicionResponse.from(ordenRepositoryPort.guardar(orden));
+        OrdenReposicion ordenGuardada = ordenRepositoryPort.guardar(orden);
+
+        log.info("Recomendación de reposición aprobada. recomendacionId: {}, ordenId: {}, productoId: {}, cantidad: {}, centroOrigenId: {}, tiendaDestinoId: {}",
+                recomendacion.getId(), ordenGuardada.getId(), recomendacion.getProductoId(),
+                recomendacion.getCantidad(), recomendacion.getCentroDistribucionOrigenId(),
+                recomendacion.getTiendaDestinoId());
+
+        return OrdenReposicionResponse.from(ordenGuardada);
     }
 
     @Override
@@ -245,7 +265,13 @@ public class RecomendacionReposicionService implements
         recomendacion.setAccionTomada("RECHAZADA");
         recomendacion.setFechaResolucion(LocalDateTime.now());
 
-        return toResponse(recomendacionRepositoryPort.guardar(recomendacion));
+        RecomendacionReposicion rechazada =
+                recomendacionRepositoryPort.guardar(recomendacion);
+
+        log.info("Recomendación de reposición rechazada. recomendacionId: {}, productoId: {}, estado: {}",
+                rechazada.getId(), rechazada.getProductoId(), rechazada.getEstado());
+
+        return toResponse(rechazada);
     }
 
     private RecomendacionReposicion obtenerPropuestaPendiente(Long recomendacionId) {
