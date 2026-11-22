@@ -1,0 +1,36 @@
+@startuml C4-Contexto
+title C4 - Nivel 1: Diagrama de contexto de OptiWay
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultFontName Arial
+skinparam ArrowColor #526579
+
+actor "Administrador" as Admin
+actor "Encargado de tienda" as EncTienda
+actor "Encargado de centro\n de distribución" as EncCD
+actor "Planificador" as Planificador
+
+rectangle "OptiWay" as Sistema #DCEBFA {
+  rectangle "Sistema de gestión\nlogística e inventarios" as Aplicacion #A9D0F5
+}
+
+rectangle "Supabase" as Supabase #E9DDF5 {
+  rectangle "Supabase Auth\nAutenticación y emisión de JWT" as Auth #D5B8EA
+  database "PostgreSQL\nPersistencia de información" as DB #D5B8EA
+}
+
+Admin --> Aplicacion : Gestiona usuarios,\nproductos y operaciones
+EncTienda --> Aplicacion : Consulta inventario,\nregistra ventas y ajustes
+EncCD --> Aplicacion : Gestiona inventario\ne ingresos
+Planificador --> Aplicacion : Crea y gestiona\nrecomendaciones
+
+Aplicacion --> Auth : Valida identidad\nmediante JWT
+Aplicacion --> DB : Consulta y persiste\ndatos operativos
+
+note bottom of Aplicacion
+  Backend Java / Spring Boot
+  API REST con arquitectura hexagonal
+end note
+
+@enduml

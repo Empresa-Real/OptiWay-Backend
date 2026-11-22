@@ -1,0 +1,51 @@
+@startuml
+title HU-13 - Ajustar inventario
+
+autonumber
+actor "Usuario autorizado" as Usuario
+boundary "InventarioController" as Controller
+control "AjustarInventarioService" as Service
+participant "AuthorizationPort" as Auth
+participant "TiendaRepositoryPort" as Tienda
+participant "CentroDistribucionRepositoryPort" as CD
+participant "ProductoRepositoryPort" as Producto
+participant "InventarioRepositoryPort" as Inventario
+participant "AjusteInventarioRepositoryPort" as Ajuste
+
+Usuario -> Controller : POST /api/inventario/ajustes\nAjustarInventarioRequest
+Controller -> Controller : Validar datos y convertir a Command
+Controller -> Service : ajustarInventario(authUserId, command)
+
+Service -> Service : Validar IDs, cantidad y ubicación
+
+alt Ubicación inválida o ambas ubicaciones
+    Service --> Controller : Error de validación
+    Controller --> Usuario : HTTP 400
+else Ajuste en tienda
+    Service -> Tienda : Buscar tienda
+    Tienda --> Service : Tienda
+    Service -> Auth : requirePermisoTienda(..., AJUSTAR_INVENTARIO_TIENDA)
+    Auth --> Service : Permiso autorizado
+else Ajuste en centro de distribución
+    Service -> CD : Buscar centro de distribución
+    CD --> Service : Centro de distribución
+    Service -> Auth : requireEncargadoDelCentro(...,\nAJUSTAR_INVENTARIO_CENTRO_DISTRIBUCION)
+    Auth --> Service : Permiso autorizado
+end
+
+Service -> Producto : Buscar producto
+Producto --> Service : Producto
+
+Service -> Inventario : Obtener inventario para actualizar
+Inventario --> Service : Inventario actual
+Service -> Service : Calcular diferencia y nueva cantidad
+Service -> Inventario : Guardar inventario actualizado
+Inventario --> Service : Inventario guardado
+
+Service -> Ajuste : Guardar historial del ajuste
+Ajuste --> Service : Ajuste registrado
+
+Service --> Controller : AjusteInventarioResponse
+Controller --> Usuario : HTTP 201 Created
+
+@enduml

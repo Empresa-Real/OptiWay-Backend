@@ -1,0 +1,54 @@
+@startuml C4-Componentes-Backend
+title C4 - Nivel 3: Componentes internos del backend OptiWay
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultFontName Arial
+skinparam ArrowColor #526579
+
+actor "Cliente HTTP" as Cliente
+
+package "Adaptadores de entrada" {
+  rectangle "Controladores REST\nInventarioController\nRecomendacionReposicionController\nProductoController y otros" as Controllers #DCEBFA
+}
+
+package "Aplicación" {
+  rectangle "Servicios de aplicación\nAjustarInventarioService\nRecomendacionReposicionService\nOtros casos de uso" as Services #A9D0F5
+
+  rectangle "Puertos de entrada\nCommands y casos de uso" as InPorts #C6E0F5
+  rectangle "Puertos de salida\nRepositorios y autorización" as OutPorts #C6E0F5
+}
+
+package "Dominio" {
+  rectangle "Modelos y reglas de negocio\nInventario\nProducto\nTienda\nCentroDistribucion\nRecomendacionReposicion" as Domain #D9EAD3
+}
+
+package "Adaptadores de salida" {
+  rectangle "Persistencia JPA\nEntidades y repositorios\nAdapters" as Persistence #FCE4D6
+  rectangle "Autenticación Supabase\nSupabaseAuthAdapter" as SupabaseAdapter #FCE4D6
+}
+
+database "PostgreSQL\nSupabase" as DB
+cloud "Supabase Auth\nJWT" as Auth
+
+Cliente --> Controllers : HTTP / JSON
+Controllers --> InPorts : Invoca caso de uso
+InPorts --> Services : Ejecuta operación
+Services --> Domain : Aplica reglas de negocio
+Services --> OutPorts : Solicita operaciones
+OutPorts --> Persistence : Implementación de persistencia
+OutPorts --> SupabaseAdapter : Implementación de autorización
+Persistence --> DB : JPA / Hibernate
+SupabaseAdapter --> Auth : Integración de autenticación
+
+note bottom of Services
+  Los servicios coordinan los casos de uso
+  y aplican las validaciones del negocio.
+end note
+
+note bottom of Domain
+  El dominio contiene modelos y reglas
+  independientes de la infraestructura.
+end note
+
+@enduml

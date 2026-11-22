@@ -1,0 +1,39 @@
+@startuml C4-Contenedores
+title C4 - Nivel 2: Contenedores de OptiWay
+left to right direction
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam defaultFontName Arial
+skinparam ArrowColor #526579
+
+actor "Usuario del sistema" as Usuario
+
+rectangle "Entorno del usuario" {
+  rectangle "Aplicación web\nInterfaz de usuario" as Frontend #DCEBFA
+}
+
+rectangle "Plataforma OptiWay" {
+  rectangle "Backend OptiWay\nJava + Spring Boot\nAPI REST :8080" as Backend #A9D0F5
+}
+
+cloud "Supabase" as Supabase {
+  rectangle "Supabase Auth\nOAuth2 / JWT" as Auth #D5B8EA
+  database "PostgreSQL\nBase de datos" as DB #D5B8EA
+}
+
+Usuario --> Frontend : Utiliza
+Frontend --> Backend : Solicitudes HTTP\nJSON / API REST
+Frontend --> Auth : Inicio de sesión\nSupabase JS
+Backend --> Auth : Validación JWT\nIssuer configurado
+Backend --> DB : JPA / Hibernate\nJDBC PostgreSQL
+
+note bottom of Backend
+  Arquitectura hexagonal:
+  - Adaptadores REST
+  - Servicios de aplicación
+  - Dominio
+  - Puertos
+  - Adaptadores de persistencia y autenticación
+end note
+
+@enduml

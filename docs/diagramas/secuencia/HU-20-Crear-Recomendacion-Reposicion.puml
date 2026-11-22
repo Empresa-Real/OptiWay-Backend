@@ -1,0 +1,56 @@
+@startuml
+title HU-20 - Crear recomendación de reposición
+
+autonumber
+actor "Analista / Planificador" as Usuario
+boundary "RecomendacionReposicionController" as Controller
+control "RecomendacionReposicionService" as Service
+participant "AuthorizationPort" as Auth
+participant "ProductoRepositoryPort" as Producto
+participant "TiendaRepositoryPort" as Tienda
+participant "CentroDistribucionRepositoryPort" as CD
+participant "InventarioRepositoryPort" as Inventario
+participant "RecomendacionReposicionRepositoryPort" as Recomendacion
+
+Usuario -> Controller : POST /api/recomendaciones-reposicion\nCrearRecomendacionReposicionRequest
+Controller -> Controller : Validar datos y convertir a Command
+Controller -> Service : crearRecomendacion(authUserId, command)
+
+Service -> Auth : Verificar permiso PLANIFICADOR
+Auth --> Service : Permiso autorizado
+
+Service -> Producto : Buscar producto
+Producto --> Service : Producto
+
+Service -> Tienda : Buscar tienda destino
+Tienda --> Service : Tienda
+
+Service -> CD : Buscar centro de distribución origen
+CD --> Service : Centro de distribución
+
+Service -> Inventario : Consultar inventario del producto en el CD
+Inventario --> Service : Existencias disponibles
+
+alt Stock inexistente o insuficiente
+    Service --> Controller : StockInsuficienteException
+    Controller --> Usuario : Error: stock insuficiente\nNo se crea recomendación
+else Stock suficiente
+    Service -> Service : Verificar cobertura del CD hacia la tienda
+
+    alt Fuera de cobertura y sin confirmación
+        Service --> Controller : Conflicto HTTP 409
+        Controller --> Usuario : Advertencia de cobertura\nConfirmar o cambiar centro de distribución
+    else Dentro de cobertura o fuera de cobertura confirmado
+        Service -> Service : Construir recomendación\nEstado = PROPUESTA
+        Service -> Recomendacion : Guardar recomendación
+        Recomendacion --> Service : Recomendación guardada
+        note right of Service
+          La propuesta no ejecuta el traslado
+          ni descuenta existencias del inventario.
+        end note
+        Service --> Controller : RecomendacionReposicionResponse
+        Controller --> Usuario : HTTP 201 Created
+    end
+end
+
+@enduml
