@@ -123,6 +123,16 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>13.0.0</version>
+                <configuration>
+                    <nvdApiKeyEnvironmentVariable>NVD_API_KEY</nvdApiKeyEnvironmentVariable>
+                    <format>HTML</format>
+                    <failBuildOnCVSS>11</failBuildOnCVSS>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 

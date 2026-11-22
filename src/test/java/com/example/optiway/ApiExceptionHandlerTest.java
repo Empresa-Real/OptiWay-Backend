@@ -10,6 +10,8 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.optiway.application.exception.RecursoNoEncontradoException;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import com.example.optiway.infrastructure.adapter.in.rest.ApiExceptionHandler;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.ErrorResponse;
 
@@ -62,6 +64,23 @@ class ApiExceptionHandlerTest {
                 "El producto tiene existencias activas. Confirme la desactivación.",
                 response.getBody().message()
         );
+    }
+
+
+    @Test
+    @DisplayName("Un recurso inexistente devuelve HTTP 404")
+    void recursoNoEncontrado_devuelveHttp404() throws NoSuchMethodException {
+        RecursoNoEncontradoException exception =
+                new RecursoNoEncontradoException("Producto no encontrado");
+
+        ErrorResponse response = handler.recursoNoEncontrado(exception);
+
+        ResponseStatus status = ApiExceptionHandler.class
+                .getMethod("recursoNoEncontrado", RecursoNoEncontradoException.class)
+                .getAnnotation(ResponseStatus.class);
+
+        assertEquals(HttpStatus.NOT_FOUND, status.value());
+        assertEquals("Producto no encontrado", response.message());
     }
 
 }
