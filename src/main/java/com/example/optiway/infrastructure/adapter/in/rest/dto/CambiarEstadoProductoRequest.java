@@ -5,10 +5,11 @@ import jakarta.validation.constraints.NotNull;
 
 public record CambiarEstadoProductoRequest(
         @NotNull(message = "Debe indicar si el producto estará activo o inactivo")
-        Boolean activo
-) {
+        Boolean activo,
 
+        Boolean confirmarConStock
+) {
     public CambiarEstadoProductoCommand toCommand(Long id) {
-        return new CambiarEstadoProductoCommand(id, activo);
+        return new CambiarEstadoProductoCommand(id, activo, confirmarConStock);
     }
 }

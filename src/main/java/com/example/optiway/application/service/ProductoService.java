@@ -129,6 +129,16 @@ public class ProductoService implements CrearProductoUseCase, ObtenerProductosUs
         Producto producto = productoRepositoryPort.findById(command.id())
                 .orElseThrow(() -> new IllegalArgumentException("El producto no existe con ID: " + command.id()));
 
+        if (Boolean.FALSE.equals(command.activo())
+                && inventarioRepositoryPort.existeStockActivoDeProducto(producto.getId())
+                && !Boolean.TRUE.equals(command.confirmarConStock())) {
+
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.CONFLICT,
+                    "El producto tiene existencias activas en tiendas o centros de distribución. "
+                            + "Confirme la desactivación enviando confirmarConStock=true.");
+        }
+
         producto.setActivo(command.activo());
         return ProductoResponse.from(productoRepositoryPort.save(producto));
     }

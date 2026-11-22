@@ -74,7 +74,7 @@ public class ProductoController {
     }
 
     @PatchMapping("/{id}/estado")
-    @Operation(summary = "Cambiar estado de producto", description = "Activa o desactiva un producto en el catálogo. Requiere rol ADMINISTRADOR.")
+    @Operation(summary = "Cambiar estado de producto", description = "Activa o desactiva un producto en el catálogo. Requiere rol ADMINISTRADOR o PLANIFICADOR.")
     public ProductoResponse cambiarEstado(@AuthUserId UUID authUserId,
                                           @Parameter(description = "ID numérico (Long) del producto", example = "1")
                                           @PathVariable Long id,
