@@ -64,3 +64,8 @@ temp/
 api-docs.json
 content.md
 last_logs.txt
+
+# Logs de ejecucion y capturas temporales
+logs/
+*.gz
+mintty.*.png
