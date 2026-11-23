@@ -5,7 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+import com.example.optiway.application.exception.RecursoNoEncontradoException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import com.example.optiway.infrastructure.adapter.in.rest.ApiExceptionHandler;
@@ -44,4 +48,22 @@ class ApiExceptionHandlerTest {
         assertEquals(response.error(), response.message());
         assertTrue(response.message().contains("'tiendaId'"));
     }
+
+    @Test
+    @DisplayName("Un recurso inexistente debe estar configurado para responder HTTP 404")
+    void recursoNoEncontrado_debeResponderHttp404() throws NoSuchMethodException {
+        RecursoNoEncontradoException exception =
+                new RecursoNoEncontradoException("Producto no encontrado con ID: 999");
+
+        ErrorResponse response = handler.recursoNoEncontrado(exception);
+
+        assertEquals("Producto no encontrado con ID: 999", response.message());
+
+        ResponseStatus responseStatus = ApiExceptionHandler.class
+                .getMethod("recursoNoEncontrado", RecursoNoEncontradoException.class)
+                .getAnnotation(ResponseStatus.class);
+
+        assertEquals(HttpStatus.NOT_FOUND, responseStatus.value());
+    }
+
 }
