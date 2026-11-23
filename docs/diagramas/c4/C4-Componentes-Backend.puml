@@ -1,54 +1,44 @@
 @startuml C4-Componentes-Backend
-title C4 - Nivel 3: Componentes internos del backend OptiWay
-left to right direction
-skinparam shadowing false
-skinparam packageStyle rectangle
-skinparam defaultFontName Arial
-skinparam ArrowColor #526579
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 
-actor "Cliente HTTP" as Cliente
+TITLE C4 - Nivel 3: Componentes del backend OptiWay
+LAYOUT_LEFT_RIGHT()
 
-package "Adaptadores de entrada" {
-  rectangle "Controladores REST\nInventarioController\nRecomendacionReposicionController\nProductoController y otros" as Controllers #DCEBFA
+Person(cliente, "Usuario de OptiWay", "Administrador, encargado de tienda, encargado de CD o planificador.")
+
+System_Boundary(opt, "Sistema OptiWay") {
+    Container_Boundary(backend, "Backend OptiWay - Java / Spring Boot") {
+
+        Component(web, "Recursos web estáticos", "HTML / recursos estáticos", "Página de bienvenida servida desde index.html.")
+
+        Component(rest, "Controladores REST", "Spring MVC", "Reciben solicitudes HTTP y exponen los endpoints de la API.")
+
+        Component(services, "Servicios de aplicación", "Java / Spring", "Coordinan casos de uso y validaciones del negocio.")
+
+        Component(inPorts, "Puertos de entrada", "Interfaces Java / Commands", "Definen las operaciones disponibles para los adaptadores de entrada.")
+
+        Component(outPorts, "Puertos de salida", "Interfaces Java", "Abstraen persistencia, autorización y otros servicios externos.")
+
+        Component(domain, "Dominio", "Modelos y reglas de negocio", "Contiene entidades y reglas de inventario, productos, tiendas, centros de distribución y recomendaciones.")
+
+        Component(persistence, "Adaptadores de persistencia", "Spring Data JPA / Hibernate", "Implementan repositorios y operaciones sobre la base de datos.")
+
+        Component(authAdapter, "Adaptador de autenticación", "Java / Supabase", "Integra la validación de identidad y autorización con Supabase.")
+    }
 }
 
-package "Aplicación" {
-  rectangle "Servicios de aplicación\nAjustarInventarioService\nRecomendacionReposicionService\nOtros casos de uso" as Services #A9D0F5
+System_Ext(auth, "Supabase Auth", "Autenticación y tokens JWT.")
+System_Ext(db, "PostgreSQL", "Base de datos de OptiWay.")
 
-  rectangle "Puertos de entrada\nCommands y casos de uso" as InPorts #C6E0F5
-  rectangle "Puertos de salida\nRepositorios y autorización" as OutPorts #C6E0F5
-}
-
-package "Dominio" {
-  rectangle "Modelos y reglas de negocio\nInventario\nProducto\nTienda\nCentroDistribucion\nRecomendacionReposicion" as Domain #D9EAD3
-}
-
-package "Adaptadores de salida" {
-  rectangle "Persistencia JPA\nEntidades y repositorios\nAdapters" as Persistence #FCE4D6
-  rectangle "Autenticación Supabase\nSupabaseAuthAdapter" as SupabaseAdapter #FCE4D6
-}
-
-database "PostgreSQL\nSupabase" as DB
-cloud "Supabase Auth\nJWT" as Auth
-
-Cliente --> Controllers : HTTP / JSON
-Controllers --> InPorts : Invoca caso de uso
-InPorts --> Services : Ejecuta operación
-Services --> Domain : Aplica reglas de negocio
-Services --> OutPorts : Solicita operaciones
-OutPorts --> Persistence : Implementación de persistencia
-OutPorts --> SupabaseAdapter : Implementación de autorización
-Persistence --> DB : JPA / Hibernate
-SupabaseAdapter --> Auth : Integración de autenticación
-
-note bottom of Services
-  Los servicios coordinan los casos de uso
-  y aplican las validaciones del negocio.
-end note
-
-note bottom of Domain
-  El dominio contiene modelos y reglas
-  independientes de la infraestructura.
-end note
+Rel(cliente, web, "Accede a la página de bienvenida", "HTTP")
+Rel(cliente, rest, "Consume la API", "HTTP / JSON")
+Rel(rest, inPorts, "Invoca operaciones")
+Rel(inPorts, services, "Dirige al caso de uso")
+Rel(services, domain, "Aplica reglas de negocio")
+Rel(services, outPorts, "Solicita operaciones externas")
+Rel(outPorts, persistence, "Usa implementación de persistencia")
+Rel(outPorts, authAdapter, "Usa implementación de autenticación")
+Rel(persistence, db, "Consulta y persiste", "JPA / JDBC")
+Rel(authAdapter, auth, "Valida identidad y JWT", "HTTPS")
 
 @enduml

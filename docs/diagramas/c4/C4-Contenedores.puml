@@ -1,39 +1,27 @@
 @startuml C4-Contenedores
-title C4 - Nivel 2: Contenedores de OptiWay
-left to right direction
-skinparam shadowing false
-skinparam packageStyle rectangle
-skinparam defaultFontName Arial
-skinparam ArrowColor #526579
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
-actor "Usuario del sistema" as Usuario
+TITLE C4 - Nivel 2: Contenedores de OptiWay
+LAYOUT_LEFT_RIGHT()
 
-rectangle "Entorno del usuario" {
-  rectangle "Aplicación web\nInterfaz de usuario" as Frontend #DCEBFA
+Person(admin, "Administrador", "Gestiona usuarios, productos y operaciones.")
+Person(encTienda, "Encargado de tienda", "Consulta inventario y registra ventas y ajustes.")
+Person(encCD, "Encargado de CD", "Gestiona inventario e ingresos.")
+Person(planificador, "Planificador", "Gestiona recomendaciones.")
+
+System_Boundary(opt, "Sistema OptiWay") {
+    Container(backend, "Backend OptiWay", "Java 17+, Spring Boot", "API REST, lógica de negocio y recursos web estáticos. Puerto 8080.")
 }
 
-rectangle "Plataforma OptiWay" {
-  rectangle "Backend OptiWay\nJava + Spring Boot\nAPI REST :8080" as Backend #A9D0F5
-}
+System_Ext(auth, "Supabase Auth", "Autenticación y emisión de tokens JWT.")
+System_Ext(db, "PostgreSQL", "Persistencia de datos operativos.")
 
-cloud "Supabase" as Supabase {
-  rectangle "Supabase Auth\nOAuth2 / JWT" as Auth #D5B8EA
-  database "PostgreSQL\nBase de datos" as DB #D5B8EA
-}
+Rel(admin, backend, "Gestiona el sistema", "HTTPS / JSON")
+Rel(encTienda, backend, "Consulta y registra operaciones", "HTTPS / JSON")
+Rel(encCD, backend, "Gestiona inventario e ingresos", "HTTPS / JSON")
+Rel(planificador, backend, "Gestiona recomendaciones", "HTTPS / JSON")
 
-Usuario --> Frontend : Utiliza
-Frontend --> Backend : Solicitudes HTTP\nJSON / API REST
-Frontend --> Auth : Inicio de sesión\nSupabase JS
-Backend --> Auth : Validación JWT\nIssuer configurado
-Backend --> DB : JPA / Hibernate\nJDBC PostgreSQL
-
-note bottom of Backend
-  Arquitectura hexagonal:
-  - Adaptadores REST
-  - Servicios de aplicación
-  - Dominio
-  - Puertos
-  - Adaptadores de persistencia y autenticación
-end note
+Rel(backend, auth, "Valida tokens e identidad", "JWT")
+Rel(backend, db, "Lee y escribe información", "JPA / JDBC")
 
 @enduml

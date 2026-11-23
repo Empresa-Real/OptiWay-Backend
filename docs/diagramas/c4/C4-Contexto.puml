@@ -1,36 +1,29 @@
 @startuml C4-Contexto
-title C4 - Nivel 1: Diagrama de contexto de OptiWay
-left to right direction
-skinparam shadowing false
-skinparam packageStyle rectangle
-skinparam defaultFontName Arial
-skinparam ArrowColor #526579
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
 
-actor "Administrador" as Admin
-actor "Encargado de tienda" as EncTienda
-actor "Encargado de centro\n de distribución" as EncCD
-actor "Planificador" as Planificador
+TITLE C4 - Nivel 1: Contexto del sistema OptiWay
+LAYOUT_LEFT_RIGHT()
 
-rectangle "OptiWay" as Sistema #DCEBFA {
-  rectangle "Sistema de gestión\nlogística e inventarios" as Aplicacion #A9D0F5
-}
+' Personas que utilizan el sistema
+Person(admin, "Administrador", "Gestiona usuarios, productos y operaciones.")
+Person(encTienda, "Encargado de tienda", "Consulta inventario, registra ventas y ajustes.")
+Person(encCD, "Encargado de centro de distribución", "Gestiona inventario e ingresos de mercancía.")
+Person(planificador, "Planificador", "Gestiona recomendaciones de reposición.")
 
-rectangle "Supabase" as Supabase #E9DDF5 {
-  rectangle "Supabase Auth\nAutenticación y emisión de JWT" as Auth #D5B8EA
-  database "PostgreSQL\nPersistencia de información" as DB #D5B8EA
-}
+' Sistema principal
+System(opt, "OptiWay", "Sistema de gestión logística e inventarios. Backend Java con Spring Boot y API REST.")
 
-Admin --> Aplicacion : Gestiona usuarios,\nproductos y operaciones
-EncTienda --> Aplicacion : Consulta inventario,\nregistra ventas y ajustes
-EncCD --> Aplicacion : Gestiona inventario\ne ingresos
-Planificador --> Aplicacion : Crea y gestiona\nrecomendaciones
+' Servicios externos
+System_Ext(auth, "Supabase Auth", "Gestiona autenticación y emisión de tokens JWT.")
+System_Ext(db, "PostgreSQL", "Almacena usuarios, productos, tiendas, centros de distribución, inventarios y operaciones.")
 
-Aplicacion --> Auth : Valida identidad\nmediante JWT
-Aplicacion --> DB : Consulta y persiste\ndatos operativos
+' Relaciones
+Rel(admin, opt, "Administra")
+Rel(encTienda, opt, "Gestiona inventario y ventas")
+Rel(encCD, opt, "Gestiona inventario e ingresos")
+Rel(planificador, opt, "Gestiona recomendaciones")
 
-note bottom of Aplicacion
-  Backend Java / Spring Boot
-  API REST con arquitectura hexagonal
-end note
+Rel(opt, auth, "Valida identidad y token", "JWT")
+Rel(opt, db, "Consulta y persiste información", "SQL / JPA")
 
 @enduml
