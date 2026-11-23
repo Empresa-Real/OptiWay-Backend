@@ -14,4 +14,5 @@ public interface TiendaRepositoryPort {
     List<Tienda> findAll();
     List<Tienda> obtenerPorEncargadoId(Long encargadoId);
     Optional<Tienda> obtenerPorId(Long id);
+    List<Tienda> obtenerPorIds(List<Long> ids);
 }
