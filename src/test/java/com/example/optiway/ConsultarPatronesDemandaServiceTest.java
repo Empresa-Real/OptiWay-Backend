@@ -1,5 +1,7 @@
 package com.example.optiway;
 
+import com.example.optiway.application.exception.AccesoDenegadoException;
+import com.example.optiway.application.exception.RecursoNoEncontradoException;
 import com.example.optiway.application.port.in.dto.PatronesDemandaResponse;
 import com.example.optiway.application.port.in.dto.PatronesDemandaResponse.DemandaTienda;
 import com.example.optiway.application.port.in.dto.PatronesDemandaResponse.VentaDiaria;
@@ -15,13 +17,18 @@ import com.example.optiway.infrastructure.security.AuthorizedAction;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class ConsultarPatronesDemandaServiceTest {
@@ -84,6 +91,89 @@ class ConsultarPatronesDemandaServiceTest {
 
         assertEquals(List.of(1L, 2L), resultado.tiendasMayorRotacion());
         assertEquals(List.of(3L), resultado.tiendasMenorRotacion());
+    }
+
+    @Test
+    void deduplicaTiendasRepetidasYConsultaUnaSolaVezPorTienda() {
+        when(productos.findById(productoId)).thenReturn(Optional.of(mock(Producto.class)));
+        when(tiendas.obtenerPorId(1L)).thenReturn(Optional.of(mock(Tienda.class)));
+        when(tiendas.obtenerPorId(2L)).thenReturn(Optional.of(mock(Tienda.class)));
+        when(ventas.buscarVentasPorProductoYTiendasEnPeriodo(
+                productoId, List.of(1L, 2L), desde.atStartOfDay(), hasta.plusDays(1).atStartOfDay()))
+                .thenReturn(List.of(venta(1L, desde, 4)));
+
+        var resultado = servicio.consultarPatronesDemanda(
+                usuario, productoId, List.of(1L, 2L, 1L), desde, hasta);
+
+        assertEquals(2, resultado.tiendas().size());
+        verify(tiendas, times(1)).obtenerPorId(1L);
+        verify(tiendas, times(1)).obtenerPorId(2L);
+    }
+
+    @Test
+    void rechazaProductoInvalido() {
+        assertThrows(IllegalArgumentException.class, () ->
+                servicio.consultarPatronesDemanda(usuario, null, List.of(1L), desde, hasta));
+        assertThrows(IllegalArgumentException.class, () ->
+                servicio.consultarPatronesDemanda(usuario, 0L, List.of(1L), desde, hasta));
+        verifyNoInteractions(productos, tiendas, ventas);
+    }
+
+    @Test
+    void rechazaListaDeTiendasVaciaNulaOConIdsInvalidos() {
+        assertThrows(IllegalArgumentException.class, () ->
+                servicio.consultarPatronesDemanda(usuario, productoId, null, desde, hasta));
+        assertThrows(IllegalArgumentException.class, () ->
+                servicio.consultarPatronesDemanda(usuario, productoId, List.of(), desde, hasta));
+        assertThrows(IllegalArgumentException.class, () ->
+                servicio.consultarPatronesDemanda(usuario, productoId, Arrays.asList(1L, null), desde, hasta));
+        assertThrows(IllegalArgumentException.class, () ->
+                servicio.consultarPatronesDemanda(usuario, productoId, List.of(1L, -2L), desde, hasta));
+        verifyNoInteractions(productos, tiendas, ventas);
+    }
+
+    @Test
+    void rechazaRangoDeFechasInvalidoOLocalDateMax() {
+        assertThrows(IllegalArgumentException.class, () ->
+                servicio.consultarPatronesDemanda(usuario, productoId, List.of(1L), null, hasta));
+        assertThrows(IllegalArgumentException.class, () ->
+                servicio.consultarPatronesDemanda(usuario, productoId, List.of(1L), desde, null));
+        assertThrows(IllegalArgumentException.class, () ->
+                servicio.consultarPatronesDemanda(usuario, productoId, List.of(1L), hasta, desde));
+        assertThrows(IllegalArgumentException.class, () ->
+                servicio.consultarPatronesDemanda(usuario, productoId, List.of(1L), desde, LocalDate.MAX));
+        verifyNoInteractions(productos, tiendas, ventas);
+    }
+
+    @Test
+    void lanzaRecursoNoEncontradoCuandoProductoNoExiste() {
+        when(productos.findById(productoId)).thenReturn(Optional.empty());
+
+        assertThrows(RecursoNoEncontradoException.class, () ->
+                servicio.consultarPatronesDemanda(usuario, productoId, List.of(1L), desde, hasta));
+        verifyNoInteractions(tiendas, ventas);
+    }
+
+    @Test
+    void lanzaRecursoNoEncontradoCuandoAlgunaTiendaNoExiste() {
+        when(productos.findById(productoId)).thenReturn(Optional.of(mock(Producto.class)));
+        when(tiendas.obtenerPorId(1L)).thenReturn(Optional.of(mock(Tienda.class)));
+        when(tiendas.obtenerPorId(99L)).thenReturn(Optional.empty());
+
+        assertThrows(RecursoNoEncontradoException.class, () ->
+                servicio.consultarPatronesDemanda(usuario, productoId, List.of(1L, 99L), desde, hasta));
+        verifyNoInteractions(ventas);
+    }
+
+    @Test
+    void rechazaAccesoCuandoUsuarioNoEsPlanificador() {
+        doThrow(new AccesoDenegadoException("Solo planificadores"))
+                .when(autorizacion)
+                .requirePlanificador(usuario, AuthorizedAction.CONSULTAR_PATRONES_DEMANDA);
+
+        assertThrows(AccesoDenegadoException.class, () ->
+                servicio.consultarPatronesDemanda(usuario, productoId, List.of(1L), desde, hasta));
+        verifyNoInteractions(productos, tiendas, ventas);
     }
 
     private PatronesDemandaResponse consultar(List<Long> tiendaIds, List<Venta> ventasDePrueba) {
