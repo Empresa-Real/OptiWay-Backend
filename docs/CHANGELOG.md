@@ -123,3 +123,10 @@
 - **Errores de Supabase**: documentado que la Admin API responde `502` con el `code` del proveedor (`429`/`422`) y que un JWT inválido se resuelve con `401` vacío; nuevo ejemplo `docs/dto/response/error-502-supabase-auth.json`.
 - **Ventas sin fecha del cliente**: eliminado `fechaHora` de `RegistrarVentaRequest`; el servidor asigna `LocalDateTime.now()`. Evita el `400` cuando el frontend enviaba ISO-8601 con `Z` y no rompe clientes viejos (Spring ignora campos desconocidos).
 - **Deuda técnica**: retirado el ítem de `LocalDateTime` con `Z` porque ya no existe ningún `LocalDateTime` en un request DTO.
+
+## Unificación de errores para recursos inexistentes (Fix 42)
+
+- Las búsquedas de tiendas, centros de distribución, productos y usuarios inexistentes en los servicios afectados utilizan `RecursoNoEncontradoException`, que se traduce a HTTP 404.
+- Swagger documenta los códigos 404 en los seis endpoints de inventario, productos y usuarios involucrados.
+- Se actualizan las pruebas unitarias y se incorpora el escenario de actualización de rol para un usuario inexistente.
+- Se conserva `IllegalArgumentException` para validaciones y reglas de negocio, y `AccesoDenegadoException` para restricciones de autorización.

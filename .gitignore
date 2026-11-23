@@ -57,10 +57,22 @@ product_backlog.txt
 *.wav
 audio_taller.*
 
-docs/diagramas/
 other/
 src/main/resources/static/web
 temp/
 api-docs.json
 content.md
 last_logs.txt
+
+# Logs de ejecucion y capturas temporales
+logs/
+*.gz
+mintty.*.png
+
+# Diagramas PlantUML de los entregables
+
+# Herramientas locales de generación de diagramas
+tools/plantuml/
+
+# Incluir diagramas y evidencias visuales del proyecto
+!docs/diagramas/

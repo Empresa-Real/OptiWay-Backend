@@ -8,10 +8,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.example.optiway.application.exception.RecursoNoEncontradoException;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-
 import com.example.optiway.infrastructure.adapter.in.rest.ApiExceptionHandler;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.ErrorResponse;
 
@@ -47,6 +47,23 @@ class ApiExceptionHandlerTest {
 
         assertEquals(response.error(), response.message());
         assertTrue(response.message().contains("'tiendaId'"));
+    }
+
+    @Test
+    @DisplayName("Una operación que requiere confirmación de existencias devuelve HTTP 409")
+    void responseStatusException_conflict() {
+        ResponseStatusException exception = new ResponseStatusException(
+                HttpStatus.CONFLICT,
+                "El producto tiene existencias activas. Confirme la desactivación."
+        );
+
+        var response = handler.responseStatus(exception);
+
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertEquals(
+                "El producto tiene existencias activas. Confirme la desactivación.",
+                response.getBody().message()
+        );
     }
 
     @Test

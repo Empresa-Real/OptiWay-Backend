@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 import com.example.optiway.application.exception.AccesoDenegadoException;
+import com.example.optiway.application.exception.RecursoNoEncontradoException;
 import com.example.optiway.application.exception.UsuarioDuplicadoException;
 import com.example.optiway.application.port.in.ActualizarRolCommand;
 import com.example.optiway.application.port.in.ActualizarRolUsuarioUseCase;
@@ -156,7 +157,7 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
     public void eliminarUsuario(UUID authUserId, Long id) {
         authorizationService.requireAdministrador(authUserId, AuthorizedAction.ELIMINAR_USUARIO);
         Usuario usuarioAEliminar = usuarioRepositoryPort.obtenerPorId(id)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con ID: " + id));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado con ID: " + id));
 
         if (authUserId.equals(usuarioAEliminar.getAuthUserId())) {
             throw new IllegalArgumentException("Un administrador no puede eliminarse a sí mismo");
@@ -194,7 +195,7 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
         authorizationService.requireAdministrador(authUserId, AuthorizedAction.ACTUALIZAR_ROL);
 
         Usuario usuario = usuarioRepositoryPort.obtenerPorId(command.usuarioId())
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con ID: " + command.usuarioId()));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado con ID: " + command.usuarioId()));
 
         Rol nuevoRol = command.nuevoRol();
 

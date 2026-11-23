@@ -13,6 +13,8 @@ import com.example.optiway.infrastructure.adapter.in.rest.dto.EditarProductoRequ
 import com.example.optiway.infrastructure.security.AuthUserId;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -66,6 +68,10 @@ public class ProductoController {
 
     @PatchMapping("/{id}")
     @Operation(summary = "Editar producto existente", description = "Modifica los atributos comerciales de un producto. Requiere rol ADMINISTRADOR.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Producto actualizado correctamente"),
+            @ApiResponse(responseCode = "404", description = "El producto indicado no existe")
+    })
     public ProductoResponse editarProducto(@AuthUserId UUID authUserId,
                                            @Parameter(description = "ID numérico (Long) del producto", example = "1")
                                            @PathVariable Long id,
@@ -74,7 +80,11 @@ public class ProductoController {
     }
 
     @PatchMapping("/{id}/estado")
-    @Operation(summary = "Cambiar estado de producto", description = "Activa o desactiva un producto en el catálogo. Requiere rol ADMINISTRADOR.")
+    @Operation(summary = "Cambiar estado de producto", description = "Activa o desactiva un producto en el catálogo. Requiere rol ADMINISTRADOR o PLANIFICADOR.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Estado del producto actualizado correctamente"),
+            @ApiResponse(responseCode = "404", description = "El producto indicado no existe")
+    })
     public ProductoResponse cambiarEstado(@AuthUserId UUID authUserId,
                                           @Parameter(description = "ID numérico (Long) del producto", example = "1")
                                           @PathVariable Long id,

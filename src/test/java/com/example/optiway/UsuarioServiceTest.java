@@ -1,5 +1,6 @@
 package com.example.optiway;
 
+import com.example.optiway.application.exception.RecursoNoEncontradoException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
@@ -157,13 +158,13 @@ class UsuarioServiceTest {
         }
 
         @Test
-        @DisplayName("Rechazar eliminación si el usuario objetivo no existe (HTTP 400)")
+        @DisplayName("Rechazar eliminación si el usuario objetivo no existe (HTTP 404)")
         void eliminarUsuario_usuarioNoExiste_lanzaIllegalArgumentException() {
             Long idInexistente = 999L;
             when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(adminUsuario));
             when(usuarioRepositoryPort.obtenerPorId(idInexistente)).thenReturn(Optional.empty());
 
-            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+            RecursoNoEncontradoException exception = assertThrows(RecursoNoEncontradoException.class, () ->
                     usuarioService.eliminarUsuario(adminAuthId, idInexistente)
             );
 
@@ -176,6 +177,25 @@ class UsuarioServiceTest {
     @Nested
     @DisplayName("Reglas de cambio de rol (actualizarRol)")
     class ActualizarRolTests {
+
+        @Test
+        @DisplayName("Rechazar cambio de rol cuando el usuario no existe (HTTP 404)")
+        void actualizarRol_usuarioNoExiste_lanzaRecursoNoEncontrado() {
+            Long idInexistente = 999L;
+
+            when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId))
+                    .thenReturn(Optional.of(adminUsuario));
+            when(usuarioRepositoryPort.obtenerPorId(idInexistente))
+                    .thenReturn(Optional.empty());
+
+            assertThrows(RecursoNoEncontradoException.class, () ->
+                    usuarioService.actualizarRol(
+                            adminAuthId,
+                            new ActualizarRolCommand(idInexistente, Rol.PLANIFICADOR))
+            );
+
+            verify(usuarioRepositoryPort, never()).guardar(any());
+        }
 
         @Test
         @DisplayName("Cambiar el rol de un usuario no administrador exitosamente")

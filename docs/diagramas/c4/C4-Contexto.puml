@@ -1,0 +1,29 @@
+@startuml C4-Contexto
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+TITLE C4 - Nivel 1: Contexto del sistema OptiWay
+LAYOUT_LEFT_RIGHT()
+
+' Personas que utilizan el sistema
+Person(admin, "Administrador", "Gestiona usuarios, productos y operaciones.")
+Person(encTienda, "Encargado de tienda", "Consulta inventario, registra ventas y ajustes.")
+Person(encCD, "Encargado de centro de distribución", "Gestiona inventario e ingresos de mercancía.")
+Person(planificador, "Planificador", "Gestiona recomendaciones de reposición.")
+
+' Sistema principal
+System(opt, "OptiWay", "Sistema de gestión logística e inventarios. Backend Java con Spring Boot y API REST.")
+
+' Servicios externos
+System_Ext(auth, "Supabase Auth", "Gestiona autenticación y emisión de tokens JWT.")
+System_Ext(db, "PostgreSQL", "Almacena usuarios, productos, tiendas, centros de distribución, inventarios y operaciones.")
+
+' Relaciones
+Rel(admin, opt, "Administra")
+Rel(encTienda, opt, "Gestiona inventario y ventas")
+Rel(encCD, opt, "Gestiona inventario e ingresos")
+Rel(planificador, opt, "Gestiona recomendaciones")
+
+Rel(opt, auth, "Valida identidad y token", "JWT")
+Rel(opt, db, "Consulta y persiste información", "SQL / JPA")
+
+@enduml

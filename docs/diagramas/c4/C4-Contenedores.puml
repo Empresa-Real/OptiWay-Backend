@@ -1,0 +1,27 @@
+@startuml C4-Contenedores
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+TITLE C4 - Nivel 2: Contenedores de OptiWay
+LAYOUT_LEFT_RIGHT()
+
+Person(admin, "Administrador", "Gestiona usuarios, productos y operaciones.")
+Person(encTienda, "Encargado de tienda", "Consulta inventario y registra ventas y ajustes.")
+Person(encCD, "Encargado de CD", "Gestiona inventario e ingresos.")
+Person(planificador, "Planificador", "Gestiona recomendaciones.")
+
+System_Boundary(opt, "Sistema OptiWay") {
+    Container(backend, "Backend OptiWay", "Java 17+, Spring Boot", "API REST, lógica de negocio y recursos web estáticos. Puerto 8080.")
+}
+
+System_Ext(auth, "Supabase Auth", "Autenticación y emisión de tokens JWT.")
+System_Ext(db, "PostgreSQL", "Persistencia de datos operativos.")
+
+Rel(admin, backend, "Gestiona el sistema", "HTTPS / JSON")
+Rel(encTienda, backend, "Consulta y registra operaciones", "HTTPS / JSON")
+Rel(encCD, backend, "Gestiona inventario e ingresos", "HTTPS / JSON")
+Rel(planificador, backend, "Gestiona recomendaciones", "HTTPS / JSON")
+
+Rel(backend, auth, "Valida tokens e identidad", "JWT")
+Rel(backend, db, "Lee y escribe información", "JPA / JDBC")
+
+@enduml
