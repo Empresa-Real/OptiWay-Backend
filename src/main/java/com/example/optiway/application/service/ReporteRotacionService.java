@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.optiway.application.exception.RecursoNoEncontradoException;
 import com.example.optiway.application.port.in.ReporteRotacionUseCase;
@@ -52,6 +53,7 @@ public class ReporteRotacionService implements ReporteRotacionUseCase {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ReporteRotacionResponse generarReporte(UUID authUserId, Long tiendaId, LocalDate desde, LocalDate hasta) {
         validarParametros(tiendaId, desde, hasta);
         authorization.requirePlanificador(authUserId, AuthorizedAction.CONSULTAR_REPORTE_ROTACION);
@@ -135,6 +137,9 @@ public class ReporteRotacionService implements ReporteRotacionUseCase {
         }
         if (desde.isAfter(hasta)) {
             throw new IllegalArgumentException("La fecha desde no puede ser posterior a hasta.");
+        }
+        if (hasta.equals(LocalDate.MAX)) {
+            throw new IllegalArgumentException("La fecha hasta está fuera del rango admitido.");
         }
     }
 }

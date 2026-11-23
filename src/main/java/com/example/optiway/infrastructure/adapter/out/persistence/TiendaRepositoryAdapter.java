@@ -67,6 +67,13 @@ public class TiendaRepositoryAdapter implements TiendaRepositoryPort {
                 .map(this::toDomain);
     }
 
+    @Override
+    public List<Tienda> obtenerPorIds(List<Long> ids) {
+        return tiendaJpaRepository.findAllById(ids).stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
     private Tienda toDomain(TiendaJpaEntity entity) {
         if (entity == null) {
             return null;

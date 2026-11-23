@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -419,6 +420,42 @@ class RecomendacionReposicionServiceTest {
         assertThrows(IllegalArgumentException.class, () ->
                 service.rechazar(authUserId, new RechazarRecomendacionCommand(5L, "a".repeat(501))));
         verify(recomendacionRepositoryPort, never()).guardar(any());
+    }
+
+    @Test
+    void consultarRecomendaciones_CuandoUsuarioEsPlanificador_DebeRetornarRecomendaciones() {
+        when(authorizationPort.requirePlanificador(
+                authUserId, AuthorizedAction.LISTAR_RECOMENDACIONES_REPOSICION
+        )).thenReturn(planificador);
+
+        LocalDateTime fecha = LocalDateTime.now();
+
+        RecomendacionReposicion recomendacion = crearPropuestaBase(1L, "PROPUESTA");
+        recomendacion.setFechaCreacion(fecha);
+
+        when(recomendacionRepositoryPort.obtenerTodas())
+                .thenReturn(List.of(recomendacion));
+
+        List<RecomendacionReposicionResponse> resultado = service.consultar(authUserId);
+
+        assertEquals(1, resultado.size());
+        RecomendacionReposicionResponse response = resultado.get(0);
+
+        assertEquals(1L, response.id());
+        assertEquals(productoId, response.productoId());
+        assertEquals("Arroz Diana", response.nombreProducto());
+        assertEquals(25, response.cantidad());
+        assertEquals(centroId, response.centroDistribucionOrigenId());
+        assertEquals(tiendaId, response.tiendaDestinoId());
+        assertEquals("PROPUESTA", response.estado());
+        assertFalse(response.fueraDeCobertura());
+        assertEquals(authUserId, response.creadoPor());
+        assertEquals(fecha, response.fechaCreacion());
+
+        verify(authorizationPort).requirePlanificador(
+                authUserId, AuthorizedAction.LISTAR_RECOMENDACIONES_REPOSICION
+        );
+        verify(recomendacionRepositoryPort).obtenerTodas();
     }
 
     private void prepararEntidadesActivasParaAprobacion(
