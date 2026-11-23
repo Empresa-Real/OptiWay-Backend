@@ -49,7 +49,7 @@ public class SecurityConfig {
                                 "default-src 'self'; " +
                                 "script-src 'self' https://unpkg.com; " +
                                 "style-src 'self'; " +
-                                "img-src 'self' data: https://gif.fxtwitter.com; " +
+                                "img-src 'self' data:; " +
                                 "font-src 'self' data:; " +
                                 "connect-src 'self'; " +
                                 "object-src 'none'; " +

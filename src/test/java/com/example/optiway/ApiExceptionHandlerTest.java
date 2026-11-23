@@ -5,13 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.web.bind.MissingServletRequestParameterException;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.example.optiway.application.exception.RecursoNoEncontradoException;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import com.example.optiway.infrastructure.adapter.in.rest.ApiExceptionHandler;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.ErrorResponse;
 
@@ -66,21 +66,21 @@ class ApiExceptionHandlerTest {
         );
     }
 
-
     @Test
-    @DisplayName("Un recurso inexistente devuelve HTTP 404")
-    void recursoNoEncontrado_devuelveHttp404() throws NoSuchMethodException {
+    @DisplayName("Un recurso inexistente debe estar configurado para responder HTTP 404")
+    void recursoNoEncontrado_debeResponderHttp404() throws NoSuchMethodException {
         RecursoNoEncontradoException exception =
-                new RecursoNoEncontradoException("Producto no encontrado");
+                new RecursoNoEncontradoException("Producto no encontrado con ID: 999");
 
         ErrorResponse response = handler.recursoNoEncontrado(exception);
 
-        ResponseStatus status = ApiExceptionHandler.class
+        assertEquals("Producto no encontrado con ID: 999", response.message());
+
+        ResponseStatus responseStatus = ApiExceptionHandler.class
                 .getMethod("recursoNoEncontrado", RecursoNoEncontradoException.class)
                 .getAnnotation(ResponseStatus.class);
 
-        assertEquals(HttpStatus.NOT_FOUND, status.value());
-        assertEquals("Producto no encontrado", response.message());
+        assertEquals(HttpStatus.NOT_FOUND, responseStatus.value());
     }
 
 }
