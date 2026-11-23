@@ -1,4 +1,4 @@
- package com.example.optiway.application.port.out;
+package com.example.optiway.application.port.out;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,10 +23,14 @@ public interface VentaRepositoryPort {
     List<Venta> findAll();
 
     List<Venta> findByTiendaId(Long tiendaId);
+
+    List<VentaProductoResumen> resumirUnidadesVendidasPorProducto(
+            Long tiendaId, LocalDateTime desdeInclusive, LocalDateTime hastaExclusive);
+
     List<Venta> buscarVentasPorProductoYTiendasEnPeriodo(
-        Long productoId,
-        List<Long> tiendaIds,
-        LocalDateTime desdeInclusive,
-        LocalDateTime hastaExclusivo
-);
+            Long productoId,
+            List<Long> tiendaIds,
+            LocalDateTime desdeInclusive,
+            LocalDateTime hastaExclusivo
+    );
 }
