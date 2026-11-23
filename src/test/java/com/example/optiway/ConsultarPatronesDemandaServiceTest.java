@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.LongStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -95,9 +96,9 @@ class ConsultarPatronesDemandaServiceTest {
 
     @Test
     void deduplicaTiendasRepetidasYConsultaUnaSolaVezPorTienda() {
+        List<Tienda> tiendasMock = List.of(tienda(1L), tienda(2L));
         when(productos.findById(productoId)).thenReturn(Optional.of(mock(Producto.class)));
-        when(tiendas.obtenerPorId(1L)).thenReturn(Optional.of(mock(Tienda.class)));
-        when(tiendas.obtenerPorId(2L)).thenReturn(Optional.of(mock(Tienda.class)));
+        when(tiendas.obtenerPorIds(List.of(1L, 2L))).thenReturn(tiendasMock);
         when(ventas.buscarVentasPorProductoYTiendasEnPeriodo(
                 productoId, List.of(1L, 2L), desde.atStartOfDay(), hasta.plusDays(1).atStartOfDay()))
                 .thenReturn(List.of(venta(1L, desde, 4)));
@@ -106,8 +107,9 @@ class ConsultarPatronesDemandaServiceTest {
                 usuario, productoId, List.of(1L, 2L, 1L), desde, hasta);
 
         assertEquals(2, resultado.tiendas().size());
-        verify(tiendas, times(1)).obtenerPorId(1L);
-        verify(tiendas, times(1)).obtenerPorId(2L);
+        verify(tiendas, times(1)).obtenerPorIds(List.of(1L, 2L));
+        verify(ventas, times(1)).buscarVentasPorProductoYTiendasEnPeriodo(
+                productoId, List.of(1L, 2L), desde.atStartOfDay(), hasta.plusDays(1).atStartOfDay());
     }
 
     @Test
@@ -146,6 +148,23 @@ class ConsultarPatronesDemandaServiceTest {
     }
 
     @Test
+    void rechazaMasDeCincuentaTiendas() {
+        List<Long> muchasTiendas = LongStream.rangeClosed(1, 51).boxed().toList();
+
+        assertThrows(IllegalArgumentException.class, () ->
+                servicio.consultarPatronesDemanda(usuario, productoId, muchasTiendas, desde, hasta));
+        verifyNoInteractions(productos, tiendas, ventas);
+    }
+
+    @Test
+    void rechazaRangoSuperiorATrescientosSesentaYSeisDias() {
+        assertThrows(IllegalArgumentException.class, () ->
+                servicio.consultarPatronesDemanda(
+                        usuario, productoId, List.of(1L), desde.minusDays(366), hasta));
+        verifyNoInteractions(productos, tiendas, ventas);
+    }
+
+    @Test
     void lanzaRecursoNoEncontradoCuandoProductoNoExiste() {
         when(productos.findById(productoId)).thenReturn(Optional.empty());
 
@@ -156,9 +175,9 @@ class ConsultarPatronesDemandaServiceTest {
 
     @Test
     void lanzaRecursoNoEncontradoCuandoAlgunaTiendaNoExiste() {
+        List<Tienda> tiendasMock = List.of(tienda(1L));
         when(productos.findById(productoId)).thenReturn(Optional.of(mock(Producto.class)));
-        when(tiendas.obtenerPorId(1L)).thenReturn(Optional.of(mock(Tienda.class)));
-        when(tiendas.obtenerPorId(99L)).thenReturn(Optional.empty());
+        when(tiendas.obtenerPorIds(List.of(1L, 99L))).thenReturn(tiendasMock);
 
         assertThrows(RecursoNoEncontradoException.class, () ->
                 servicio.consultarPatronesDemanda(usuario, productoId, List.of(1L, 99L), desde, hasta));
@@ -177,16 +196,21 @@ class ConsultarPatronesDemandaServiceTest {
     }
 
     private PatronesDemandaResponse consultar(List<Long> tiendaIds, List<Venta> ventasDePrueba) {
+        List<Tienda> tiendasMock = tiendaIds.stream().map(this::tienda).toList();
         when(productos.findById(productoId)).thenReturn(Optional.of(mock(Producto.class)));
-        for (Long tiendaId : tiendaIds) {
-            when(tiendas.obtenerPorId(tiendaId)).thenReturn(Optional.of(mock(Tienda.class)));
-        }
+        when(tiendas.obtenerPorIds(tiendaIds)).thenReturn(tiendasMock);
 
         when(ventas.buscarVentasPorProductoYTiendasEnPeriodo(
                 productoId, tiendaIds, desde.atStartOfDay(), hasta.plusDays(1).atStartOfDay()))
                 .thenReturn(ventasDePrueba);
 
         return servicio.consultarPatronesDemanda(usuario, productoId, tiendaIds, desde, hasta);
+    }
+
+    private Tienda tienda(Long tiendaId) {
+        Tienda tienda = mock(Tienda.class);
+        when(tienda.getId()).thenReturn(tiendaId);
+        return tienda;
     }
 
     private Venta venta(Long tiendaId, LocalDate fecha, int cantidad) {

@@ -5,6 +5,8 @@ import com.example.optiway.application.port.in.dto.PatronesDemandaResponse;
 import com.example.optiway.infrastructure.security.AuthUserId;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,7 +33,14 @@ public class PatronesDemandaController {
     @GetMapping("/patrones")
     @Operation(summary = "Consultar patrones de demanda",
             description = "Devuelve las unidades vendidas por día y por tienda, "
-                    + "e identifica las tiendas con mayor y menor total en el período.")
+                    + "e identifica las tiendas con mayor y menor total en el período. "
+                    + "Máximo 366 días y 50 tiendas por consulta. Requiere rol PLANIFICADOR.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Patrones de demanda calculados correctamente"),
+            @ApiResponse(responseCode = "400", description = "Parámetros inválidos o límites de rango/tiendas excedidos"),
+            @ApiResponse(responseCode = "403", description = "El usuario no tiene rol PLANIFICADOR"),
+            @ApiResponse(responseCode = "404", description = "El producto o alguna tienda indicada no existe")
+    })
     public PatronesDemandaResponse consultarPatrones(
             @Parameter(hidden = true) @AuthUserId UUID authUserId,
             @RequestParam("productoId") Long productoId,
