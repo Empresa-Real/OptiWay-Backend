@@ -147,6 +147,7 @@ Los controladores de OptiWay reciben la identidad del usuario mediante el parám
 | Controlador | Ruta Base | Operaciones Principales |
 | :--- | :--- | :--- |
 | **`inventario-controller`** | `/api/inventario` | `GET /api/inventario` (Inventario de Tienda), `GET /api/inventario/centro-distribucion` (Inventario de CD), `POST /api/inventario/ajustes` (Ajuste de inventario de tienda o CD con auditoría). |
+| **`reporte-rotacion-controller`** | `/api/reportes/rotacion` | `GET /api/reportes/rotacion` (consulta JSON), `GET /api/reportes/rotacion/exportar` (descarga CSV UTF-8). |
 | **`producto-controller`** | `/api/productos` | `GET /api/productos`, `POST /api/productos`, `PUT /api/productos/{id}`, `PATCH /api/productos/{id}/estado`. |
 | **`tienda-controller`** | `/api/tiendas` | `GET /api/tiendas`, `POST /api/tiendas`, `PUT /api/tiendas/{id}/encargado`, `POST /api/tiendas/{id}/ventas` (Registro de venta con deducción atómica de stock). |
 | **`centro-distribucion-controller`** | `/api/centros-distribucion` (alias `/api/cd`) | `GET /api/centros-distribucion`, `POST /api/centros-distribucion`, `PUT /api/centros-distribucion/{id}/encargado`, `POST /api/centros-distribucion/{id}/ingresos` (Registro de ingresos con validación de capacidad). |

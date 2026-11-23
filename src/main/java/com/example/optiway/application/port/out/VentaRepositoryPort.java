@@ -4,6 +4,7 @@ import com.example.optiway.domain.model.Venta;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 public interface VentaRepositoryPort {
 
@@ -22,4 +23,7 @@ public interface VentaRepositoryPort {
     List<Venta> findAll();
 
     List<Venta> findByTiendaId(Long tiendaId);
+
+    List<VentaProductoResumen> resumirUnidadesVendidasPorProducto(
+            Long tiendaId, LocalDateTime desdeInclusive, LocalDateTime hastaExclusive);
 }

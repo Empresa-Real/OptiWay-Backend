@@ -4,6 +4,13 @@
 
 ---
 
+## HU-27 — Reporte de rotación por tienda
+
+- `GET /api/reportes/rotacion` devuelve unidades vendidas, stock actual, tiempo promedio estimado en inventario y clasificación rápida/baja por producto para un periodo.
+- `GET /api/reportes/rotacion/exportar` descarga el mismo resultado en CSV UTF-8.
+- Acceso limitado al rol `PLANIFICADOR`. La clasificación compara velocidad de venta contra la mediana de productos de la misma tienda y periodo.
+- El tiempo en inventario se informa como estimación: el sistema todavía no registra ingresos de mercancía a nivel de tienda para reconstruir permanencias exactas.
+
 ## Estandarización de errores HTTP y documentación OpenAPI (Fix 41)
 
 - **Manejo de tipos y parámetros inválidos en endpoints REST (400 Bad Request)**:

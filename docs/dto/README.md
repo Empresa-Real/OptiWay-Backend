@@ -455,7 +455,42 @@ export interface ConsultarInventarioCdParams {
 
 ---
 
-## 5. Productos (`/api/productos`) — HU-04, HU-05 y HU-06
+## 5. Reporte de rotación — HU-27
+
+Los dos endpoints requieren autenticación y el rol `PLANIFICADOR` (analista de cadena de suministro).
+
+```http
+GET /api/reportes/rotacion?tiendaId=1&desde=2026-11-01&hasta=2026-11-30
+GET /api/reportes/rotacion/exportar?tiendaId=1&desde=2026-11-01&hasta=2026-11-30
+```
+
+`desde` y `hasta` son fechas ISO-8601 inclusivas. El reporte incluye productos con inventario en la tienda aunque no registren ventas en el periodo. `RAPIDA` y `BAJA` comparan las unidades vendidas por día con la mediana de productos de esa tienda en el mismo periodo; `SIN_VENTAS` indica rotación nula.
+
+El tiempo promedio en inventario es una estimación: se usa el stock actual a la fecha de la consulta como aproximación del stock al cierre del periodo, se infiere el stock inicial como `stockActual + unidadesVendidas` y se calcula `díasDelPeriodo × ((stockActual + unidadesVendidas / 2) / unidadesVendidas)`. El sistema todavía no registra movimientos de entrada de mercancía a las tiendas, así que la métrica no puede reconstruir entradas o ajustes históricos y puede diferir del tiempo real.
+
+```json
+{
+  "tiendaId": 1,
+  "desde": "2026-11-01",
+  "hasta": "2026-11-30",
+  "metodoCalculo": "Tiempo estimado = días del periodo × ((stockActual + unidadesVendidas / 2) / unidadesVendidas)...",
+  "productos": [
+    {
+      "productoId": 10,
+      "nombreProducto": "Arroz Blanco Premium 1kg",
+      "categoriaProducto": "Granos",
+      "unidadesVendidas": 45,
+      "stockActual": 15,
+      "tiempoPromedioEstimadoEnInventarioDias": 20.00,
+      "clasificacionRotacion": "RAPIDA"
+    }
+  ]
+}
+```
+
+La exportación entrega las mismas filas en un archivo CSV UTF-8. Si las fechas están invertidas o los parámetros no son válidos, la API responde `400 Bad Request`; una tienda inexistente responde `404 Not Found`, y una tienda sin permiso para el usuario responde `403 Forbidden`.
+
+## 6. Productos (`/api/productos`) — HU-04, HU-05 y HU-06
 
 ### Request Crear Producto (`POST /api/productos`)
 * **Archivo:** [`docs/dto/request/crear-producto.json`](./request/crear-producto.json)
@@ -569,7 +604,7 @@ export interface ProductoStockResponse {
 
 ---
 
-## 6. Errores
+## 7. Errores
 
 > **Importante:** la API **no emite un único formato de error**. Hay tres formas posibles según dónde ocurra el fallo. El frontend debe tolerar las tres y nunca asumir que el body siempre tiene la misma forma.
 
