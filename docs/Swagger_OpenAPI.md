@@ -166,6 +166,7 @@ Los controladores de OptiWay reciben la identidad del usuario mediante el parám
 | **`inventario-controller`** | `/api/inventario` | `GET /api/inventario` (Inventario de Tienda), `GET /api/inventario/centro-distribucion` (Inventario de CD), `POST /api/inventario/ajustes` (ajuste de inventario de tienda o CD con auditoría). |
 | **`reposicion-controller`** | `/api/tiendas/{id}/solicitudes-reposicion`, `/api/solicitudes-reposicion` | `POST /api/tiendas/{id}/solicitudes-reposicion` (solicitud manual HU-15), `GET /api/solicitudes-reposicion` (listado para el planificador). |
 | **`recomendacion-reposicion-controller`** | `/api/recomendaciones-reposicion` | `POST` (crear propuesta HU-20), `GET` (consultar), `PATCH /{id}/aprobar` (aprobar o ajustar, genera orden HU-21), `PATCH /{id}/rechazar` (rechazar con motivo HU-21). |
+| **`demanda-controller`** | `/api/demanda` | `GET /api/demanda/patrones` (histórico de ventas por producto y tiendas; máx. 366 días y 50 tiendas; requiere rol `PLANIFICADOR`). |
 
 ### 6.1. Notas de integración para frontend
 
@@ -173,5 +174,6 @@ Los controladores de OptiWay reciben la identidad del usuario mediante el parám
 - **Desactivar CD**: `PATCH /api/centros-distribucion/{id}/estado` (o `/api/cd/{id}/estado`) con body `{"activo": false}`. Si abastece tiendas, responde `409` hasta enviar `{"activo": false, "confirmarConTiendasAsignadas": true}`.
 - **Roles**: desactivar tienda/CD requiere `ADMINISTRADOR` (un `PLANIFICADOR` recibe `403`, no un `404`). Las operaciones de recomendaciones requieren `PLANIFICADOR`.
 - **Editar producto** es `PATCH /api/productos/{id}` (no `PUT`).
-- **Sin backend a la fecha**: HU-19 (consultar patrones de demanda) y HU-27 (reporte de rotación de productos). El resto de las historias comprometidas para el sprint están expuestas en las rutas anteriores. Ver guías detalladas en [`docs/Historias de Usuario/Sprint 3`](Historias%20de%20Usuario/Sprint%203/README.md).
+- **HU-19 (consultar patrones de demanda)**: disponible en `GET /api/demanda/patrones` con `productoId`, `tiendaIds`, `desde` y `hasta` (máx. 366 días y 50 tiendas; rol `PLANIFICADOR`). La guía de HU-19 está actualizada con el contrato real.
+- **Sin backend a la fecha**: únicamente HU-27 (reporte de rotación de productos). El resto de las historias comprometidas para el sprint están expuestas en las rutas anteriores. Ver guías detalladas en [`docs/Historias de Usuario/Sprint 3`](Historias%20de%20Usuario/Sprint%203/README.md).
 - Para verificar cualquier endpoint: `https://optiway-backend.onrender.com/docs` o descargar el contrato desde `https://optiway-backend.onrender.com/v3/api-docs`.

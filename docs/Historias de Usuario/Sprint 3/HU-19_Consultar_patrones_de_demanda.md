@@ -3,7 +3,7 @@
 **Épica 5:** Análisis y reportes  
 **Feature:** Análisis de demanda y rotación  
 **Sprint:** 3  
-**Estado:** ⚠️ **Pendiente de implementación en backend** (planeada para este sprint, sin merge)
+**Estado:** ✅ **Implementado y mergeado en `main`** (PR #21)
 
 ---
 
@@ -27,41 +27,80 @@ Fuente: `product_backlog.txt:391-401`.
 
 ## Estado de Implementación
 
-**No hay backend para esta historia.** Verificación realizada contra el código de `main`/`produccion` y contra el OpenAPI en vivo (`https://optiway-backend.onrender.com/v3/api-docs`):
+### Endpoint real
 
-* No existe controlador, caso de uso, servicio, repositorio ni entidad relacionada con patrones de demanda.
-* No existe ningún endpoint de consulta de histórico de ventas ni de agregación por producto/tienda/fecha.
-* No hay migración SQL ni campos calculados para rotación o estacionalidad.
-* No hay tests asociados.
+```http
+GET /api/demanda/patrones?productoId=3&tiendaIds=1&tiendaIds=2&desde=2026-11-01&hasta=2026-11-03
+```
 
-**Lo que sí existe y puede servir de base (pero no cumple la HU):**
+`tiendaIds` admite tanto valores repetidos (`tiendaIds=1&tiendaIds=2`) como separados por coma (`tiendaIds=1,2`). Las fechas usan ISO-8601 (`yyyy-MM-dd`).
 
-| Recurso | Qué hace | Por qué no cubre HU-19 |
-| :--- | :--- | :--- |
-| `POST /api/tiendas/{id}/ventas` (HU-11) | Registra una venta y descuenta stock. | Solo escritura; no expone histórico consultable. |
-| `GET /api/inventario` (HU-12) y `GET /api/inventario/centro-distribucion` (HU-16) | Consultan stock actual con filtros. | No incluyen ventas, rangos de fechas ni comparación entre tiendas. |
-| `GET /api/solicitudes-reposicion` (HU-15) | Lista solicitudes pendientes. | No es demanda real ni serie temporal. |
+### Respuesta
 
----
+```json
+{
+  "productoId": 3,
+  "desde": "2026-11-01",
+  "hasta": "2026-11-03",
+  "tiendas": [
+    {
+      "tiendaId": 1,
+      "unidadesVendidas": 9,
+      "evolucion": [
+        { "fecha": "2026-11-01", "unidadesVendidas": 5 },
+        { "fecha": "2026-11-02", "unidadesVendidas": 0 },
+        { "fecha": "2026-11-03", "unidadesVendidas": 4 }
+      ]
+    }
+  ],
+  "tiendasMayorRotacion": [1],
+  "tiendasMenorRotacion": [2]
+}
+```
 
-## Contrato previsto (NO implementado — no usar desde el frontend todavía)
+### Reglas vigentes
 
-No existe contrato oficial. Cuando se implemente, deberá acordarse con el equipo de backend antes de programar consumos. Criterios que deberá satisfacer:
+* **Rol:** solo `PLANIFICADOR`. Un `ADMINISTRADOR` recibe `403` (`requirePlanificador` no lo incluye), coherente con HU-20/HU-21.
+* **Límites:** máximo **366 días** por rango y **50 tiendas distintas** por consulta. Los IDs repetidos se deduplican antes de contar.
+* **Rango:** ambos extremos inclusive; se consulta `[desde 00:00, hasta+1 00:00)` y se agrupa por día. Los días sin ventas se devuelven con `0`.
+* **Rotación:** `tiendasMayorRotacion` y `tiendasMenorRotacion` contienen **todos** los IDs empatados en el máximo/mínimo.
+* **Consulta eficiente:** la existencia de tiendas se valida en una sola llamada batch (`obtenerPorIds`), no una por tienda.
+* **Filtros:** solo cuentan ventas del `productoId` y de las tiendas seleccionadas; se ignoran las de otros productos/tiendas aunque caigan en el rango.
 
-* Parámetros mínimos: `productoId`, `tiendaId` (o lista de tiendas para comparación), `fechaDesde`, `fechaHasta`.
-* Respuesta con unidades vendidas por periodo y por tienda, e indicadores de mayor/menor rotación para el resaltado visual.
-* Roles: Analista/Planificador (`PLANIFICADOR`), coherente con HU-20/HU-21.
+### Errores
 
-> ⚠️ Cualquier pantalla que consuma estos datos debe mostrar un estado "sin endpoint disponible" hasta que el backend publique el contrato en `/docs`.
+| Código | Cuándo |
+| :--- | :--- |
+| `400` | Parámetros nulos/inválidos, fechas invertidas, rango > 366 días o > 50 tiendas. |
+| `401` | Falta JWT o el claim `sub` no es un UUID válido. |
+| `403` | El usuario autenticado no es `PLANIFICADOR`. |
+| `404` | No existe el producto o alguna de las tiendas solicitadas. |
+
+La fuente autoritativa del contrato es `https://optiway-backend.onrender.com/v3/api-docs`. El endpoint también está listado en [`docs/Swagger_OpenAPI.md`](../../Swagger_OpenAPI.md).
 
 ---
 
 ## Componentes Hexagonales Asociados
 
-Ninguno en la implementación actual.
+| Capa | Archivo |
+| :--- | :--- |
+| Puerto de entrada | `src/main/java/com/example/optiway/application/port/in/ConsultarPatronesDemandaUseCase.java` |
+| DTO de respuesta | `src/main/java/com/example/optiway/application/port/in/dto/PatronesDemandaResponse.java` |
+| Servicio | `src/main/java/com/example/optiway/application/service/ConsultarPatronesDemandaService.java` |
+| Puerto de salida | `VentaRepositoryPort`, `TiendaRepositoryPort.obtenerPorIds(...)` |
+| Adaptador REST | `src/main/java/com/example/optiway/infrastructure/adapter/in/rest/PatronesDemandaController.java` |
+| Persistencia | `VentaJpaRepository.buscarVentasPorProductoYTiendasEnPeriodo(...)`, `VentaRepositoryAdapter`, `TiendaRepositoryAdapter` |
+| Acción autorizada | `AuthorizedAction.CONSULTAR_PATRONES_DEMANDA` |
 
 ---
 
-## Pruebas y Migraciones
+## Pruebas
 
-No aplican. Esta guía se crea para dejar trazabilidad del hueco funcional y evitar que el frontend interprete la ausencia de endpoint como un error de integración.
+* `ConsultarPatronesDemandaServiceTest`: 12 pruebas unitarias (agregación por día, ceros, empates, deduplicación, validaciones, 404 y RBAC).
+* `PatronesDemandaIntegrationTest`: 7 pruebas MVC con JWT real sobre H2. Cubren bindings repetido y por coma, formato de fecha, límites de rango/tiendas, `403`, `404` y el intervalo `[desde, hasta]` con ruido de otros productos/tiendas.
+
+---
+
+## Pendiente para el frontend
+
+El resaltado visual de `tiendasMayorRotacion` / `tiendasMenorRotacion` debe hacerse en la pantalla; el backend solo entrega las listas de IDs. No existe aún una pantalla propia documentada para HU-19.
