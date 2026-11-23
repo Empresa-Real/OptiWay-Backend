@@ -9,6 +9,8 @@ import com.example.optiway.infrastructure.adapter.in.rest.dto.AjustarInventarioR
 import com.example.optiway.infrastructure.security.AuthUserId;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -41,6 +43,10 @@ public class InventarioController {
     @GetMapping
     @Operation(summary = "Consultar inventario de tienda",
             description = "Obtiene los productos en inventario de una tienda específica.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Inventario consultado correctamente"),
+            @ApiResponse(responseCode = "404", description = "La tienda indicada no existe")
+    })
     public List<InventarioResponse> consultarInventario(
             @AuthUserId UUID authUserId,
             @Parameter(description = "ID numérico de la tienda", example = "1", required = true)
@@ -57,6 +63,10 @@ public class InventarioController {
     @GetMapping("/centro-distribucion")
     @Operation(summary = "Consultar inventario de centro de distribución",
             description = "Obtiene los productos en inventario de un centro de distribución específico.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Inventario consultado correctamente"),
+            @ApiResponse(responseCode = "404", description = "El centro de distribución indicado no existe")
+    })
     public List<InventarioResponse> consultarInventarioCD(
             @AuthUserId UUID authUserId,
             @Parameter(description = "ID numérico del centro de distribución", example = "1", required = true)

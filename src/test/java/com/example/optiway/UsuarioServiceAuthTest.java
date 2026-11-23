@@ -26,6 +26,7 @@ import com.example.optiway.application.port.out.TiendaRepositoryPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.application.service.AuthErrorMapper;
 import com.example.optiway.application.exception.InvitacionAuthException;
+import com.example.optiway.application.exception.RecursoNoEncontradoException;
 import com.example.optiway.application.service.UsuarioService;
 import com.example.optiway.domain.model.Rol;
 import com.example.optiway.domain.model.Usuario;
@@ -168,12 +169,12 @@ class UsuarioServiceAuthTest {
         }
 
         @Test
-        @DisplayName("Usuario inexistente lanza IllegalArgumentException y no toca Supabase")
+        @DisplayName("Usuario inexistente lanza RecursoNoEncontradoException y no toca Supabase")
         void usuarioInexistente_lanza() {
             when(usuarioRepositoryPort.obtenerPorAuthUserId(adminAuthId)).thenReturn(Optional.of(admin));
             when(usuarioRepositoryPort.obtenerPorId(99L)).thenReturn(Optional.empty());
 
-            IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+            RecursoNoEncontradoException e = assertThrows(RecursoNoEncontradoException.class,
                     () -> usuarioService.eliminarUsuario(adminAuthId, 99L));
             assertEquals("Usuario no encontrado con ID: 99", e.getMessage());
             verify(authPort, never()).eliminarUsuarioAuth(any());

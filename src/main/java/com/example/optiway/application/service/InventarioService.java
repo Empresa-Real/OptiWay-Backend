@@ -1,5 +1,6 @@
 package com.example.optiway.application.service;
 
+import com.example.optiway.application.exception.RecursoNoEncontradoException;
 import com.example.optiway.application.port.in.ObtenerInventarioCommand;
 import com.example.optiway.application.port.in.ObtenerInventarioUseCase;
 import com.example.optiway.application.port.in.dto.InventarioResponse;
@@ -71,11 +72,11 @@ public class InventarioService implements ObtenerInventarioUseCase {
     private void validarAcceso(UUID authUserId, Long tiendaId, Long centroDistribucionId) {
         if (tiendaId != null) {
             Tienda tienda = tiendaRepositoryPort.obtenerPorId(tiendaId)
-                    .orElseThrow(() -> new IllegalArgumentException("La tienda no existe."));
+                    .orElseThrow(() -> new RecursoNoEncontradoException("La tienda no existe."));
             authorizationService.requirePermisoTienda(authUserId, tienda, AuthorizedAction.CONSULTAR_INVENTARIO_TIENDA);
         } else if (centroDistribucionId != null) {
             CentroDistribucion centro = centroDistribucionRepositoryPort.obtenerPorId(centroDistribucionId)
-                    .orElseThrow(() -> new IllegalArgumentException("El centro de distribución no existe"));
+                    .orElseThrow(() -> new RecursoNoEncontradoException("El centro de distribución no existe"));
             authorizationService.requirePermisoCentroDistribucion(
                     authUserId, centro, AuthorizedAction.CONSULTAR_INVENTARIO_CENTRO_DISTRIBUCION);
         }

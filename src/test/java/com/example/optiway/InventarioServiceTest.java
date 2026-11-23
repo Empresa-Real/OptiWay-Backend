@@ -1,5 +1,6 @@
 package com.example.optiway;
 
+import com.example.optiway.application.exception.RecursoNoEncontradoException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -174,8 +175,8 @@ class InventarioServiceTest {
         UUID authUserId = UUID.randomUUID();
         when(tiendaRepositoryPort.obtenerPorId(99L)).thenReturn(Optional.empty());
 
-        IllegalArgumentException ex = assertThrows(
-                IllegalArgumentException.class,
+        RecursoNoEncontradoException ex = assertThrows(
+                RecursoNoEncontradoException.class,
                 () -> inventarioService.obtenerInventario(authUserId, new ObtenerInventarioCommand(99L, null, null, null, null))
         );
 
@@ -239,8 +240,8 @@ class InventarioServiceTest {
         UUID authUserId = UUID.randomUUID();
         when(centroDistribucionRepositoryPort.obtenerPorId(88L)).thenReturn(Optional.empty());
 
-        IllegalArgumentException ex = assertThrows(
-                IllegalArgumentException.class,
+        RecursoNoEncontradoException ex = assertThrows(
+                RecursoNoEncontradoException.class,
                 () -> inventarioService.obtenerInventario(authUserId, new ObtenerInventarioCommand(null, 88L, null, null, null))
         );
 

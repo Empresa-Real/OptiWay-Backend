@@ -15,6 +15,8 @@ import com.example.optiway.infrastructure.adapter.in.rest.dto.CrearUsuarioReques
 import com.example.optiway.infrastructure.security.AuthUserId;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -87,6 +89,10 @@ public class UsuarioController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Eliminar usuario", description = "Elimina lógicamente o físicamente un usuario del sistema. Requiere rol ADMINISTRADOR.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Usuario eliminado correctamente"),
+            @ApiResponse(responseCode = "404", description = "El usuario indicado no existe")
+    })
     public void eliminarUsuario(
             @AuthUserId UUID authUserId,
             @Parameter(description = "ID numérico (Long) del usuario", example = "1")
@@ -96,6 +102,10 @@ public class UsuarioController {
 
     @PatchMapping("/{id}/rol")
     @Operation(summary = "Actualizar rol de usuario", description = "Modifica el rol de un usuario existente. Requiere rol ADMINISTRADOR.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Rol actualizado correctamente"),
+            @ApiResponse(responseCode = "404", description = "El usuario indicado no existe")
+    })
     public UsuarioResponse actualizarRol(
             @AuthUserId UUID authUserId,
             @Parameter(description = "ID numérico (Long) del usuario", example = "1")
