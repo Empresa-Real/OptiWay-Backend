@@ -1,6 +1,7 @@
 package com.example.optiway.application.service;
 
 import com.example.optiway.application.exception.ProductoDuplicadoException;
+import com.example.optiway.application.exception.RecursoNoEncontradoException;
 import com.example.optiway.application.port.in.CambiarEstadoProductoCommand;
 import com.example.optiway.application.port.in.CambiarEstadoProductoUseCase;
 import com.example.optiway.application.port.in.CrearProductoCommand;
@@ -89,7 +90,8 @@ public class ProductoService implements CrearProductoUseCase, ObtenerProductosUs
         }
 
         Producto actual = productoRepositoryPort.findById(command.id())
-                .orElseThrow(() -> new IllegalArgumentException("Producto no encontrado con ID: " + command.id()));
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "Producto no encontrado con ID: " + command.id()));
 
         boolean hayCambios = false;
         if (command.nombre() != null) {
@@ -127,7 +129,8 @@ public class ProductoService implements CrearProductoUseCase, ObtenerProductosUs
         }
 
         Producto producto = productoRepositoryPort.findById(command.id())
-                .orElseThrow(() -> new IllegalArgumentException("El producto no existe con ID: " + command.id()));
+                .orElseThrow(() -> new RecursoNoEncontradoException(
+                        "El producto no existe con ID: " + command.id()));
 
         if (Boolean.FALSE.equals(command.activo())
                 && inventarioRepositoryPort.existeStockActivoDeProducto(producto.getId())

@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.example.optiway.application.port.in.CambiarEstadoProductoCommand;
+import com.example.optiway.application.exception.RecursoNoEncontradoException;
 import com.example.optiway.application.port.out.AuthorizationPort;
 import com.example.optiway.application.port.out.InventarioRepositoryPort;
 import com.example.optiway.application.port.out.ProductoRepositoryPort;
@@ -155,5 +156,39 @@ class ProductoServiceTest {
 
         verifyNoInteractions(inventarioRepositoryPort);
         verify(productoRepositoryPort).save(producto);
+    }
+
+    @Test
+    void cambiarEstadoProducto_ProductoInexistente_DebeLanzar404() {
+        when(productoRepositoryPort.findById(productoId))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                RecursoNoEncontradoException.class,
+                () -> service.cambiarEstadoProducto(
+                        authUserId,
+                        new CambiarEstadoProductoCommand(productoId, false, false)
+                )
+        );
+
+        verify(productoRepositoryPort, never()).save(any(Producto.class));
+    }
+
+    @Test
+    void editarProducto_ProductoInexistente_DebeLanzar404() {
+        when(productoRepositoryPort.findById(productoId))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                RecursoNoEncontradoException.class,
+                () -> service.editarProducto(
+                        authUserId,
+                        new com.example.optiway.application.port.in.EditarProductoCommand(
+                                productoId, "Camisa nueva", null, null, null
+                        )
+                )
+        );
+
+        verify(productoRepositoryPort, never()).update(any(Producto.class), any());
     }
 }
