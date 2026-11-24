@@ -81,7 +81,7 @@ class AdminControllerTest {
     }
 
     @Test
-    void sinArchivoDeLogRespondeSinLineas() {
+    void sinArchivoDeLogUsaBufferEnMemoria() {
         AdminController sinArchivo = new AdminController(
                 "target/no-existe.log", tiendas, centros, inventarios);
 
@@ -89,6 +89,7 @@ class AdminControllerTest {
         Map<String, Object> respuesta = (Map<String, Object>) sinArchivo.logs(10);
 
         assertFalse((boolean) respuesta.get("disponible"));
-        assertEquals(List.of(), respuesta.get("lineas"));
+        assertEquals("memoria", respuesta.get("fuente"));
+        assertTrue(respuesta.get("lineas") instanceof List);
     }
 }
