@@ -76,3 +76,6 @@ tools/plantuml/
 
 
 docs/diagramas/otros
+
+# Estado local de Supabase CLI (no versionar)
+supabase/.temp/
