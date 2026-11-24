@@ -68,7 +68,7 @@ Lo exclusivo del plan Pro (HTTP request logs, latencia p50/p99, streaming a prov
 - **Logs:** `GET /admin/logs?lines=100` (últimas líneas de `logs/optiway.log`, tope 500).
 - **Estadísticas:** `GET /api/estadisticas` devuelve número de tiendas, CDs y unidades de stock. Es **público** (sin token ni cookie) porque el frontend lo muestra en el login, antes de autenticarse; por eso no expone datos personales ni trazas.
 
-La página `/admin` es **pública** (igual que Swagger): el navegador no puede adjuntar un Bearer token al abrir una URL directa. Las consultas de datos (`/admin/logs` y `/admin/metrics`) sí exigen **JWT y rol ADMINISTRADOR**, verificado con `AuthorizationPort.requireAdministrador` y la acción `VER_LOGS`. El token se pega en el campo del panel y `admin.js` lo envía en el header. `/api/estadisticas` es público porque se muestra en el login.
+El panel `/admin` es **público por decisión del equipo**: ni la página ni los datos (`/admin/logs`, `/admin/metrics`, `/api/estadisticas`) piden token ni cookie. No hay campo de JWT en la interfaz. Esto se documenta para la demo; en un entorno real conviene proteger los logs y las métricas con rol ADMINISTRADOR.
 
 En Render el archivo puede no existir después de un deploy (filesystem efímero): el panel muestra “Sin líneas disponibles” y el visor oficial sigue siendo la pestaña *Logs*.
 
@@ -85,4 +85,4 @@ $env:JAVA_HOME='C:\Program Files\Eclipse Adoptium\jdk-17.0.18.8-hotspot'
 - Captura de la pestaña *Metrics*.
 - Respuesta de `/actuator/health`.
 - Informe de cobertura `target/site/jacoco/index.html` (ver pipeline de CI).
-- Captura del panel `/admin` con un usuario ADMINISTRADOR (logs, métricas y health).
+- Captura del panel `/admin` (logs, métricas, health y estadísticas), sin iniciar sesión.

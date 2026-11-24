@@ -83,9 +83,10 @@ public class SecurityConfig {
                                 "/swagger-ui/index.html",
                                 "/swagger",
                                 "/docs",
-                                // La pagina /admin es publica (como Swagger): el navegador no puede
-                                // adjuntar un Bearer token al navegar. Los datos si estan protegidos.
+                                // Panel de observabilidad publico: pagina, logs, metricas y
+                                // estadisticas del login. No pide token ni cookie.
                                 "/admin",
+                                "/admin/**",
                                 "/api/estadisticas",
                                 "/graph",
                                 "/graph/",

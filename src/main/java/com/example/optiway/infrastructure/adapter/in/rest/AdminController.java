@@ -7,15 +7,11 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
-import com.example.optiway.application.port.out.AuthorizationPort;
 import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
 import com.example.optiway.application.port.out.InventarioRepositoryPort;
 import com.example.optiway.application.port.out.TiendaRepositoryPort;
 import com.example.optiway.domain.model.Inventario;
-import com.example.optiway.infrastructure.security.AuthUserId;
-import com.example.optiway.infrastructure.security.AuthorizedAction;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,11 +22,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Panel de observabilidad minimo: pagina /admin, ultimas lineas de log y metricas basicas de JVM.
- * Las tres operaciones exigen rol ADMINISTRADOR.
+ * Panel de observabilidad minimo: pagina /admin, ultimas lineas de log, metricas basicas de JVM
+ * y estadisticas para el login. Todo publico, sin token ni cookie.
  */
 @RestController
-@Tag(name = "Admin", description = "Panel de observabilidad (solo ADMINISTRADOR)")
+@Tag(name = "Admin", description = "Panel de observabilidad (publico, sin autenticacion)")
 public class AdminController {
 
     private static final long INICIO = System.currentTimeMillis();
@@ -47,8 +43,7 @@ public class AdminController {
             <body>
             <main>
             <h1>OptiWay - Panel de administracion</h1>
-            <p class="nota">Solo ADMINISTRADOR. Pegá tu token JWT para consultar logs y métricas.</p>
-            <p><label>Token JWT <input id="token" type="password" placeholder="Bearer ..." size="60"></label></p>
+            <p class="nota">Panel publico de observabilidad: no pide token ni inicio de sesion.</p>
             <p><button id="actualizar">Actualizar</button> <span id="estado"></span></p>
             <h2>Salud</h2><pre id="health">-</pre>
             <h2>Estadísticas</h2><pre id="estadisticas">-</pre>
@@ -60,19 +55,16 @@ public class AdminController {
             </html>
             """;
 
-    private final AuthorizationPort authorizationService;
     private final String logPath;
     private final TiendaRepositoryPort tiendaRepositoryPort;
     private final CentroDistribucionRepositoryPort centroDistribucionRepositoryPort;
     private final InventarioRepositoryPort inventarioRepositoryPort;
 
     public AdminController(
-            AuthorizationPort authorizationService,
             @Value("${logging.file.name:logs/optiway.log}") String logPath,
             TiendaRepositoryPort tiendaRepositoryPort,
             CentroDistribucionRepositoryPort centroDistribucionRepositoryPort,
             InventarioRepositoryPort inventarioRepositoryPort) {
-        this.authorizationService = authorizationService;
         this.logPath = logPath;
         this.tiendaRepositoryPort = tiendaRepositoryPort;
         this.centroDistribucionRepositoryPort = centroDistribucionRepositoryPort;
@@ -80,23 +72,18 @@ public class AdminController {
     }
 
     @GetMapping(value = "/admin", produces = MediaType.TEXT_HTML_VALUE)
-    @Operation(summary = "Panel de observabilidad", description = "Pagina HTML publica; los datos que consulta requieren rol ADMINISTRADOR.")
+    @Operation(summary = "Panel de observabilidad", description = "Pagina HTML publica, sin token.")
     public ResponseEntity<String> panel() {
-        // Publica: el navegador no puede enviar Bearer al abrir una URL (igual que Swagger).
         return ResponseEntity.ok().contentType(MediaType.TEXT_HTML).body(HTML);
     }
 
     @GetMapping("/admin/logs")
-    @Operation(summary = "Ultimas lineas de log", description = "Lee el archivo logs/optiway.log. Requiere rol ADMINISTRADOR.")
-    public Map<String, Object> logs(
-            @AuthUserId UUID authUserId,
-            @RequestParam(defaultValue = "100") int lineas) {
-        authorizationService.requireAdministrador(authUserId, AuthorizedAction.VER_LOGS);
-
+    @Operation(summary = "Ultimas lineas de log", description = "Lee logs/optiway.log. Publico, sin token.")
+    public Map<String, Object> logs(@RequestParam(defaultValue = "100") int lineas) {
         int cantidad = Math.max(1, Math.min(lineas, 500));
         Path ruta = Path.of(logPath);
         if (!Files.exists(ruta)) {
-            // En Render el filesystem es efímero: puede no existir tras un deploy.
+            // En Render el filesystem es efimero: puede no existir tras un deploy.
             return Map.of("archivo", logPath, "disponible", false, "lineas", List.of());
         }
         try {
@@ -111,9 +98,8 @@ public class AdminController {
     }
 
     @GetMapping("/api/estadisticas")
-    @Operation(summary = "Estadisticas del sistema", description = "Numero de tiendas, centros de distribucion y unidades de stock. Publico: se muestra en el login, antes de autenticarse.")
+    @Operation(summary = "Estadisticas del sistema", description = "Tiendas, CDs y stock. Publico: se muestra en el login.")
     public Map<String, Object> estadisticas() {
-        // Publico a proposito: el frontend lo consulta en el login, sin token ni cookie.
         var inventarios = inventarioRepositoryPort.findAll();
         return Map.of(
                 "tiendas", tiendaRepositoryPort.findAll().size(),
@@ -133,10 +119,8 @@ public class AdminController {
     }
 
     @GetMapping("/admin/metrics")
-    @Operation(summary = "Metricas basicas de JVM", description = "Uptime, memoria e hilos. Requiere rol ADMINISTRADOR.")
-    public Map<String, Object> metricas(@AuthUserId UUID authUserId) {
-        authorizationService.requireAdministrador(authUserId, AuthorizedAction.VER_LOGS);
-
+    @Operation(summary = "Metricas basicas de JVM", description = "Uptime, memoria e hilos. Publico, sin token.")
+    public Map<String, Object> metricas() {
         Runtime runtime = Runtime.getRuntime();
         return Map.of(
                 "uptimeSegundos", (System.currentTimeMillis() - INICIO) / 1000,

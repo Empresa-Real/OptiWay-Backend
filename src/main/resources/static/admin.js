@@ -1,16 +1,9 @@
-const tokenInput = document.getElementById('token');
 const estado = document.getElementById('estado');
-
-function headers() {
-  const valor = tokenInput.value.trim();
-  if (!valor) return {};
-  return { Authorization: valor.startsWith('Bearer ') ? valor : 'Bearer ' + valor };
-}
 
 async function cargar(url, id, formatear) {
   const destino = document.getElementById(id);
   try {
-    const respuesta = await fetch(url, { headers: headers() });
+    const respuesta = await fetch(url);
     const texto = await respuesta.text();
     let datos = texto;
     try { datos = JSON.parse(texto); } catch (error) { /* texto plano */ }
