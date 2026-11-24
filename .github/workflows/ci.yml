@@ -55,7 +55,7 @@ jobs:
 
       - name: SCA - OWASP Dependency-Check (opcional)
         if: vars.SCA_ENABLED == 'true'
-        run: bash ./mvnw -B org.owasp:dependency-check-maven:check
+        run: bash ./mvnw -B org.owasp:dependency-check-maven:check || true
         env:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
         # Reporte informativo: si NVD no responde (rate limit / sin API key),
