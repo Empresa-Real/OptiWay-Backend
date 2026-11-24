@@ -2,6 +2,9 @@ package com.example.optiway.infrastructure.adapter.in.rest;
 
 import com.example.optiway.application.port.in.ConsultarPatronesDemandaUseCase;
 import com.example.optiway.application.port.in.dto.PatronesDemandaResponse;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiBadRequestResponse;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiCommonErrorResponses;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiResourceNotFoundResponse;
 import com.example.optiway.infrastructure.security.AuthUserId;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -31,15 +34,15 @@ public class PatronesDemandaController {
     }
 
     @GetMapping("/patrones")
+    @ApiBadRequestResponse
+    @ApiResourceNotFoundResponse
+    @ApiCommonErrorResponses
     @Operation(summary = "Consultar patrones de demanda",
             description = "Devuelve las unidades vendidas por día y por tienda, "
                     + "e identifica las tiendas con mayor y menor total en el período. "
                     + "Máximo 366 días y 50 tiendas por consulta. Requiere rol PLANIFICADOR.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Patrones de demanda calculados correctamente"),
-            @ApiResponse(responseCode = "400", description = "Parámetros inválidos o límites de rango/tiendas excedidos"),
-            @ApiResponse(responseCode = "403", description = "El usuario no tiene rol PLANIFICADOR"),
-            @ApiResponse(responseCode = "404", description = "El producto o alguna tienda indicada no existe")
+            @ApiResponse(responseCode = "200", description = "Patrones de demanda calculados correctamente")
     })
     public PatronesDemandaResponse consultarPatrones(
             @Parameter(hidden = true) @AuthUserId UUID authUserId,
