@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -12,6 +13,7 @@ import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort
 import com.example.optiway.application.port.out.InventarioRepositoryPort;
 import com.example.optiway.application.port.out.TiendaRepositoryPort;
 import com.example.optiway.domain.model.Inventario;
+import com.example.optiway.infrastructure.observability.LogBuffer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Value;
@@ -82,19 +84,36 @@ public class AdminController {
     public Map<String, Object> logs(@RequestParam(defaultValue = "100") int lineas) {
         int cantidad = Math.max(1, Math.min(lineas, 500));
         Path ruta = Path.of(logPath);
-        if (!Files.exists(ruta)) {
-            // En Render el filesystem es efimero: puede no existir tras un deploy.
-            return Map.of("archivo", logPath, "disponible", false, "lineas", List.of());
+        List<String> delArchivo = List.of();
+        int total = 0;
+        boolean disponible = false;
+        String error = null;
+
+        if (Files.exists(ruta)) {
+            try {
+                List<String> todas = Files.readAllLines(ruta, StandardCharsets.UTF_8);
+                total = todas.size();
+                delArchivo = todas.subList(Math.max(0, total - cantidad), total);
+                disponible = true;
+            } catch (IOException excepcion) {
+                error = excepcion.getMessage();
+            }
         }
-        try {
-            List<String> todas = Files.readAllLines(ruta, StandardCharsets.UTF_8);
-            int desde = Math.max(0, todas.size() - cantidad);
-            return Map.of("archivo", logPath, "disponible", true,
-                    "totalLineas", todas.size(), "lineas", todas.subList(desde, todas.size()));
-        } catch (IOException excepcion) {
-            return Map.of("archivo", logPath, "disponible", false,
-                    "error", excepcion.getMessage(), "lineas", List.of());
+
+        // En Render el appender de archivo no arranca; se usa el buffer en memoria.
+        if (disponible) {
+            return Map.of("archivo", logPath, "disponible", true, "fuente", "archivo",
+                    "totalLineas", total, "lineas", delArchivo);
         }
+        Map<String, Object> respuesta = new HashMap<>();
+        respuesta.put("archivo", logPath);
+        respuesta.put("disponible", false);
+        respuesta.put("fuente", "memoria");
+        respuesta.put("lineas", LogBuffer.lineas(cantidad));
+        if (error != null) {
+            respuesta.put("error", error);
+        }
+        return respuesta;
     }
 
     @GetMapping("/api/estadisticas")

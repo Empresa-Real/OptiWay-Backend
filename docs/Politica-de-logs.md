@@ -65,7 +65,7 @@ Lo exclusivo del plan Pro (HTTP request logs, latencia p50/p99, streaming a prov
 
 - **Salud:** estado de `/actuator/health`.
 - **Métricas:** `GET /admin/metrics` (uptime, memoria usada/total e hilos de JVM).
-- **Logs:** `GET /admin/logs?lines=100` (últimas líneas de `logs/optiway.log`, tope 500).
+- **Logs:** `GET /admin/logs?lines=100` (últimas líneas de `logs/optiway.log`, tope 500). Si el appender de archivo no arranca (Render: filesystem efímero, `Attempted to append to non started appender [FILE]`), el endpoint cae a un **buffer circular en memoria** de las últimas 500 líneas, alimentado por un appender de Logback adjunto al logger raíz. La respuesta incluye `"fuente": "archivo" | "memoria"`.
 - **Estadísticas:** `GET /api/estadisticas` devuelve número de tiendas, CDs y unidades de stock. Es **público** (sin token ni cookie) porque el frontend lo muestra en el login, antes de autenticarse; por eso no expone datos personales ni trazas.
 
 El panel `/admin` es **público por decisión del equipo**: ni la página ni los datos (`/admin/logs`, `/admin/metrics`, `/api/estadisticas`) piden token ni cookie. No hay campo de JWT en la interfaz. Esto se documenta para la demo; en un entorno real conviene proteger los logs y las métricas con rol ADMINISTRADOR.
