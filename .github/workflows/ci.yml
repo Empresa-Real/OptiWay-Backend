@@ -61,6 +61,8 @@ jobs:
         if: vars.SONAR_ENABLED == 'true'
         id: sonar-auth
         uses: SonarSource/sonarqube-auth-action@v1
+        # Opcional: si la cuenta/project no esta configurada, no bloquea el deploy.
+        continue-on-error: true
 
       - name: Quality Gate - SonarQube Cloud (opcional)
         if: vars.SONAR_ENABLED == 'true'
@@ -68,5 +70,6 @@ jobs:
           bash ./mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
           -Dsonar.organization=${{ steps.sonar-auth.outputs.organization }}
           -Dsonar.projectKey=${{ steps.sonar-auth.outputs.project-key }}
+        continue-on-error: true
 
 # El despliegue no se dispara desde aqui: Render hace auto-deploy al pushear a produccion.
