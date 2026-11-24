@@ -1,0 +1,32 @@
+body {
+  font-family: system-ui, sans-serif;
+  margin: 2rem;
+  color: #222;
+}
+
+main {
+  max-width: 70rem;
+}
+
+.nota {
+  color: #666;
+}
+
+pre {
+  background: #f4f4f4;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 0.75rem;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  max-height: 24rem;
+}
+
+input {
+  padding: 0.35rem;
+}
+
+button {
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+}

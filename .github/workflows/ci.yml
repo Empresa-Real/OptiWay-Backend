@@ -1,0 +1,69 @@
+name: CI - Producción
+
+# Se ejecuta SOLAMENTE cuando se actualiza la rama de producción.
+on:
+  push:
+    branches:
+      - produccion
+
+permissions:
+  contents: read
+  # Necesario para el análisis secretless de SonarQube Cloud (OIDC).
+  id-token: write
+
+jobs:
+  build:
+    name: Compilar, probar y medir cobertura
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Compilar, ejecutar pruebas y exigir cobertura >= 40%
+        # mvnw no tiene permiso de ejecución en el repo, por eso se invoca con bash.
+        run: bash ./mvnw -B verify
+
+      - name: Publicar informe de cobertura
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: target/site/jacoco
+          if-no-files-found: warn
+
+      - name: Detección de secretos (Gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Si el workspace requiere licencia de pago, no bloquea el pipeline.
+        continue-on-error: true
+
+      - name: SCA - OWASP Dependency-Check (opcional)
+        if: vars.SCA_ENABLED == 'true'
+        run: bash ./mvnw -B org.owasp:dependency-check-maven:check
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+
+      - name: Autenticar con SonarQube Cloud (opcional, secretless)
+        if: vars.SONAR_ENABLED == 'true'
+        id: sonar-auth
+        uses: SonarSource/sonarqube-auth-action@v1
+
+      - name: Quality Gate - SonarQube Cloud (opcional)
+        if: vars.SONAR_ENABLED == 'true'
+        run: >
+          bash ./mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+          -Dsonar.organization=${{ steps.sonar-auth.outputs.organization }}
+          -Dsonar.projectKey=${{ steps.sonar-auth.outputs.project-key }}
+
+# El despliegue no se dispara desde aqui: Render hace auto-deploy al pushear a produccion.

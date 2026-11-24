@@ -45,7 +45,7 @@ public class SupabaseAuthAdapter implements AuthPort {
         }
 
         try {
-            log.info("Invitando usuario {} con redirect_to: {}", email, inviteRedirectUrl);
+            log.info("Iniciando invitación de usuario en Supabase Auth");
             AuthUserResponse response = restClient.post()
                     .uri("/auth/v1/invite?redirect_to={redirect_to}", inviteRedirectUrl)
                     .header("apikey", serviceRoleKey)
@@ -66,12 +66,12 @@ public class SupabaseAuthAdapter implements AuthPort {
             // Este conocimiento del proveedor (qué códigos implican "ya existe") reside aquí.
             UUID usuarioExistenteId = buscarUsuarioPorEmailEnSupabase(email);
             if (usuarioExistenteId != null) {
-                log.info("Usuario {} ya existe en Supabase Auth con ID {}. Reutilizando cuenta sin requerir nuevo correo.", email, usuarioExistenteId);
+                log.info("El usuario ya existe en Supabase Auth. Se reutilizará la cuenta existente");
                 return usuarioExistenteId;
             }
 
             String errorBody = exception.getResponseBodyAsString();
-            log.error("Error al invitar usuario {} en Supabase [HTTP {}]: {}", email, exception.getStatusCode(), errorBody);
+            log.error("Error al invitar usuario en Supabase [HTTP {}]", exception.getStatusCode());
             throw new SupabaseAuthException(
                     "Error de Supabase Auth al invitar usuario",
                     exception.getStatusCode().value(),
@@ -101,7 +101,7 @@ public class SupabaseAuthAdapter implements AuthPort {
                 return msg.asText();
             }
         } catch (Exception exception) {
-            log.debug("El cuerpo de error de Supabase no es JSON: {}", errorBody);
+            log.debug("El cuerpo de error de Supabase no tiene formato JSON");
         }
         return null;
     }
@@ -126,9 +126,9 @@ public class SupabaseAuthAdapter implements AuthPort {
                 }
             }
         } catch (HttpClientErrorException.NotFound ignored) {
-            log.warn("Usuario con email {} no encontrado en Supabase Auth", email);
+            log.warn("No se encontró el usuario en Supabase Auth");
         } catch (Exception e) {
-            log.warn("No se pudo consultar listado de usuarios en Supabase Admin: {}", e.getMessage());
+            log.warn("No se pudo consultar el listado de usuarios en Supabase Admin. Tipo de error: {}", e.getClass().getSimpleName());
         }
         return null;
     }
@@ -144,26 +144,26 @@ public class SupabaseAuthAdapter implements AuthPort {
         }
 
         try {
-            log.info("Eliminando usuario en Supabase Auth: {}", authUserId);
+            log.info("Iniciando eliminación de usuario en Supabase Auth");
             restClient.delete()
                     .uri("/auth/v1/admin/users/{userId}", authUserId.toString())
                     .header("apikey", serviceRoleKey)
                     .header("Authorization", "Bearer " + serviceRoleKey)
                     .retrieve()
                     .toBodilessEntity();
-            log.info("Usuario {} eliminado exitosamente de Supabase Auth", authUserId);
+            log.info("Usuario eliminado exitosamente de Supabase Auth");
         } catch (HttpClientErrorException.NotFound ignored) {
-            log.warn("Usuario {} no existía en Supabase Auth al intentar eliminarlo", authUserId);
+            log.warn("Se intentó eliminar un usuario que no existe en Supabase Auth");
         } catch (RestClientResponseException exception) {
             String errorBody = exception.getResponseBodyAsString();
-            log.error("Error al eliminar usuario {} en Supabase [HTTP {}]: {}", authUserId, exception.getStatusCode(), errorBody);
+            log.error("Error al eliminar usuario en Supabase [HTTP {}]", exception.getStatusCode());
             throw new SupabaseAuthException(
                     "Error de Supabase Auth al eliminar usuario",
                     exception.getStatusCode().value(),
                     errorBody,
                     mensajeDelProveedor(errorBody));
         } catch (RuntimeException exception) {
-            log.error("Error inesperado al eliminar usuario {} en Supabase: ", authUserId, exception);
+            log.error("Error inesperado al eliminar usuario en Supabase", exception);
             throw new SupabaseAuthException(
                     "Error inesperado al eliminar usuario en Supabase Auth", null, null);
         }

@@ -135,6 +135,8 @@ Para una explicación a fondo del flujo de capas, consulta [`docs/Hexagonal-Arqu
 
 La referencia completa de la API (métodos, roles requeridos, códigos de estado y ejemplos) está en [`docs/Swagger_OpenAPI.md`](docs/Swagger_OpenAPI.md). Para probarla directamente, entra a [Swagger UI del backend desplegado](https://optiway-backend.onrender.com/swagger-ui.html) o, en local, a [`http://localhost:8080/swagger-ui.html`](http://localhost:8080/swagger-ui.html).
 
+El reporte HU-27 se consulta en `GET /api/reportes/rotacion?tiendaId={id}&desde=AAAA-MM-DD&hasta=AAAA-MM-DD` y se exporta como CSV UTF-8 en `GET /api/reportes/rotacion/exportar` con los mismos parámetros. Requiere rol `PLANIFICADOR` e incluye unidades vendidas, clasificación relativa de rotación y tiempo promedio estimado en inventario.
+
 
 ## Credenciales de Desarrollo y Pruebas
 

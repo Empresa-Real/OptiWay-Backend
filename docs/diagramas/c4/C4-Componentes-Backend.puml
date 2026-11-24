@@ -1,0 +1,44 @@
+@startuml C4-Componentes-Backend
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+TITLE C4 - Nivel 3: Componentes del backend OptiWay
+LAYOUT_LEFT_RIGHT()
+
+Person(cliente, "Usuario de OptiWay", "Administrador, encargado de tienda, encargado de CD o planificador.")
+
+System_Boundary(opt, "Sistema OptiWay") {
+    Container_Boundary(backend, "Backend OptiWay - Java / Spring Boot") {
+
+        Component(web, "Recursos web estáticos", "HTML / recursos estáticos", "Página de bienvenida servida desde index.html.")
+
+        Component(rest, "Controladores REST", "Spring MVC", "Reciben solicitudes HTTP y exponen los endpoints de la API.")
+
+        Component(services, "Servicios de aplicación", "Java / Spring", "Coordinan casos de uso y validaciones del negocio.")
+
+        Component(inPorts, "Puertos de entrada", "Interfaces Java / Commands", "Definen las operaciones disponibles para los adaptadores de entrada.")
+
+        Component(outPorts, "Puertos de salida", "Interfaces Java", "Abstraen persistencia, autorización y otros servicios externos.")
+
+        Component(domain, "Dominio", "Modelos y reglas de negocio", "Contiene entidades y reglas de inventario, productos, tiendas, centros de distribución y recomendaciones.")
+
+        Component(persistence, "Adaptadores de persistencia", "Spring Data JPA / Hibernate", "Implementan repositorios y operaciones sobre la base de datos.")
+
+        Component(authAdapter, "Adaptador de autenticación", "Java / Supabase", "Integra la validación de identidad y autorización con Supabase.")
+    }
+}
+
+System_Ext(auth, "Supabase Auth", "Autenticación y tokens JWT.")
+System_Ext(db, "PostgreSQL", "Base de datos de OptiWay.")
+
+Rel(cliente, web, "Accede a la página de bienvenida", "HTTP")
+Rel(cliente, rest, "Consume la API", "HTTP / JSON")
+Rel(rest, inPorts, "Invoca operaciones")
+Rel(inPorts, services, "Dirige al caso de uso")
+Rel(services, domain, "Aplica reglas de negocio")
+Rel(services, outPorts, "Solicita operaciones externas")
+Rel(outPorts, persistence, "Usa implementación de persistencia")
+Rel(outPorts, authAdapter, "Usa implementación de autenticación")
+Rel(persistence, db, "Consulta y persiste", "JPA / JDBC")
+Rel(authAdapter, auth, "Valida identidad y JWT", "HTTPS")
+
+@enduml

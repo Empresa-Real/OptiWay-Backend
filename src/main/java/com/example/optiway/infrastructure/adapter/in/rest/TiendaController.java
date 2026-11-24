@@ -1,5 +1,11 @@
 package com.example.optiway.infrastructure.adapter.in.rest;
 
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiCommonErrorResponses;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiBadRequestResponse;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiConflictResponse;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiResourceNotFoundResponse;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiUnsupportedMediaTypeResponse;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -57,6 +63,9 @@ public class TiendaController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @ApiBadRequestResponse
+    @ApiUnsupportedMediaTypeResponse
+    @ApiCommonErrorResponses
     @Operation(summary = "Crear nueva tienda", description = "Registra una tienda en el sistema generando su código único. Requiere rol ADMINISTRADOR.")
     public TiendaResponse crearTienda(
             @AuthUserId UUID authUserId,
@@ -65,12 +74,18 @@ public class TiendaController {
     }
 
     @GetMapping
+    @ApiCommonErrorResponses
     @Operation(summary = "Listar tiendas", description = "Retorna el listado de tiendas registradas en el sistema.")
     public List<TiendaResponse> obtenerTiendas(@AuthUserId UUID authUserId) {
         return obtenerTiendasUseCase.obtenerTiendas(authUserId);
     }
 
     @PutMapping("/{id}/encargado")
+    @ApiBadRequestResponse
+    @ApiResourceNotFoundResponse
+    @ApiConflictResponse
+    @ApiUnsupportedMediaTypeResponse
+    @ApiCommonErrorResponses
     @Operation(summary = "Asignar encargado a tienda", description = "Asigna o desasigna un usuario con rol TIENDA como encargado. Requiere rol ADMINISTRADOR.")
     public TiendaResponse asignarEncargado(
             @AuthUserId UUID authUserId,
@@ -83,6 +98,10 @@ public class TiendaController {
 
     @PostMapping("/{id}/ventas")
     @ResponseStatus(HttpStatus.CREATED)
+    @ApiBadRequestResponse
+    @ApiResourceNotFoundResponse
+    @ApiUnsupportedMediaTypeResponse
+    @ApiCommonErrorResponses
     @Operation(summary = "Registrar venta", description = "Registra una transacción de venta en la tienda indicada en la URL, descontando inmediatamente las existencias del inventario local.")
     public VentaResponse registrarVenta(
             @AuthUserId UUID authUserId,
@@ -93,6 +112,11 @@ public class TiendaController {
     }
 
     @PatchMapping("/{id}/estado")
+    @ApiBadRequestResponse
+    @ApiResourceNotFoundResponse
+    @ApiConflictResponse
+    @ApiUnsupportedMediaTypeResponse
+    @ApiCommonErrorResponses
     @Operation(summary = "Desactivar o activar tienda", description = "Cambia el estado activo/inactivo de la tienda validando órdenes de reposición en tránsito. Requiere rol ADMINISTRADOR.")
     public TiendaResponse cambiarEstadoTienda(
             @AuthUserId UUID authUserId,
@@ -103,6 +127,8 @@ public class TiendaController {
     }
 
     @GetMapping("/{id}/ordenes-en-transito")
+    @ApiBadRequestResponse
+    @ApiCommonErrorResponses
     @Operation(summary = "Verificar órdenes en tránsito", description = "Retorna si la tienda tiene órdenes de reposición en tránsito o enviadas para gestionar modales de confirmación en el frontend.")
     public OrdenesEnTransitoResponse verificarOrdenesEnTransito(
             @AuthUserId UUID authUserId,

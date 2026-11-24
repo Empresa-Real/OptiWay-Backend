@@ -1,5 +1,11 @@
 package com.example.optiway.infrastructure.adapter.in.rest;
 
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiCommonErrorResponses;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiBadRequestResponse;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiConflictResponse;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiResourceNotFoundResponse;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiUnsupportedMediaTypeResponse;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -63,6 +69,9 @@ public class CentroDistribucionController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @ApiBadRequestResponse
+    @ApiUnsupportedMediaTypeResponse
+    @ApiCommonErrorResponses
     @Operation(summary = "Crear centro de distribución", description = "Registra un nuevo centro de distribución con su capacidad y tiendas asignadas. Requiere rol ADMINISTRADOR.")
     public CentroDistribucionResponse crear(
             @AuthUserId UUID authUserId,
@@ -71,12 +80,18 @@ public class CentroDistribucionController {
     }
 
     @GetMapping
+    @ApiCommonErrorResponses
     @Operation(summary = "Listar centros de distribución", description = "Retorna los centros de distribución disponibles para el usuario según su rol.")
     public List<CentroDistribucionResponse> listar(@AuthUserId UUID authUserId) {
         return obtenerCentrosDistribucionUseCase.obtenerCentrosDistribucion(authUserId);
     }
 
     @PatchMapping("/{id}/estado")
+    @ApiBadRequestResponse
+    @ApiResourceNotFoundResponse
+    @ApiConflictResponse
+    @ApiUnsupportedMediaTypeResponse
+    @ApiCommonErrorResponses
     @Operation(summary = "Cambiar estado del centro de distribución", description = "Activa o desactiva un CD. Requiere ADMINISTRADOR; si abastece tiendas, la desactivación requiere confirmación.")
     public CentroDistribucionResponse cambiarEstado(
             @AuthUserId UUID authUserId,
@@ -90,6 +105,10 @@ public class CentroDistribucionController {
     }
 
     @PutMapping("/{id}/encargado")
+    @ApiBadRequestResponse
+    @ApiResourceNotFoundResponse
+    @ApiUnsupportedMediaTypeResponse
+    @ApiCommonErrorResponses
     @Operation(summary = "Asignar encargado a centro de distribución", description = "Asigna o desasigna un usuario con rol ENCARGADO_CD como responsable. Requiere rol ADMINISTRADOR.")
     public CentroDistribucionResponse asignarEncargado(
             @AuthUserId UUID authUserId,
@@ -102,6 +121,11 @@ public class CentroDistribucionController {
 
     @PostMapping("/{id}/ingresos")
     @ResponseStatus(HttpStatus.CREATED)
+    @ApiBadRequestResponse
+    @ApiResourceNotFoundResponse
+    @ApiConflictResponse
+    @ApiUnsupportedMediaTypeResponse
+    @ApiCommonErrorResponses
     @Operation(summary = "Registrar ingreso de mercancía", description = "Registra una entrada de stock en el centro de distribución indicado en la URL. Alias corto: POST /api/cd/{id}/ingresos.")
     public IngresoMercanciaResponse registrarIngreso(
             @AuthUserId UUID authUserId,
@@ -112,6 +136,10 @@ public class CentroDistribucionController {
     }
 
     @PatchMapping("/{id}/inventario")
+    @ApiBadRequestResponse
+    @ApiResourceNotFoundResponse
+    @ApiUnsupportedMediaTypeResponse
+    @ApiCommonErrorResponses
     @Operation(summary = "Ajustar inventario del centro de distribución", description = "Ajusta la cantidad registrada al conteo físico del centro de distribución y conserva el historial del ajuste. Alias corto: PATCH /api/cd/{id}/inventario.")
     public AjusteInventarioResponse ajustarInventario(
             @AuthUserId UUID authUserId,

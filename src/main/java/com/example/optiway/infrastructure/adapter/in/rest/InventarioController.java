@@ -1,5 +1,10 @@
 package com.example.optiway.infrastructure.adapter.in.rest;
 
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiCommonErrorResponses;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiBadRequestResponse;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiResourceNotFoundResponse;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiUnsupportedMediaTypeResponse;
+
 import com.example.optiway.application.port.in.AjustarInventarioUseCase;
 import com.example.optiway.application.port.in.ObtenerInventarioCommand;
 import com.example.optiway.application.port.in.ObtenerInventarioUseCase;
@@ -9,6 +14,8 @@ import com.example.optiway.infrastructure.adapter.in.rest.dto.AjustarInventarioR
 import com.example.optiway.infrastructure.security.AuthUserId;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -39,8 +46,14 @@ public class InventarioController {
     }
 
     @GetMapping
+    @ApiBadRequestResponse
+    @ApiResourceNotFoundResponse
+    @ApiCommonErrorResponses
     @Operation(summary = "Consultar inventario de tienda",
             description = "Obtiene los productos en inventario de una tienda específica.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Inventario consultado correctamente")
+    })
     public List<InventarioResponse> consultarInventario(
             @AuthUserId UUID authUserId,
             @Parameter(description = "ID numérico de la tienda", example = "1", required = true)
@@ -55,8 +68,14 @@ public class InventarioController {
     }
 
     @GetMapping("/centro-distribucion")
+    @ApiBadRequestResponse
+    @ApiResourceNotFoundResponse
+    @ApiCommonErrorResponses
     @Operation(summary = "Consultar inventario de centro de distribución",
             description = "Obtiene los productos en inventario de un centro de distribución específico.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Inventario consultado correctamente")
+    })
     public List<InventarioResponse> consultarInventarioCD(
             @AuthUserId UUID authUserId,
             @Parameter(description = "ID numérico del centro de distribución", example = "1", required = true)
@@ -72,6 +91,10 @@ public class InventarioController {
 
     @PostMapping("/ajustes")
     @ResponseStatus(HttpStatus.CREATED)
+    @ApiBadRequestResponse
+    @ApiResourceNotFoundResponse
+    @ApiUnsupportedMediaTypeResponse
+    @ApiCommonErrorResponses
     @Operation(summary = "Ajustar inventario de tienda o centro de distribución",
             description = "Ajusta la cantidad registrada al conteo físico (tiendaId o centroDistribucionId) y conserva el historial del ajuste.")
     public AjusteInventarioResponse ajustarInventario(

@@ -224,7 +224,9 @@ El modelo actual implica reglas cardinales que **no están formalizadas** ni val
 
 ## 9. Logging: guía teórica sin implementación real
 
-**Estado:** ⚠️ Abierto · **Impacto:** Observabilidad / diagnóstico en producción · **Esfuerzo:** Bajo-Medio
+> **Actualización (24/11/2026):** ya existe `docs/Politica-de-logs.md`, la configuración en `application.properties` (niveles por variable de entorno, archivo, patrones y rotación), `show-sql=false`, Actuator `health,info` y `log.info` de auditoría en seis servicios (Venta, Ajuste de inventario, Ingreso de mercancía, Recomendación, Usuario). El texto original se conserva como registro del estado en la review del Sprint 2.
+
+**Estado:** ⚠️ Parcialmente resuelto · **Impacto:** Observabilidad / diagnóstico en producción · **Esfuerzo:** Bajo-Medio
 
 El proyecto **no tiene una política de logging definida**. Hoy solo existe:
 
@@ -240,6 +242,8 @@ El antiguo `docs/Sistema-de-Logs.md` era una guía genérica (niveles, `CommonsR
 - Loguear peticiones sin volcar tokens JWT ni datos sensibles.
 - Evaluar formato estructurado (JSON) si se consume desde Render u otra herramienta de observabilidad.
 - En Render, priorizar stdout; añadir rotación/archivo solo si se necesita retención local.
+
+**Avance (24/11/2026):** resueltos los niveles por entorno (`application-local.properties` con DEBUG y variables `LOG_LEVEL`/`APP_LOG_LEVEL` en producción), `show-sql=false`, la política documentada y la auditoría de acciones críticas. Queda verificar en el dashboard de Render (Logs y Metrics) y, si se decide, evaluar JSON (no obligatorio en el básico).
 
 ---
 
@@ -345,80 +349,6 @@ El frontend ha incorporado un script (`scripts/gen-api.mjs`) que descarga el con
 2. **Riesgo con `propertiesRequiredByDefault: true`:** SpringDoc no marca automáticamente campos como `required` a menos que tengan Bean Validation (`@NotNull`). Forzar que todas las propiedades sean requeridas por defecto en `openapiTS` puede provocar que campos que admiten `null` (como `encargadoId` o `asignacion`) se tipen como siempre presentes, ocultando posibles `NullPointerException` en el frontend.
 3. **Validación estática vs runtime:** Los archivos `.d.ts` solo aplican en tiempo de compilación. Si la API en producción cambia sin regenerar los tipos en el cliente, la aplicación puede fallar silenciosamente en ejecución si no se complementa con validación en runtime (ej. Zod).
 4. **Cero visibilidad de autorización y reglas de negocio:** El tipado generado describe la estructura del JSON pero ignora por completo permisos de usuario y reglas de pertenencia (documentadas en el ítem 10).
-
----
-
-## 12. Declarar respuestas de error (`@ApiResponse`) en los controladores
-
-**Estado:** ⚠️ Abierto · **Impacto:** Contrato de API para frontend e integradores · **Esfuerzo:** Medio
-
-### El problema
-
-Los controladores documentan con `@Operation` y `@Tag`, pero **ninguno declara `@ApiResponse`**. En `/v3/api-docs` y Swagger UI solo se ven las respuestas exitosas y el esquema genérico; no aparecen los códigos de error (`400`, `401`, `403`, `404`, `409`, `415`, `500`, `502`) ni su formato real.
-
-Además, la API emite tres formatos de error distintos (documentados en [`docs/dto/README.md` §6](./dto/README.md#6-errores)): `ErrorResponse`, el error por defecto de Spring Boot y respuestas sin body. Swagger no refleja ninguno de forma explícita.
-
-### Estrategia propuesta
-
-Declarar por endpoint las respuestas de error relevantes, reutilizando el esquema `ErrorResponse`:
-
-```java
-@ApiResponses(value = {
-    @ApiResponse(responseCode = "200", description = "OK"),
-    @ApiResponse(responseCode = "400", description = "Solicitud inválida",
-        content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-    @ApiResponse(responseCode = "403", description = "Sin permisos",
-        content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-    @ApiResponse(responseCode = "404", description = "Recurso no encontrado",
-        content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-})
-```
-
-Incluir una nota para los casos sin body (`401`/`403` de Spring Security y `404` de `/graph`), que no siguen el esquema `ErrorResponse`.
-
-### Criterio de cierre
-
-- Cada controlador declara los códigos de error que realmente puede devolver.
-- Swagger UI muestra `ErrorResponse` para los errores con body.
-- Se documenta explícitamente qué endpoints pueden responder sin body.
-
----
-
-## 13. Unificación de excepciones para recursos no encontrados (`404 Not Found` vs `400 Bad Request`)
-
-**Estado:** ⚠️ Abierto · **Impacto:** Consistencia semántica de la API REST · **Esfuerzo:** Bajo-Medio
-
-### Estado actual
-
-Tras el **Fix 41**, se unificaron las búsquedas por ID inexistente en `CentroDistribucionService`, `TiendaService`, `IngresoMercanciaService`, `VentaService` y `UsuarioController` para lanzar `RecursoNoEncontradoException`, mapeada a `404 Not Found`.
-
-Sin embargo, todavía existen servicios del dominio que lanzan `IllegalArgumentException` (mapeada a `400 Bad Request`) cuando una entidad consultada por su clave primaria no existe en la base de datos:
-
-| Servicio | Método | Línea | Comportamiento actual | Comportamiento esperado (REST) |
-| :--- | :--- | :--- | :--- | :--- |
-| `InventarioService` | `consultarInventario` | L76 | `IllegalArgumentException("La tienda no existe.")` (400) | `RecursoNoEncontradoException` (404) |
-| `InventarioService` | `consultarInventarioCD` | L80 | `IllegalArgumentException("El centro de distribución no existe")` (400) | `RecursoNoEncontradoException` (404) |
-| `ProductoService` | `editarProducto` | L93 | `IllegalArgumentException("Producto no encontrado con ID: ...")` (400) | `RecursoNoEncontradoException` (404) |
-| `ProductoService` | `cambiarEstadoProducto` | L131 | `IllegalArgumentException("El producto no existe con ID: ...")` (400) | `RecursoNoEncontradoException` (404) |
-| `UsuarioService` | `eliminarUsuario` | L159 | `IllegalArgumentException("Usuario no encontrado con ID: ...")` (400) | `RecursoNoEncontradoException` (404) |
-| `UsuarioService` | `actualizarRol` | L197 | `IllegalArgumentException("Usuario no encontrado con ID: ...")` (400) | `RecursoNoEncontradoException` (404) |
-
-### El conflicto
-
-El estándar HTTP y la semántica REST establecen que:
-- **`400 Bad Request`**: Debe reservarse para solicitudes sintácticamente inválidas (ej. tipos de datos incompatibles capturados por `MethodArgumentTypeMismatchException`) o para **violaciones de reglas de negocio** (ej. asignación de rol incompatible, stock insuficiente, aforo de CD excedido).
-- **`404 Not Found`**: Debe devolverse cuando el recurso referenciado por su identificador no existe en el sistema.
-
-La presencia simultánea de `400` y `404` para el mismo tipo de fallo ("recurso inexistente en BD") genera un comportamiento híbrido que confunde tanto a consumidores de la API (frontend, integraciones externas) como a suites de pruebas automáticas generadas a partir del contrato OpenAPI (como TestSprite).
-
-### Tareas pendientes para el cierre
-
-1. Sustituir `IllegalArgumentException` por `RecursoNoEncontradoException` en:
-   - `InventarioService` (`consultarInventario` y `consultarInventarioCD`).
-   - `ProductoService` (`editarProducto` y `cambiarEstadoProducto`).
-   - `UsuarioService` (`eliminarUsuario` y `actualizarRol`).
-2. Actualizar las pruebas unitarias existentes que aserten `IllegalArgumentException` en dichos casos (p. ej. `InventarioServiceTest`, `UsuarioServiceTest`).
-3. Documentar los códigos `404` correspondientes en las anotaciones `@ApiResponses` de los controladores respectivos (alineado con la sección 12).
 
 ---
 

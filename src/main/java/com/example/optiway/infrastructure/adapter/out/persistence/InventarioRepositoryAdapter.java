@@ -56,6 +56,13 @@ public class InventarioRepositoryAdapter implements InventarioRepositoryPort {
     }
 
     @Override
+    public List<Inventario> findAll() {
+        return inventarioJpaRepository.findAll().stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
     public List<Inventario> findByTiendaId(Long tiendaId) {
         return inventarioJpaRepository.findByTienda_Id(tiendaId)
                 .stream()

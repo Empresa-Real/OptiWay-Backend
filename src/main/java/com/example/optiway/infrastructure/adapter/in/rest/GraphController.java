@@ -2,6 +2,10 @@ package com.example.optiway.infrastructure.adapter.in.rest;
 
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
@@ -22,6 +26,11 @@ public class GraphController {
 
     @GetMapping(value = {"/graph", "/graph/", "/graph.html"}, produces = MediaType.TEXT_HTML_VALUE)
     @Operation(summary = "Obtener HTML del grafo interactivo", description = "Retorna la visualización interactiva del grafo de arquitectura (acceso público).")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "HTML del grafo",
+                    content = @Content(mediaType = MediaType.TEXT_HTML_VALUE, schema = @Schema(type = "string"))),
+            @ApiResponse(responseCode = "404", description = "El archivo del grafo no existe; respuesta sin cuerpo")
+    })
     public ResponseEntity<Resource> verGrafo() {
         Resource resource = new ClassPathResource("static/graph.html");
         if (!resource.exists()) {

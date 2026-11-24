@@ -1,5 +1,11 @@
 package com.example.optiway.infrastructure.adapter.in.rest;
 
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiCommonErrorResponses;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiBadRequestResponse;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiConflictResponse;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiResourceNotFoundResponse;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiUnsupportedMediaTypeResponse;
+
 import com.example.optiway.application.port.in.CambiarEstadoProductoUseCase;
 import com.example.optiway.application.port.in.CrearProductoUseCase;
 import com.example.optiway.application.port.in.EditarProductoUseCase;
@@ -13,6 +19,8 @@ import com.example.optiway.infrastructure.adapter.in.rest.dto.EditarProductoRequ
 import com.example.optiway.infrastructure.security.AuthUserId;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -53,19 +61,31 @@ public class ProductoController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @ApiBadRequestResponse
+    @ApiConflictResponse
+    @ApiUnsupportedMediaTypeResponse
+    @ApiCommonErrorResponses
     @Operation(summary = "Crear nuevo producto", description = "Registra un producto en el catálogo. Requiere rol ADMINISTRADOR.")
     public ProductoResponse crearProducto(@AuthUserId UUID authUserId, @Valid @RequestBody CrearProductoRequest request) {
         return crearProductoUseCase.crearProducto(authUserId, request.toCommand());
     }
 
     @GetMapping
+    @ApiCommonErrorResponses
     @Operation(summary = "Listar catálogo de productos", description = "Retorna todos los productos registrados en el sistema. Requiere autenticación.")
     public List<ProductoResponse> obtenerProductos(@AuthUserId UUID authUserId) {
         return obtenerProductosUseCase.obtenerProductos(authUserId);
     }
 
     @PatchMapping("/{id}")
+    @ApiBadRequestResponse
+    @ApiResourceNotFoundResponse
+    @ApiUnsupportedMediaTypeResponse
+    @ApiCommonErrorResponses
     @Operation(summary = "Editar producto existente", description = "Modifica los atributos comerciales de un producto. Requiere rol ADMINISTRADOR.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Producto actualizado correctamente")
+    })
     public ProductoResponse editarProducto(@AuthUserId UUID authUserId,
                                            @Parameter(description = "ID numérico (Long) del producto", example = "1")
                                            @PathVariable Long id,
@@ -74,7 +94,14 @@ public class ProductoController {
     }
 
     @PatchMapping("/{id}/estado")
-    @Operation(summary = "Cambiar estado de producto", description = "Activa o desactiva un producto en el catálogo. Requiere rol ADMINISTRADOR.")
+    @ApiBadRequestResponse
+    @ApiResourceNotFoundResponse
+    @ApiUnsupportedMediaTypeResponse
+    @ApiCommonErrorResponses
+    @Operation(summary = "Cambiar estado de producto", description = "Activa o desactiva un producto en el catálogo. Requiere rol ADMINISTRADOR o PLANIFICADOR.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Estado del producto actualizado correctamente")
+    })
     public ProductoResponse cambiarEstado(@AuthUserId UUID authUserId,
                                           @Parameter(description = "ID numérico (Long) del producto", example = "1")
                                           @PathVariable Long id,
@@ -83,6 +110,8 @@ public class ProductoController {
     }
 
     @GetMapping("/{id}/tiene-stock")
+    @ApiBadRequestResponse
+    @ApiCommonErrorResponses
     @Operation(summary = "Verificar existencias de producto", description = "Consulta si el producto cuenta con existencias activas en alguna tienda o centro de distribución. Requiere autenticación.")
     public ProductoStockResponse tieneStock(
             @AuthUserId UUID authUserId,

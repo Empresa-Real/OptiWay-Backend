@@ -12,6 +12,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -40,6 +41,23 @@ public class SecurityConfig {
                 // CSRF deshabilitado: la API es stateless y se autentica vía JWT (Bearer token),
                 // por lo que no es vulnerable a ataques CSRF tradicionales de navegador.
                 .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .headers(headers -> headers
+                        .contentSecurityPolicy(csp -> csp.policyDirectives(
+                                "default-src 'self'; " +
+                                "script-src 'self' https://unpkg.com; " +
+                                "style-src 'self'; " +
+                                "img-src 'self' data:; " +
+                                "font-src 'self' data:; " +
+                                "connect-src 'self'; " +
+                                "object-src 'none'; " +
+                                "base-uri 'self'; " +
+                                "frame-ancestors 'none'; " +
+                                "form-action 'self'"
+                        ))
+                )
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler)
@@ -65,6 +83,7 @@ public class SecurityConfig {
                                 "/swagger-ui/index.html",
                                 "/swagger",
                                 "/docs",
+                                "/api/estadisticas",
                                 "/graph",
                                 "/graph/",
                                 "/robots.txt",

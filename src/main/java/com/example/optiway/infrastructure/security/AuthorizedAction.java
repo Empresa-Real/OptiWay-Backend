@@ -18,6 +18,7 @@ public enum AuthorizedAction {
     CAMBIAR_ESTADO_TIENDA("activar o desactivar tiendas"),
     OPERAR_TIENDA("operar la tienda especificada"),
     CONSULTAR_INVENTARIO_TIENDA("consultar el inventario de esta tienda"),
+    CONSULTAR_REPORTE_ROTACION("consultar el reporte de rotación de esta tienda"),
     AJUSTAR_INVENTARIO_TIENDA("ajustar el inventario de esta tienda"),
     REGISTRAR_VENTA("registrar ventas en la tienda especificada"),
     CONSULTAR_PATRONES_DEMANDA("consultar los patrones de demanda"),
@@ -38,7 +39,8 @@ public enum AuthorizedAction {
     CREAR_RECOMENDACION_REPOSICION("crear recomendaciones de reposición"),
     LISTAR_RECOMENDACIONES_REPOSICION("consultar recomendaciones de reposición"),
     APROBAR_RECOMENDACION_REPOSICION("aprobar recomendaciones de reposición"),
-    RECHAZAR_RECOMENDACION_REPOSICION("rechazar recomendaciones de reposición");
+    RECHAZAR_RECOMENDACION_REPOSICION("rechazar recomendaciones de reposición"),
+    VER_LOGS("consultar los logs y métricas del sistema");
 
     private final String descripcion;
 

@@ -5,9 +5,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.example.optiway.application.exception.AccesoDenegadoException;
+import com.example.optiway.application.exception.RecursoNoEncontradoException;
 import com.example.optiway.application.exception.UsuarioDuplicadoException;
 import com.example.optiway.application.port.in.ActualizarRolCommand;
 import com.example.optiway.application.port.in.ActualizarRolUsuarioUseCase;
@@ -37,6 +40,7 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
     private final AuthPort authPort;
     private final AuthorizationPort authorizationService;
     private final AuthErrorMapper authErrorMapper;
+    private static final Logger log = LoggerFactory.getLogger(UsuarioService.class);
 
     public UsuarioService(
             UsuarioRepositoryPort usuarioRepositoryPort,
@@ -71,7 +75,9 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
         usuario.setRol(rol);
         usuario.setCreadoPor(authUserId);
         usuario.setAuthUserId(invitarEnAuth(email));
-        return UsuarioResponse.from(usuarioRepositoryPort.guardar(usuario), null);
+        Usuario guardado = usuarioRepositoryPort.guardar(usuario);
+        log.info("Usuario creado. usuarioId: {}, rol: {}", guardado.getId(), rol);
+        return UsuarioResponse.from(guardado, null);
     }
 
     @Override
@@ -156,7 +162,7 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
     public void eliminarUsuario(UUID authUserId, Long id) {
         authorizationService.requireAdministrador(authUserId, AuthorizedAction.ELIMINAR_USUARIO);
         Usuario usuarioAEliminar = usuarioRepositoryPort.obtenerPorId(id)
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con ID: " + id));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado con ID: " + id));
 
         if (authUserId.equals(usuarioAEliminar.getAuthUserId())) {
             throw new IllegalArgumentException("Un administrador no puede eliminarse a sí mismo");
@@ -175,6 +181,7 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
         }
 
         usuarioRepositoryPort.eliminar(id);
+        log.info("Usuario eliminado. usuarioId: {}, eliminadoPor: {}", id, authUserId);
     }
 
     /**
@@ -194,7 +201,7 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
         authorizationService.requireAdministrador(authUserId, AuthorizedAction.ACTUALIZAR_ROL);
 
         Usuario usuario = usuarioRepositoryPort.obtenerPorId(command.usuarioId())
-                .orElseThrow(() -> new IllegalArgumentException("Usuario no encontrado con ID: " + command.usuarioId()));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado con ID: " + command.usuarioId()));
 
         Rol nuevoRol = command.nuevoRol();
 
@@ -208,7 +215,11 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
                     "No está permitido otorgar el rol ADMINISTRADOR");
         }
 
+        Rol rolAnterior = usuario.getRol();
         usuario.setRol(nuevoRol);
-        return UsuarioResponse.from(usuarioRepositoryPort.guardar(usuario), null);
+        Usuario guardado = usuarioRepositoryPort.guardar(usuario);
+        log.info("Rol actualizado. usuarioId: {}, rolAnterior: {}, rolNuevo: {}",
+                command.usuarioId(), rolAnterior, nuevoRol);
+        return UsuarioResponse.from(guardado, null);
     }
 }
