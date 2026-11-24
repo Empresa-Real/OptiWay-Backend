@@ -53,6 +53,9 @@ jobs:
         run: bash ./mvnw -B org.owasp:dependency-check-maven:check
         env:
           NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        # Reporte informativo: si NVD no responde (rate limit / sin API key),
+        # no debe bloquear el despliegue de Render.
+        continue-on-error: true
 
       - name: Autenticar con SonarQube Cloud (opcional, secretless)
         if: vars.SONAR_ENABLED == 'true'

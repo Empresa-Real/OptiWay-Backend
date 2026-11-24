@@ -58,8 +58,8 @@ class AdminControllerTest {
     }
 
     @Test
-    void panelSeSirveParaAdministrador() {
-        ResponseEntity<String> respuesta = controller.panel(administrador);
+    void panelEsPublico() {
+        ResponseEntity<String> respuesta = controller.panel();
 
         assertEquals(200, respuesta.getStatusCode().value());
         assertTrue(respuesta.getBody().contains("Panel de administracion"));
@@ -107,7 +107,6 @@ class AdminControllerTest {
 
         assertThrows(AccesoDenegadoException.class, () -> controller.logs(otro, 10));
         assertThrows(AccesoDenegadoException.class, () -> controller.metricas(otro));
-        assertThrows(AccesoDenegadoException.class, () -> controller.panel(otro));
     }
 
     @Test

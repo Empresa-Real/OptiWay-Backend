@@ -80,9 +80,9 @@ public class AdminController {
     }
 
     @GetMapping(value = "/admin", produces = MediaType.TEXT_HTML_VALUE)
-    @Operation(summary = "Panel de observabilidad", description = "Pagina HTML con health, metricas y logs. Requiere rol ADMINISTRADOR.")
-    public ResponseEntity<String> panel(@AuthUserId UUID authUserId) {
-        authorizationService.requireAdministrador(authUserId, AuthorizedAction.VER_LOGS);
+    @Operation(summary = "Panel de observabilidad", description = "Pagina HTML publica; los datos que consulta requieren rol ADMINISTRADOR.")
+    public ResponseEntity<String> panel() {
+        // Publica: el navegador no puede enviar Bearer al abrir una URL (igual que Swagger).
         return ResponseEntity.ok().contentType(MediaType.TEXT_HTML).body(HTML);
     }
 

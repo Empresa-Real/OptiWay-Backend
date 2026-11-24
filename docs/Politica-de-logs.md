@@ -68,7 +68,7 @@ Lo exclusivo del plan Pro (HTTP request logs, latencia p50/p99, streaming a prov
 - **Logs:** `GET /admin/logs?lines=100` (últimas líneas de `logs/optiway.log`, tope 500).
 - **Estadísticas:** `GET /api/estadisticas` devuelve número de tiendas, CDs y unidades de stock. Es **público** (sin token ni cookie) porque el frontend lo muestra en el login, antes de autenticarse; por eso no expone datos personales ni trazas.
 
-Las tres rutas exigen **JWT y rol ADMINISTRADOR**, verificado con `AuthorizationPort.requireAdministrador` y la acción `VER_LOGS`. El token se pega en el campo del panel porque la API es stateless y usa Bearer. Los archivos `admin.js` y `admin.css` son públicos, pero no contienen datos: las consultas a métricas y logs sí están protegidas.
+La página `/admin` es **pública** (igual que Swagger): el navegador no puede adjuntar un Bearer token al abrir una URL directa. Las consultas de datos (`/admin/logs` y `/admin/metrics`) sí exigen **JWT y rol ADMINISTRADOR**, verificado con `AuthorizationPort.requireAdministrador` y la acción `VER_LOGS`. El token se pega en el campo del panel y `admin.js` lo envía en el header. `/api/estadisticas` es público porque se muestra en el login.
 
 En Render el archivo puede no existir después de un deploy (filesystem efímero): el panel muestra “Sin líneas disponibles” y el visor oficial sigue siendo la pestaña *Logs*.
 
