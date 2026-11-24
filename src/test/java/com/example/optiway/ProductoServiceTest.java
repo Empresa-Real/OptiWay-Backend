@@ -214,7 +214,7 @@ class ProductoServiceTest {
         assertEquals("PRD-NEW", res.identificador());
         assertEquals("Arroz", res.nombre());
         assertEquals("Granos", res.categoria());
-        assertEquals("kg", res.unidadMedida());
+        assertEquals("KG", res.unidadMedida());
         assertTrue(res.activo());
         verify(authorizationService).requireGestionLogistica(authUserId, AuthorizedAction.CREAR_PRODUCTO);
     }
@@ -268,5 +268,42 @@ class ProductoServiceTest {
         assertThrows(IllegalArgumentException.class, () -> service.editarProducto(
                 authUserId, new EditarProductoCommand(productoId, null, null, BigDecimal.ZERO, null)));
         verify(productoRepositoryPort, never()).update(any(), any());
+    }
+
+    @Test
+    void crearProducto_CuandoUnidadMedidaEsAlias_DebeNormalizarAlEstandar() {
+        when(productoRepositoryPort.existsByIdentificador(any())).thenReturn(false);
+        when(productoRepositoryPort.save(any(Producto.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        assertEquals("LITRO", service.crearProducto(authUserId,
+                new CrearProductoCommand("P-1", "Leche", "Lacteos", new BigDecimal("4000"), "Litro")).unidadMedida());
+        assertEquals("UNIDAD", service.crearProducto(authUserId,
+                new CrearProductoCommand("P-2", "Pan", "Panaderia", new BigDecimal("1000"), "und")).unidadMedida());
+        assertEquals("KG", service.crearProducto(authUserId,
+                new CrearProductoCommand("P-3", "Papa", "Verduras", new BigDecimal("3000"), "kilogramos")).unidadMedida());
+    }
+
+    @Test
+    void crearProducto_CuandoUnidadMedidaEsInvalida_DebeLanzarExcepcion() {
+        assertThrows(IllegalArgumentException.class, () -> service.crearProducto(
+                authUserId, new CrearProductoCommand("P-1", "Leche", "Lacteos", new BigDecimal("4000"), "tonelada_x")));
+        verify(productoRepositoryPort, never()).save(any());
+    }
+
+    @Test
+    void editarProducto_CuandoUnidadMedidaEsValidaOInvalida_DebeNormalizarORechazar() {
+        Usuario admin = new Usuario(1L, authUserId, "Admin", "admin@opt.com", Rol.ADMINISTRADOR, null);
+        when(authorizationService.requireGestionLogistica(authUserId, AuthorizedAction.EDITAR_PRODUCTO))
+                .thenReturn(admin);
+        prepararProducto();
+        when(productoRepositoryPort.update(any(Producto.class), eq(1L)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        ProductoResponse res = service.editarProducto(authUserId, new EditarProductoCommand(
+                productoId, null, null, null, "paquetes"));
+        assertEquals("PAQUETE", res.unidadMedida());
+
+        assertThrows(IllegalArgumentException.class, () -> service.editarProducto(
+                authUserId, new EditarProductoCommand(productoId, null, null, null, "invalida")));
     }
 }

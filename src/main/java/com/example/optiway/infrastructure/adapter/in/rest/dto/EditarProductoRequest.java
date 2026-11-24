@@ -17,7 +17,8 @@ public record EditarProductoRequest(
         @Schema(description = "Nuevo precio de venta (debe ser mayor que cero)", example = "4800.00")
         BigDecimal precio,
 
-        @Schema(description = "Nueva unidad de medida", example = "KG")
+        @Schema(description = "Nueva unidad de medida estándar", example = "KG",
+                allowableValues = {"UNIDAD", "KG", "G", "LITRO", "ML", "CAJA", "PAQUETE", "DOCENA"})
         String unidadMedida
 ) {
     public EditarProductoCommand toCommand(Long id) {

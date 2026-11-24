@@ -15,6 +15,7 @@ import com.example.optiway.application.port.out.InventarioRepositoryPort;
 import com.example.optiway.application.port.out.ProductoRepositoryPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.domain.model.Producto;
+import com.example.optiway.domain.model.UnidadMedida;
 import com.example.optiway.domain.model.Usuario;
 import com.example.optiway.application.port.out.AuthorizationPort;
 import com.example.optiway.infrastructure.security.AuthorizedAction;
@@ -57,7 +58,7 @@ public class ProductoService implements CrearProductoUseCase, ObtenerProductosUs
         }
         String unidadMedida = null;
         if (command.unidadMedida() != null && !command.unidadMedida().isBlank()) {
-            unidadMedida = command.unidadMedida().trim();
+            unidadMedida = UnidadMedida.normalizar(command.unidadMedida());
         }
 
         if (productoRepositoryPort.existsByIdentificador(identificador)) {
@@ -110,7 +111,8 @@ public class ProductoService implements CrearProductoUseCase, ObtenerProductosUs
             hayCambios = true;
         }
         if (command.unidadMedida() != null) {
-            actual.setUnidadMedida(requerido(command.unidadMedida(), "La unidad de medida es obligatoria."));
+            String valor = requerido(command.unidadMedida(), "La unidad de medida es obligatoria.");
+            actual.setUnidadMedida(UnidadMedida.normalizar(valor));
             hayCambios = true;
         }
         if (!hayCambios) {

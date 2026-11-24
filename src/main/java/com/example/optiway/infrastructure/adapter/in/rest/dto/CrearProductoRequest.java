@@ -24,7 +24,8 @@ public record CrearProductoRequest(
         @Schema(description = "Precio unitario de venta", example = "4500.00")
         BigDecimal precio,
 
-        @Schema(description = "Unidad de medida (ej: KG, UNIDAD, LITRO)", example = "KG")
+        @Schema(description = "Unidad de medida estándar", example = "KG",
+                allowableValues = {"UNIDAD", "KG", "G", "LITRO", "ML", "CAJA", "PAQUETE", "DOCENA"})
         String unidadMedida
 ) {
     public CrearProductoCommand toCommand() {
