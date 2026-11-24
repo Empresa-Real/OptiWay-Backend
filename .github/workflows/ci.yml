@@ -15,15 +15,18 @@ jobs:
   build:
     name: Compilar, probar y medir cobertura
     runs-on: ubuntu-latest
+    env:
+      # Si el secret no existe, el step de Gitleaks se omite (sin anotaciones de error).
+      GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
 
     steps:
       - name: Descargar código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Configurar JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
@@ -35,16 +38,18 @@ jobs:
 
       - name: Publicar informe de cobertura
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: jacoco-report
           path: target/site/jacoco
           if-no-files-found: warn
 
       - name: Detección de secretos (Gitleaks)
+        if: env.GITLEAKS_LICENSE != ''
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
         # Si el workspace requiere licencia de pago, no bloquea el pipeline.
         continue-on-error: true
 
@@ -57,15 +62,18 @@ jobs:
         # no debe bloquear el despliegue de Render.
         continue-on-error: true
 
+      # Sonar solo corre cuando el repo está bindeado en SonarCloud.
+      # Para habilitarlo: crear las variables SONAR_ENABLED=true y SONAR_BOUND=true
+      # después de vincular el proyecto en SonarCloud.
       - name: Autenticar con SonarQube Cloud (opcional, secretless)
-        if: vars.SONAR_ENABLED == 'true'
+        if: vars.SONAR_ENABLED == 'true' && vars.SONAR_BOUND == 'true'
         id: sonar-auth
         uses: SonarSource/sonarqube-auth-action@v1
         # Opcional: si la cuenta/project no esta configurada, no bloquea el deploy.
         continue-on-error: true
 
       - name: Quality Gate - SonarQube Cloud (opcional)
-        if: vars.SONAR_ENABLED == 'true'
+        if: vars.SONAR_ENABLED == 'true' && vars.SONAR_BOUND == 'true'
         run: >
           bash ./mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
           -Dsonar.organization=${{ steps.sonar-auth.outputs.organization }}
