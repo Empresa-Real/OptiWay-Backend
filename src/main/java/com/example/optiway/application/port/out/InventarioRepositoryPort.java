@@ -12,6 +12,8 @@ public interface InventarioRepositoryPort {
         return save(inventario);
     }
 
+    List<Inventario> findAll();
+
     List<Inventario> findByTiendaId(Long tiendaId);
 
     List<Inventario> findByCentroDistribucionId(Long centroDistribucionId);

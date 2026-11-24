@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.example.optiway.application.exception.AccesoDenegadoException;
@@ -38,6 +40,7 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
     private final AuthPort authPort;
     private final AuthorizationPort authorizationService;
     private final AuthErrorMapper authErrorMapper;
+    private static final Logger log = LoggerFactory.getLogger(UsuarioService.class);
 
     public UsuarioService(
             UsuarioRepositoryPort usuarioRepositoryPort,
@@ -72,7 +75,9 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
         usuario.setRol(rol);
         usuario.setCreadoPor(authUserId);
         usuario.setAuthUserId(invitarEnAuth(email));
-        return UsuarioResponse.from(usuarioRepositoryPort.guardar(usuario), null);
+        Usuario guardado = usuarioRepositoryPort.guardar(usuario);
+        log.info("Usuario creado. usuarioId: {}, rol: {}", guardado.getId(), rol);
+        return UsuarioResponse.from(guardado, null);
     }
 
     @Override
@@ -176,6 +181,7 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
         }
 
         usuarioRepositoryPort.eliminar(id);
+        log.info("Usuario eliminado. usuarioId: {}, eliminadoPor: {}", id, authUserId);
     }
 
     /**
@@ -209,7 +215,11 @@ public class UsuarioService implements CrearUsuarioUseCase, ObtenerUsuariosUseCa
                     "No está permitido otorgar el rol ADMINISTRADOR");
         }
 
+        Rol rolAnterior = usuario.getRol();
         usuario.setRol(nuevoRol);
-        return UsuarioResponse.from(usuarioRepositoryPort.guardar(usuario), null);
+        Usuario guardado = usuarioRepositoryPort.guardar(usuario);
+        log.info("Rol actualizado. usuarioId: {}, rolAnterior: {}, rolNuevo: {}",
+                command.usuarioId(), rolAnterior, nuevoRol);
+        return UsuarioResponse.from(guardado, null);
     }
 }

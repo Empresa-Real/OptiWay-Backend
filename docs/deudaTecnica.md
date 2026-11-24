@@ -224,7 +224,9 @@ El modelo actual implica reglas cardinales que **no están formalizadas** ni val
 
 ## 9. Logging: guía teórica sin implementación real
 
-**Estado:** ⚠️ Abierto · **Impacto:** Observabilidad / diagnóstico en producción · **Esfuerzo:** Bajo-Medio
+> **Actualización (24/11/2026):** ya existe `docs/Politica-de-logs.md`, la configuración en `application.properties` (niveles por variable de entorno, archivo, patrones y rotación), `show-sql=false`, Actuator `health,info` y `log.info` de auditoría en seis servicios (Venta, Ajuste de inventario, Ingreso de mercancía, Recomendación, Usuario). El texto original se conserva como registro del estado en la review del Sprint 2.
+
+**Estado:** ⚠️ Parcialmente resuelto · **Impacto:** Observabilidad / diagnóstico en producción · **Esfuerzo:** Bajo-Medio
 
 El proyecto **no tiene una política de logging definida**. Hoy solo existe:
 
@@ -240,6 +242,8 @@ El antiguo `docs/Sistema-de-Logs.md` era una guía genérica (niveles, `CommonsR
 - Loguear peticiones sin volcar tokens JWT ni datos sensibles.
 - Evaluar formato estructurado (JSON) si se consume desde Render u otra herramienta de observabilidad.
 - En Render, priorizar stdout; añadir rotación/archivo solo si se necesita retención local.
+
+**Avance (24/11/2026):** resueltos los niveles por entorno (`application-local.properties` con DEBUG y variables `LOG_LEVEL`/`APP_LOG_LEVEL` en producción), `show-sql=false`, la política documentada y la auditoría de acciones críticas. Queda verificar en el dashboard de Render (Logs y Metrics) y, si se decide, evaluar JSON (no obligatorio en el básico).
 
 ---
 

@@ -39,7 +39,8 @@ public enum AuthorizedAction {
     CREAR_RECOMENDACION_REPOSICION("crear recomendaciones de reposición"),
     LISTAR_RECOMENDACIONES_REPOSICION("consultar recomendaciones de reposición"),
     APROBAR_RECOMENDACION_REPOSICION("aprobar recomendaciones de reposición"),
-    RECHAZAR_RECOMENDACION_REPOSICION("rechazar recomendaciones de reposición");
+    RECHAZAR_RECOMENDACION_REPOSICION("rechazar recomendaciones de reposición"),
+    VER_LOGS("consultar los logs y métricas del sistema");
 
     private final String descripcion;
 

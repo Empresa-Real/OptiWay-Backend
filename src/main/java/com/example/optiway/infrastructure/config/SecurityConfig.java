@@ -83,6 +83,7 @@ public class SecurityConfig {
                                 "/swagger-ui/index.html",
                                 "/swagger",
                                 "/docs",
+                                "/api/estadisticas",
                                 "/graph",
                                 "/graph/",
                                 "/robots.txt",
