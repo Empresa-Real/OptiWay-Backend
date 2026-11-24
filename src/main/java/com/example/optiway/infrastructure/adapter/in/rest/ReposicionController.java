@@ -1,5 +1,11 @@
 package com.example.optiway.infrastructure.adapter.in.rest;
 
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiCommonErrorResponses;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiBadRequestResponse;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiConflictResponse;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiResourceNotFoundResponse;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiUnsupportedMediaTypeResponse;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -35,6 +41,10 @@ public class ReposicionController {
 
     @PostMapping("/tiendas/{id}/solicitudes-reposicion")
     @ResponseStatus(HttpStatus.CREATED)
+    @ApiBadRequestResponse
+    @ApiResourceNotFoundResponse
+    @ApiUnsupportedMediaTypeResponse
+    @ApiCommonErrorResponses
     @Operation(summary = "Solicitar reposición manual", description = "Permite al encargado de tienda solicitar reposición de productos. Rol: ENCARGADO_TIENDA.")
     public SolicitudReposicionResponse crearSolicitudReposicion(
             @AuthUserId UUID authUserId,
@@ -45,6 +55,7 @@ public class ReposicionController {
     }
 
     @GetMapping("/solicitudes-reposicion")
+    @ApiCommonErrorResponses
     @Operation(summary = "Listar solicitudes de reposición", description = "Permite al planificador visualizar todas las solicitudes de reposición pendientes. Rol: PLANIFICADOR.")
     public List<SolicitudReposicionResponse> obtenerSolicitudesReposicion(@AuthUserId UUID authUserId) {
         return solicitarReposicionUseCase.obtenerTodasLasSolicitudes(authUserId);

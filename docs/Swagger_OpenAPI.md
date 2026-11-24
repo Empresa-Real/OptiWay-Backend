@@ -102,6 +102,10 @@ Los controladores de OptiWay reciben la identidad del usuario mediante el parám
 5. Todas las solicitudes subsecuentes incluirán automáticamente el encabezado:
    `Authorization: Bearer <jwt>`.
 
+### 4.4. Respuestas de error
+
+Los controladores declaran los códigos HTTP de error por operación mediante anotaciones `@ApiResponse`. Las respuestas JSON usan el esquema `ErrorResponse`; el inventario de códigos y reglas por ruta está en [Contrato de errores de la API](./Contrato-Errores-API.md). Los manejadores de Spring Security devuelven este mismo JSON para `401` y `403`. El `404` del grafo es una respuesta sin cuerpo y el controlador permanece oculto en Swagger.
+
 ---
 
 ## 5. Control de Entornos y Seguridad en Producción

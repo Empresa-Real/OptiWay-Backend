@@ -1,5 +1,12 @@
 package com.example.optiway.infrastructure.adapter.in.rest;
 
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiCommonErrorResponses;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiBadRequestResponse;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiConflictResponse;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiExternalServiceErrorResponse;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiResourceNotFoundResponse;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiUnsupportedMediaTypeResponse;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -56,6 +63,11 @@ public class UsuarioController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @ApiBadRequestResponse
+    @ApiConflictResponse
+    @ApiExternalServiceErrorResponse
+    @ApiUnsupportedMediaTypeResponse
+    @ApiCommonErrorResponses
     @Operation(summary = "Crear nuevo usuario", description = "Registra un usuario en la plataforma asignándole un rol inicial. Requiere rol ADMINISTRADOR.")
     public UsuarioResponse crearUsuario(
             @AuthUserId UUID authUserId,
@@ -64,12 +76,16 @@ public class UsuarioController {
     }
 
     @GetMapping
+    @ApiCommonErrorResponses
     @Operation(summary = "Listar usuarios", description = "Retorna el listado de todos los usuarios registrados. Requiere rol ADMINISTRADOR.")
     public List<UsuarioResponse> obtenerUsuarios(@AuthUserId UUID authUserId) {
         return obtenerUsuariosUseCase.obtenerUsuarios(authUserId);
     }
 
     @GetMapping("/{id}")
+    @ApiBadRequestResponse
+    @ApiResourceNotFoundResponse
+    @ApiCommonErrorResponses
     @Operation(summary = "Obtener usuario por ID", description = "Consulta un usuario específico por su ID interno. Requiere autenticación.")
     public UsuarioResponse obtenerUsuario(
             @AuthUserId UUID authUserId,
@@ -80,6 +96,8 @@ public class UsuarioController {
     }
 
     @GetMapping("/me")
+    @ApiResourceNotFoundResponse
+    @ApiCommonErrorResponses
     @Operation(summary = "Obtener perfil autenticado", description = "Consulta los datos y rol del usuario correspondiente al token JWT actual.")
     public UsuarioResponse obtenerUsuarioAutenticado(@AuthUserId UUID authUserId) {
         return obtenerUsuarioUseCase.obtenerUsuarioPorAuthId(authUserId)
@@ -88,10 +106,12 @@ public class UsuarioController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ApiBadRequestResponse
+    @ApiResourceNotFoundResponse
+    @ApiCommonErrorResponses
     @Operation(summary = "Eliminar usuario", description = "Elimina lógicamente o físicamente un usuario del sistema. Requiere rol ADMINISTRADOR.")
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Usuario eliminado correctamente"),
-            @ApiResponse(responseCode = "404", description = "El usuario indicado no existe")
+            @ApiResponse(responseCode = "204", description = "Usuario eliminado correctamente")
     })
     public void eliminarUsuario(
             @AuthUserId UUID authUserId,
@@ -101,10 +121,13 @@ public class UsuarioController {
     }
 
     @PatchMapping("/{id}/rol")
+    @ApiBadRequestResponse
+    @ApiResourceNotFoundResponse
+    @ApiUnsupportedMediaTypeResponse
+    @ApiCommonErrorResponses
     @Operation(summary = "Actualizar rol de usuario", description = "Modifica el rol de un usuario existente. Requiere rol ADMINISTRADOR.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Rol actualizado correctamente"),
-            @ApiResponse(responseCode = "404", description = "El usuario indicado no existe")
+            @ApiResponse(responseCode = "200", description = "Rol actualizado correctamente")
     })
     public UsuarioResponse actualizarRol(
             @AuthUserId UUID authUserId,
