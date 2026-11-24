@@ -18,6 +18,8 @@ jobs:
     env:
       # Si el secret no existe, el step de Gitleaks se omite (sin anotaciones de error).
       GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+      # URL del Deploy Hook de Render; si no existe, el deploy desde CI se omite.
+      RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
 
     steps:
       - name: Descargar código
@@ -81,4 +83,11 @@ jobs:
           -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
         continue-on-error: true
 
-# El despliegue no se dispara desde aqui: Render hace auto-deploy al pushear a produccion.
+      - name: Desplegar en Render (Deploy Hook)
+        # Solo si todos los steps previos terminaron en success y el hook esta configurado.
+        if: success() && env.RENDER_DEPLOY_HOOK != ''
+        run: curl -fsS -X POST "$RENDER_DEPLOY_HOOK"
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+
+# El deploy se dispara desde CI con el Deploy Hook de Render; el auto-deploy de Render queda apagado.
