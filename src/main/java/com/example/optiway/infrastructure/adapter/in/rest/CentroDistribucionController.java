@@ -15,10 +15,12 @@ import com.example.optiway.application.port.in.AsignarEncargadoCDUseCase;
 import com.example.optiway.application.port.in.CambiarEstadoCentroDistribucionUseCase;
 import com.example.optiway.application.port.in.CrearCentroDistribucionUseCase;
 import com.example.optiway.application.port.in.ObtenerCentrosDistribucionUseCase;
+import com.example.optiway.application.port.in.ObtenerOrdenesCDUseCase;
 import com.example.optiway.application.port.in.RegistrarIngresoMercanciaUseCase;
 import com.example.optiway.application.port.in.dto.AjusteInventarioResponse;
 import com.example.optiway.application.port.in.dto.CentroDistribucionResponse;
 import com.example.optiway.application.port.in.dto.IngresoMercanciaResponse;
+import com.example.optiway.application.port.in.dto.OrdenReposicionResponse;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.AjustarInventarioRequest;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.AsignarEncargadoRequest;
 import com.example.optiway.infrastructure.adapter.in.rest.dto.CambiarEstadoCDRequest;
@@ -51,6 +53,7 @@ public class CentroDistribucionController {
     private final RegistrarIngresoMercanciaUseCase registrarIngresoMercanciaUseCase;
     private final CambiarEstadoCentroDistribucionUseCase cambiarEstadoCentroDistribucionUseCase;
     private final AjustarInventarioUseCase ajustarInventarioUseCase;
+    private final ObtenerOrdenesCDUseCase obtenerOrdenesCDUseCase;
 
     public CentroDistribucionController(
             CrearCentroDistribucionUseCase crearCentroDistribucionUseCase,
@@ -58,13 +61,15 @@ public class CentroDistribucionController {
             AsignarEncargadoCDUseCase asignarEncargadoCDUseCase,
             RegistrarIngresoMercanciaUseCase registrarIngresoMercanciaUseCase,
             CambiarEstadoCentroDistribucionUseCase cambiarEstadoCentroDistribucionUseCase,
-            AjustarInventarioUseCase ajustarInventarioUseCase) {
+            AjustarInventarioUseCase ajustarInventarioUseCase,
+            ObtenerOrdenesCDUseCase obtenerOrdenesCDUseCase) {
         this.crearCentroDistribucionUseCase = crearCentroDistribucionUseCase;
         this.obtenerCentrosDistribucionUseCase = obtenerCentrosDistribucionUseCase;
         this.asignarEncargadoCDUseCase = asignarEncargadoCDUseCase;
         this.registrarIngresoMercanciaUseCase = registrarIngresoMercanciaUseCase;
         this.cambiarEstadoCentroDistribucionUseCase = cambiarEstadoCentroDistribucionUseCase;
         this.ajustarInventarioUseCase = ajustarInventarioUseCase;
+        this.obtenerOrdenesCDUseCase = obtenerOrdenesCDUseCase;
     }
 
     @PostMapping
@@ -149,5 +154,18 @@ public class CentroDistribucionController {
         return ajustarInventarioUseCase.ajustarInventario(
                 authUserId,
                 new AjustarInventarioCommand(null, centroDistribucionId, request.productoId(), request.nuevaCantidad()));
+    }
+
+    @GetMapping("/{id}/ordenes")
+    @ApiBadRequestResponse
+    @ApiResourceNotFoundResponse
+    @ApiCommonErrorResponses
+    @Operation(summary = "Listar órdenes de reposición del centro de distribución",
+            description = "Retorna las órdenes de reposición cuyo origen es el centro de distribución indicado. Requiere rol ENCARGADO_CD asignado, ADMINISTRADOR o PLANIFICADOR. Alias corto: GET /api/cd/{id}/ordenes.")
+    public List<OrdenReposicionResponse> listarOrdenes(
+            @AuthUserId UUID authUserId,
+            @Parameter(description = "ID numérico (Long) del centro de distribución", example = "1")
+            @PathVariable("id") Long centroDistribucionId) {
+        return obtenerOrdenesCDUseCase.obtenerOrdenesPorCentro(authUserId, centroDistribucionId);
     }
 }

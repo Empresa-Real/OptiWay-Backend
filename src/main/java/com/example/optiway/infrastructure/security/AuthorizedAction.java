@@ -32,6 +32,7 @@ public enum AuthorizedAction {
     CONSULTAR_INVENTARIO_CENTRO_DISTRIBUCION("consultar el inventario de este centro de distribución"),
     AJUSTAR_INVENTARIO_CENTRO_DISTRIBUCION("ajustar el inventario de su centro de distribución"),
     REGISTRAR_INGRESO("registrar ingresos en este Centro de Distribución"),
+    LISTAR_ORDENES_CENTRO_DISTRIBUCION("consultar las órdenes de reposición de este centro de distribución"),
 
     CREAR_PRODUCTO("crear productos"),
     EDITAR_PRODUCTO("editar productos"),

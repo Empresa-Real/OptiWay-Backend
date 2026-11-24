@@ -3,11 +3,14 @@ package com.example.optiway;
 import com.example.optiway.application.exception.RecursoNoEncontradoException;
 import com.example.optiway.application.port.in.CrearCentroDistribucionCommand;
 import com.example.optiway.application.port.in.dto.CentroDistribucionResponse;
+import com.example.optiway.application.port.in.dto.OrdenReposicionResponse;
 import com.example.optiway.application.port.out.AuthorizationPort;
 import com.example.optiway.application.port.out.CentroDistribucionRepositoryPort;
+import com.example.optiway.application.port.out.OrdenReposicionRepositoryPort;
 import com.example.optiway.application.port.out.UsuarioRepositoryPort;
 import com.example.optiway.application.service.CentroDistribucionService;
 import com.example.optiway.domain.model.CentroDistribucion;
+import com.example.optiway.domain.model.OrdenReposicion;
 import com.example.optiway.domain.model.Rol;
 import com.example.optiway.domain.model.Usuario;
 import com.example.optiway.infrastructure.security.AuthorizedAction;
@@ -37,6 +40,7 @@ class CentroDistribucionServiceTest {
     @Mock private CentroDistribucionRepositoryPort centroRepositoryPort;
     @Mock private UsuarioRepositoryPort usuarioRepositoryPort;
     @Mock private AuthorizationPort authorizationPort;
+    @Mock private OrdenReposicionRepositoryPort ordenReposicionRepositoryPort;
 
     private CentroDistribucionService service;
 
@@ -45,7 +49,8 @@ class CentroDistribucionServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new CentroDistribucionService(centroRepositoryPort, usuarioRepositoryPort, authorizationPort);
+        service = new CentroDistribucionService(
+                centroRepositoryPort, usuarioRepositoryPort, authorizationPort, ordenReposicionRepositoryPort);
     }
 
     @Test
@@ -141,5 +146,45 @@ class CentroDistribucionServiceTest {
 
         CentroDistribucionResponse res = service.cambiarEstado(authUserId, cdId, false, true);
         assertEquals("Inactivo", res.estado());
+    }
+
+    @Test
+    void obtenerOrdenesPorCentro_CuandoUsuarioAutorizado_DebeRetornarOrdenes() {
+        CentroDistribucion cd = new CentroDistribucion(cdId, "CD-1", "CD1", "Dir", 500, 2L, List.of(1L));
+        OrdenReposicion orden = new OrdenReposicion();
+        orden.setId(77L);
+        orden.setRecomendacionId(15L);
+        orden.setProductoId(5L);
+        orden.setNombreProducto("Arroz Diana");
+        orden.setCantidad(25);
+        orden.setCentroDistribucionOrigenId(cdId);
+        orden.setTiendaDestinoId(1L);
+        orden.setEstado("APROBADA");
+        orden.setCreadoPor(authUserId);
+
+        when(centroRepositoryPort.obtenerPorId(cdId)).thenReturn(Optional.of(cd));
+        when(ordenReposicionRepositoryPort.listarPorCentroDistribucionOrigen(cdId)).thenReturn(List.of(orden));
+
+        List<OrdenReposicionResponse> res = service.obtenerOrdenesPorCentro(authUserId, cdId);
+
+        assertEquals(1, res.size());
+        assertEquals(77L, res.get(0).id());
+        assertEquals("Arroz Diana", res.get(0).nombreProducto());
+        assertEquals("APROBADA", res.get(0).estado());
+        verify(authorizationPort).requirePermisoCentroDistribucion(
+                authUserId, cd, AuthorizedAction.LISTAR_ORDENES_CENTRO_DISTRIBUCION);
+    }
+
+    @Test
+    void obtenerOrdenesPorCentro_CuandoCentroNoExiste_DebeLanzar404() {
+        when(centroRepositoryPort.obtenerPorId(cdId)).thenReturn(Optional.empty());
+        assertThrows(RecursoNoEncontradoException.class, () ->
+                service.obtenerOrdenesPorCentro(authUserId, cdId));
+    }
+
+    @Test
+    void obtenerOrdenesPorCentro_CuandoIdEsInvalido_DebeLanzar400() {
+        assertThrows(IllegalArgumentException.class, () ->
+                service.obtenerOrdenesPorCentro(authUserId, 0L));
     }
 }

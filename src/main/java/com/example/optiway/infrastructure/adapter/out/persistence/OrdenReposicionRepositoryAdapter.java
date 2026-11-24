@@ -61,6 +61,18 @@ public class OrdenReposicionRepositoryAdapter implements OrdenReposicionReposito
 
     @Override
     @Transactional(readOnly = true)
+    public List<OrdenReposicion> listarPorCentroDistribucionOrigen(Long centroDistribucionId) {
+        if (centroDistribucionId == null) {
+            return List.of();
+        }
+        return repository.findByCentroDistribucionOrigen_IdOrderByFechaCreacionDescIdDesc(centroDistribucionId)
+                .stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public boolean existeOrdenEnTransitoOEnviadaPorTienda(Long tiendaId) {
         if (tiendaId == null) {
             return false;
