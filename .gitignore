@@ -74,5 +74,5 @@ mintty.*.png
 # Herramientas locales de generación de diagramas
 tools/plantuml/
 
-# Incluir diagramas y evidencias visuales del proyecto
-!docs/diagramas/
+
+docs/diagramas/otros

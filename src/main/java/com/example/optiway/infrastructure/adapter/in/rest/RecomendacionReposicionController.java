@@ -1,5 +1,11 @@
 package com.example.optiway.infrastructure.adapter.in.rest;
 
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiCommonErrorResponses;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiBadRequestResponse;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiConflictResponse;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiResourceNotFoundResponse;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiUnsupportedMediaTypeResponse;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -56,6 +62,11 @@ public class RecomendacionReposicionController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @ApiBadRequestResponse
+    @ApiResourceNotFoundResponse
+    @ApiConflictResponse
+    @ApiUnsupportedMediaTypeResponse
+    @ApiCommonErrorResponses
     @Operation(
             summary = "Crear recomendación de reposición",
             description = "Registra una propuesta de traslado de inventario. Requiere rol PLANIFICADOR."
@@ -68,6 +79,7 @@ public class RecomendacionReposicionController {
     }
 
     @GetMapping
+    @ApiCommonErrorResponses
     @Operation(
             summary = "Consultar recomendaciones de reposición",
             description = "Lista las propuestas registradas. Requiere rol PLANIFICADOR."
@@ -79,6 +91,11 @@ public class RecomendacionReposicionController {
     }
 
     @PatchMapping("/{id}/aprobar")
+    @ApiBadRequestResponse
+    @ApiResourceNotFoundResponse
+    @ApiConflictResponse
+    @ApiUnsupportedMediaTypeResponse
+    @ApiCommonErrorResponses
     @Operation(
             summary = "Aprobar o ajustar y aprobar recomendación",
             description = "Aprueba una recomendación en estado PROPUESTA (el cuerpo es opcional; si se envía, permite ajustar cantidad o CD origen) y retorna 200 OK con la Orden de Reposición generada en estado APROBADA. Requiere rol PLANIFICADOR."
@@ -96,6 +113,11 @@ public class RecomendacionReposicionController {
     }
 
     @PatchMapping("/{id}/rechazar")
+    @ApiBadRequestResponse
+    @ApiResourceNotFoundResponse
+    @ApiConflictResponse
+    @ApiUnsupportedMediaTypeResponse
+    @ApiCommonErrorResponses
     @Operation(
             summary = "Rechazar recomendación de reposición",
             description = "Marca una recomendación en estado PROPUESTA como RECHAZADA registrando el motivo obligatorio. Requiere rol PLANIFICADOR."

@@ -17,6 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.optiway.application.port.in.ReporteRotacionUseCase;
 import com.example.optiway.application.port.in.dto.ReporteRotacionProductoResponse;
 import com.example.optiway.application.port.in.dto.ReporteRotacionResponse;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiBadRequestResponse;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiCommonErrorResponses;
+import com.example.optiway.infrastructure.adapter.in.rest.docs.ApiResourceNotFoundResponse;
 import com.example.optiway.infrastructure.security.AuthUserId;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -37,12 +40,12 @@ public class ReporteRotacionController {
     }
 
     @GetMapping
+    @ApiBadRequestResponse
+    @ApiResourceNotFoundResponse
+    @ApiCommonErrorResponses
     @Operation(summary = "Consultar reporte de rotación", description = "Agrupa unidades vendidas, tiempo promedio estimado en inventario y clasificación de rotación por producto. Requiere rol PLANIFICADOR.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Reporte generado correctamente"),
-            @ApiResponse(responseCode = "400", description = "Parámetros inválidos o fechas invertidas"),
-            @ApiResponse(responseCode = "403", description = "Se requiere el rol PLANIFICADOR"),
-            @ApiResponse(responseCode = "404", description = "La tienda no existe")
+            @ApiResponse(responseCode = "200", description = "Reporte generado correctamente")
     })
     public ReporteRotacionResponse consultar(
             @AuthUserId UUID authUserId,
@@ -56,12 +59,12 @@ public class ReporteRotacionController {
     }
 
     @GetMapping(value = "/exportar", produces = "text/csv")
+    @ApiBadRequestResponse
+    @ApiResourceNotFoundResponse
+    @ApiCommonErrorResponses
     @Operation(summary = "Exportar reporte de rotación a CSV", description = "Descarga el mismo reporte de rotación en CSV UTF-8 compatible con hojas de cálculo. Requiere rol PLANIFICADOR.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Archivo CSV generado correctamente"),
-            @ApiResponse(responseCode = "400", description = "Parámetros inválidos o fechas invertidas"),
-            @ApiResponse(responseCode = "403", description = "Se requiere el rol PLANIFICADOR"),
-            @ApiResponse(responseCode = "404", description = "La tienda no existe")
+            @ApiResponse(responseCode = "200", description = "Archivo CSV generado correctamente")
     })
     public ResponseEntity<byte[]> exportar(
             @AuthUserId UUID authUserId,
