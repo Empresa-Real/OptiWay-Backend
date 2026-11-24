@@ -78,6 +78,7 @@ jobs:
           bash ./mvnw -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
           -Dsonar.organization=${{ steps.sonar-auth.outputs.organization }}
           -Dsonar.projectKey=${{ steps.sonar-auth.outputs.project-key }}
+          -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
         continue-on-error: true
 
 # El despliegue no se dispara desde aqui: Render hace auto-deploy al pushear a produccion.
