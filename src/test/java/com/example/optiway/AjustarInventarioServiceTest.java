@@ -15,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.example.optiway.application.exception.RecursoNoEncontradoException;
 import com.example.optiway.application.port.in.AjustarInventarioCommand;
 import com.example.optiway.application.port.in.dto.AjusteInventarioResponse;
 import com.example.optiway.application.port.out.AjusteInventarioRepositoryPort;
@@ -151,6 +152,58 @@ class AjustarInventarioServiceTest {
         assertThrows(IllegalArgumentException.class, () ->
                 service.ajustarInventario(authUserId, new AjustarInventarioCommand(null, null, productoId, 10)));
         verifyNoInteractions(inventarioRepository, ajusteRepository);
+    }
+
+    @Test
+    void ajustarInventario_CuandoUsuarioNoTienePermiso_DebeRechazarSinGuardar() {
+        when(tiendaRepository.obtenerPorId(tiendaId)).thenReturn(Optional.of(tienda));
+        doThrow(new IllegalStateException("Acceso denegado"))
+                .when(authorizationPort)
+                .requirePermisoTienda(authUserId, tienda, AuthorizedAction.AJUSTAR_INVENTARIO_TIENDA);
+
+        assertThrows(IllegalStateException.class, () ->
+                service.ajustarInventario(authUserId, new AjustarInventarioCommand(tiendaId, null, productoId, 5)));
+
+        verifyNoInteractions(productoRepository, inventarioRepository, ajusteRepository);
+    }
+
+    @Test
+    void ajustarInventario_CuandoTiendaNoExiste_DebeLanzarExcepcion() {
+        when(tiendaRepository.obtenerPorId(tiendaId)).thenReturn(Optional.empty());
+
+        assertThrows(RecursoNoEncontradoException.class, () ->
+                service.ajustarInventario(authUserId, new AjustarInventarioCommand(tiendaId, null, productoId, 5)));
+
+        verifyNoInteractions(authorizationPort, productoRepository, inventarioRepository, ajusteRepository);
+    }
+
+    @Test
+    void ajustarInventario_CuandoProductoNoExiste_DebeLanzarExcepcion() {
+        when(tiendaRepository.obtenerPorId(tiendaId)).thenReturn(Optional.of(tienda));
+        when(authorizationPort.requirePermisoTienda(authUserId, tienda, AuthorizedAction.AJUSTAR_INVENTARIO_TIENDA))
+                .thenReturn(encargadoTienda);
+        when(productoRepository.findById(productoId)).thenReturn(Optional.empty());
+
+        assertThrows(RecursoNoEncontradoException.class, () ->
+                service.ajustarInventario(authUserId, new AjustarInventarioCommand(tiendaId, null, productoId, 5)));
+
+        verifyNoInteractions(inventarioRepository, ajusteRepository);
+    }
+
+    @Test
+    void ajustarInventario_CuandoInventarioNoExiste_DebeLanzarExcepcion() {
+        when(tiendaRepository.obtenerPorId(tiendaId)).thenReturn(Optional.of(tienda));
+        when(authorizationPort.requirePermisoTienda(authUserId, tienda, AuthorizedAction.AJUSTAR_INVENTARIO_TIENDA))
+                .thenReturn(encargadoTienda);
+        when(productoRepository.findById(productoId)).thenReturn(Optional.of(producto));
+        when(inventarioRepository.findByTiendaIdAndProductoIdForUpdate(tiendaId, productoId))
+                .thenReturn(Optional.empty());
+
+        assertThrows(RecursoNoEncontradoException.class, () ->
+                service.ajustarInventario(authUserId, new AjustarInventarioCommand(tiendaId, null, productoId, 5)));
+
+        verify(inventarioRepository, never()).save(any());
+        verifyNoInteractions(ajusteRepository);
     }
 }
 
