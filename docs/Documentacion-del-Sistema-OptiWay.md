@@ -6,7 +6,6 @@
 **Base de datos:** PostgreSQL mediante Supabase
 **Arquitectura:** Hexagonal (Puertos y Adaptadores)
 
----
 
 ## 1. Introducción
 
@@ -30,17 +29,18 @@ Esta documentación describe la estructura técnica, los componentes principales
 
 | Área | Tecnología |
 |---|---|
-| Lenguaje | Java |
-| Framework backend | Spring Boot |
+| Lenguaje | Java 17 |
+| Framework backend | Spring Boot 4.1.2 |
+| Seguridad | Spring Security 7 (OAuth2 Resource Server JWT) |
 | API | REST |
 | Persistencia | Spring Data JPA y Hibernate |
 | Base de datos | PostgreSQL |
 | Plataforma de base de datos y autenticación | Supabase |
-| Autenticación | Supabase Auth y JWT |
-| Contrato de API | OpenAPI 3 y Springdoc |
+| Contrato de API | OpenAPI 3 y Springdoc (`3.2.0`) |
 | Interfaz de pruebas | Swagger UI |
-| Pruebas automatizadas | JUnit y Mockito |
-| Base de datos para pruebas | H2, según configuración de pruebas |
+| Pruebas automatizadas | JUnit 5, Mockito, Spring `MockMvc` y Python `requests` |
+| Cobertura de código | JaCoCo (`0.8.13`, mínimo 40% en `verify`) |
+| Base de datos para pruebas | H2 en memoria (`MODE=PostgreSQL`) |
 | Análisis de seguridad | OWASP ZAP |
 | Análisis de dependencias | OWASP Dependency-Check |
 | Diagramas | PlantUML y notación C4 |
@@ -82,15 +82,18 @@ Esta organización permite mantener separadas las responsabilidades y facilita l
 El backend contempla funcionalidades relacionadas con:
 
 - Usuarios y roles.
-- Productos.
-- Tiendas.
-- Centros de distribución.
-- Inventarios.
-- Ajustes de inventario.
-- Ingreso de mercancía.
-- Registro de ventas.
-- Recomendaciones de reposición.
+- Productos (con catálogo estándar de unidades de medida).
+- Tiendas (creación, asignación de encargado, activación/desactivación con validación de órdenes en tránsito).
+- Centros de distribución (creación, asignación de encargado, activación/desactivación y consulta de órdenes entrantes).
+- Inventarios y ajustes de inventario con historial de auditoría.
+- Ingreso de mercancía en centros de distribución.
+- Registro de ventas en tiendas.
+- Solicitudes manuales de reposición.
+- Recomendaciones de reposición (creación, consulta, aprobación, ajuste y rechazo).
 - Órdenes de reposición.
+- Patrones de demanda por producto y tienda.
+- Reportes de rotación por tienda (consulta JSON y exportación CSV).
+- Observabilidad y panel interno (`/admin` y `/api/estadisticas`).
 - Autenticación y autorización.
 
 La disponibilidad de cada operación depende de los permisos definidos para el usuario.
@@ -138,82 +141,33 @@ La configuración de conexión se gestiona mediante propiedades y variables de e
 
 La configuración de Hibernate y las migraciones deben administrarse considerando el entorno en el que se ejecuta la aplicación.
 
-## 8. Funcionalidades HU-13 y HU-20
-
-### 8.1. HU-13: Ajustar inventario
-
-Esta funcionalidad permite registrar un ajuste de existencias para un producto ubicado en una tienda o en un centro de distribución.
-
-El proceso contempla:
-
-1. Validar los datos de la solicitud.
-2. Comprobar que se haya indicado una única ubicación.
-3. Verificar la existencia del producto y de la ubicación.
-4. Validar los permisos del usuario.
-5. Consultar el registro de inventario correspondiente.
-6. Calcular la diferencia entre la cantidad anterior y la nueva.
-7. Actualizar las existencias.
-8. Registrar el historial del ajuste.
-
-El endpoint de ajuste es:
-
-`POST /api/inventario/ajustes`
-
-El campo `nuevaCantidad` representa la cantidad final que debe quedar registrada, no una cantidad que se suma automáticamente.
-
-### 8.2. HU-20: Crear recomendación de reposición
-
-Esta funcionalidad permite registrar una propuesta de reposición de mercancía desde un centro de distribución hacia una tienda.
-
-El proceso contempla:
-
-1. Validar la información de la solicitud.
-2. Comprobar el permiso del usuario.
-3. Verificar que el producto esté activo.
-4. Validar la tienda y el centro de distribución.
-5. Comprobar la disponibilidad de existencias.
-6. Evaluar la cobertura logística.
-7. Registrar la propuesta en estado `PROPUESTA`.
-
-La creación de una recomendación no ejecuta por sí misma el traslado ni descuenta existencias.
-
-Las operaciones de creación, consulta, aprobación y rechazo están restringidas al rol `PLANIFICADOR`.
-
-## 9. Registro de eventos (logging)
+## 8. Registro de eventos (logging)
 
 El backend utiliza el sistema de logging de Spring Boot y Logback.
 
-Se registran eventos relevantes para facilitar el diagnóstico y seguimiento de las operaciones, entre ellos:
+Se registran eventos relevantes para facilitar el diagnóstico y seguimiento de las operaciones (usando IDs y cantidades, sin exponer contraseñas, tokens ni correos completos), entre ellos:
 
 - Ajustes de inventario.
 - Ingresos de mercancía.
 - Registro de ventas.
 - Creación y gestión de recomendaciones.
+- Gestión de usuarios y cambios de rol.
 - Eventos relacionados con autenticación.
-- Errores no controlados.
+- Errores no controlados (`ApiExceptionHandler`).
 
 La configuración contempla:
 
-- Nivel general de registro configurable.
-- Archivo de salida configurable.
-- Registro en consola y archivo.
-- Rotación por tamaño.
-- Conservación histórica de archivos.
-- Límite de almacenamiento de registros.
+- Nivel general y por paquete configurables mediante variables de entorno (`LOG_LEVEL`, `APP_LOG_LEVEL`).
+- Perfil local (`application-local.properties`) para diagnóstico `DEBUG` y salida SQL en desarrollo.
+- Registro en consola (`stdout`) y archivo local (`logs/optiway.log`) con rotación de `10MB`, retención de `14` días y tope de `100MB`.
 
-El archivo de configuración principal es:
+El detalle completo de cómo funcionan se documenta en `docs/logs.md` y la configuración principal reside en `src/main/resources/application.properties`.
 
-`src/main/resources/application.properties`
-
-La evidencia de ejecución se encuentra en:
-
-`evidencias/logs/`
-
-## 10. Seguridad
+## 9. Seguridad
 
 El proyecto incorpora mecanismos de autenticación, autorización y análisis de seguridad.
 
-### 10.1. Análisis de dependencias (SCA)
+### 9.1. Análisis de dependencias (SCA)
 
 Se utilizó OWASP Dependency-Check para analizar las dependencias del proyecto.
 
@@ -221,7 +175,7 @@ El informe generado documenta las dependencias examinadas y los resultados obten
 
 El resultado del análisis no debe interpretarse como una garantía absoluta de ausencia de vulnerabilidades.
 
-### 10.2. Análisis dinámico (DAST)
+### 9.2. Análisis dinámico (DAST)
 
 Se utilizó OWASP ZAP para realizar un análisis dinámico sobre el backend.
 
@@ -229,114 +183,66 @@ Se conservaron informes iniciales y finales para documentar los resultados y las
 
 Los hallazgos deben evaluarse y corregirse según su impacto y prioridad. La existencia de un informe final no implica que todos los hallazgos estén resueltos.
 
-### 10.3. Evidencias
+### 9.3. Resumen de resultados
 
-Los informes se encuentran en:
+El detalle de los análisis y resultados se documenta en:
 
-`evidencias/seguridad/`
+`docs/seguridad.md`
 
-## 11. API y documentación interactiva
+## 10. API y documentación interactiva
 
 La API se documenta mediante OpenAPI 3 y Springdoc.
 
 Swagger UI permite consultar los endpoints, sus parámetros, esquemas de solicitud y respuestas documentadas.
 
-Cuando el backend se ejecuta localmente, la interfaz se encuentra en:
+Cuando el backend se ejecuta localmente, las rutas disponibles son:
 
-`http://localhost:8080/swagger-ui/index.html`
+- Swagger UI: `http://localhost:8080/swagger-ui/index.html` (también `/docs`, `/swagger` y `/swagger-ui.html`)
+- Especificación OpenAPI (JSON): `http://localhost:8080/v3/api-docs`
 
-La especificación OpenAPI se encuentra en:
+En producción (Render), la documentación y especificación se encuentran en:
 
-`http://localhost:8080/v3/api-docs`
+- Swagger UI: `https://optiway-backend.onrender.com/docs` (también `/swagger-ui/index.html`)
+- Especificación OpenAPI (JSON): `https://optiway-backend.onrender.com/v3/api-docs`
 
 Las operaciones protegidas requieren autorización mediante un JWT válido.
 
 La documentación ampliada se encuentra en:
 
-`docs/Swagger_OpenAPI.md`
+`docs/Swagger_OpenAPI.md` y `docs/Contrato-Errores-API.md`
 
-## 12. Pruebas automatizadas
+## 11. Pruebas automatizadas
 
-El proyecto utiliza JUnit y Mockito para verificar el comportamiento de los servicios.
+El proyecto organiza sus pruebas en dos grupos principales:
 
-En la ejecución documentada de las pruebas de HU-13 y HU-20 se obtuvieron los siguientes resultados:
+1. **Suite Java (`src/test/java/com/example/optiway/`):** **31 archivos** (**248** métodos `@Test` / **258** ejecuciones en Surefire), divididos en:
+   - **`integration/` (7 clases, 21 pruebas):** pruebas `@SpringBootTest` + `MockMvc` + `jwt()` contra H2 en memoria (`AjustarInventarioIntegrationTest`, `CentroDistribucionOrdenesIntegrationTest`, `PatronesDemandaIntegrationTest`, `ReporteRotacionIntegrationTest`, `RecomendacionReposicionRollbackIntegrationTest`, `RepositoriosConsultasDerivadasTest`, `OptiwayApplicationTests`).
+   - **`unit/` (24 archivos, 227 métodos):** pruebas unitarias con JUnit 5 y Mockito organizadas en `application/`, `domain/`, `infrastructure/` y `infrastructure/adapter/out/auth/`.
+2. **Suite HTTP / E2E en Python (`tests/api/`):** **5 scripts** (`test_suite.py`, `endpoints.py`, `endpoints_errores.py`, `endpoints_permisos.py`, `endpoints_supabase.py`) para validar el contrato HTTP en vivo contra el servidor Spring MVC y Supabase Auth.
 
-| Clase de prueba | Pruebas | Fallos | Errores |
-|---|---:|---:|---:|
-| `AjustarInventarioServiceTest` | 4 | 0 | 0 |
-| `RecomendacionReposicionServiceTest` | 14 | 0 | 0 |
-| **Total** | **18** | **0** | **0** |
+La documentación individual de las suites de integración Spring y de los scripts Python se encuentra en `docs/tests/README.md`.
 
-Resultado registrado: `BUILD SUCCESS`.
-
-La evidencia de ejecución y los reportes XML se encuentran en:
-
-`evidencias/pruebas/HU-13/`
-
-`evidencias/pruebas/HU-20/`
-
-`evidencias/pruebas/Resultado_Ejecucion_HU13_HU20.txt`
-
-Estos resultados corresponden a pruebas automatizadas de servicios y no sustituyen las pruebas funcionales manuales que requieran evidencias de interfaz.
-
-## 13. Diagramas del sistema
-
-Los diagramas técnicos se organizan en `docs/diagramas/`.
-
-### Diagramas C4
-
-- Contexto del sistema.
-- Contenedores.
-- Componentes del backend.
-
-### Diagramas de secuencia
-
-- HU-13: Ajustar inventario.
-- HU-20: Crear recomendación de reposición.
-
-Los archivos fuente se encuentran en formato PlantUML (`.puml`) y las representaciones generadas están disponibles en PNG y SVG.
-
-El índice de diagramas se encuentra en:
-
-`docs/diagramas/README.md`
-
-## 14. Configuración y ejecución local
-
-Para ejecutar el backend se requiere un entorno con JDK compatible con la configuración del proyecto, Maven Wrapper y las variables de entorno necesarias.
-
-Desde la raíz del repositorio:
-
-1. Configurar las variables de entorno de conexión y autenticación.
-2. Ejecutar las pruebas automatizadas con:
-
-   `./mvnw test`
-
-3. Iniciar la aplicación con:
-
-   `./mvnw spring-boot:run`
-
-4. Consultar la API desde Swagger UI:
-
-   `http://localhost:8080/swagger-ui/index.html`
-
-Las credenciales, claves privadas y tokens no deben incluirse en el repositorio ni en las evidencias públicas.
-
-## 15. Estructura de documentación y evidencias
+## 12. Estructura de documentación y evidencias
 
 | Ruta | Contenido |
 |---|---|
 | `docs/Resumen-Tecnico-OptiWay.md` | Resumen técnico del proyecto. |
 | `docs/Hexagonal-Arquitecture.md` | Explicación de arquitectura hexagonal. |
 | `docs/Swagger_OpenAPI.md` | Documentación de la API. |
-| `docs/Matriz-Pruebas-HU-13-HU-20.md` | Matriz de pruebas de las historias. |
+| `docs/Contrato-Errores-API.md` | Contrato estándar de respuestas de error por endpoint. |
+| `docs/logs.md` | Funcionamiento del sistema de logs, auditoría y observabilidad. |
+| `docs/CI-CD-Gitflow.md` | Flujo Gitflow, validaciones del pipeline CI y despliegue CD en Render. |
+| `docs/guias/` | Guías de trabajo del equipo (BD y snippet de frontend). |
+| `docs/seguridad.md` | Controles de seguridad y resumen de evidencias DAST (ZAP) y SCA. |
+| `docs/tests/` | Documentación individual de las pruebas de integración Spring y scripts Python. |
+| `docs/Matriz-Pruebas-HU-13-HU-20.md` | Matriz de pruebas de las historias HU-13 y HU-20. |
 | `docs/diagramas/` | Diagramas C4 y de secuencia. |
+| `docs/migrations/` | Scripts SQL de migración y ajuste de esquema en PostgreSQL (Supabase). |
 | `docs/deudaTecnica.md` | Deuda técnica y decisiones pendientes. |
 | `docs/CHANGELOG.md` | Historial de cambios. |
-| `evidencias/pruebas/` | Reportes de pruebas automatizadas. |
-| `evidencias/seguridad/` | Informes de seguridad. |
-| `evidencias/logs/` | Evidencias del sistema de logs. |
+| `tests/api/` | Scripts de pruebas HTTP / E2E en Python. |
 
-## 16. Consideraciones y limitaciones
+## 13. Consideraciones y limitaciones
 
 - Los permisos dependen del rol y de la acción solicitada.
 - Un código HTTP 403 indica que el usuario no dispone de autorización para la operación solicitada.
@@ -345,7 +251,7 @@ Las credenciales, claves privadas y tokens no deben incluirse en el repositorio 
 - Las operaciones que modifican información deben probarse en un entorno controlado para evitar alterar datos compartidos.
 - La disponibilidad de funcionalidades en el frontend debe verificarse por separado de su implementación en el backend.
 
-## 17. Conclusión
+## 14. Conclusión
 
 OptiWay cuenta con un backend organizado mediante arquitectura hexagonal, una API REST documentada, integración con Supabase para autenticación y persistencia, controles de autorización, registro de eventos y pruebas automatizadas.
 

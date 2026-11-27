@@ -1,4 +1,4 @@
-package com.example.optiway;
+package com.example.optiway.unit.application;
 
 import com.example.optiway.application.exception.RecursoNoEncontradoException;
 import com.example.optiway.application.port.in.CrearCentroDistribucionCommand;

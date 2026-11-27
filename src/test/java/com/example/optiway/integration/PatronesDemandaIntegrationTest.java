@@ -1,4 +1,4 @@
-package com.example.optiway;
+package com.example.optiway.integration;
 
 import com.example.optiway.domain.model.Rol;
 import com.example.optiway.infrastructure.adapter.out.persistence.ProductoJpaEntity;

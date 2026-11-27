@@ -1,4 +1,4 @@
-package com.example.optiway.infrastructure.config;
+package com.example.optiway.unit.infrastructure;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -14,6 +14,7 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.AccessDeniedHandler;
 
 import com.example.optiway.infrastructure.adapter.in.rest.dto.ErrorResponse;
+import com.example.optiway.infrastructure.config.SecurityConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**

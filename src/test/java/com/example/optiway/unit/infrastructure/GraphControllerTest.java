@@ -1,4 +1,4 @@
-package com.example.optiway;
+package com.example.optiway.unit.infrastructure;
 
 import com.example.optiway.infrastructure.adapter.in.rest.GraphController;
 import org.junit.jupiter.api.BeforeEach;
