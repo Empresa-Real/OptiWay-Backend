@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.example.optiway.infrastructure.adapter.out.auth.SupabaseAuthAdapter;
+
 /**
  * Verifica la extracción del mensaje natural ({@code msg}) del cuerpo de error
  * de Supabase. El adaptador es el único que conoce el formato del proveedor; la

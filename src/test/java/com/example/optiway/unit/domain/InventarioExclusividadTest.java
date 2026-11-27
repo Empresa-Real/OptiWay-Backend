@@ -1,4 +1,4 @@
-package com.example.optiway;
+package com.example.optiway.unit.domain;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
