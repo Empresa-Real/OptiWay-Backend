@@ -1,7 +1,7 @@
 # OptiWay — Backend EBP06
 
 <div align="center">
-<img alt="Java" src="https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white" /> <img alt="Spring Boot" src="https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F?logo=springboot&logoColor=whit" /> <img alt="Spring Security" src="https://img.shields.io/badge/Spring%20Security-7-6DB33F?logo=springsecurity&logoColor=white" /> <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-15+-4169E1?logo=postgresql&logoColor=white" /> <img alt="Supabase" src="https://img.shields.io/badge/Supabase-Cloud-3ECF8E?logo=supabase&logoColor=white" /> <a href="https://opti-way-frontend.vercel.app/"><img alt="Frontend Vercel" src="https://img.shields.io/badge/Frontend-Vercel-000000?logo=vercel&logoColor=white" /></a> <a href="https://optiway-backend.onrender.com"><img alt="Render" src="https://img.shields.io/badge/Backend-Render-46E3B7?logo=render&logoColor=black" /></a> <img alt="Apache Maven" src="https://img.shields.io/badge/Apache%20Maven-3.9+-C71A36?logo=apachemaven&logoColor=white" />
+<img alt="Java" src="https://img.shields.io/badge/Java-17-ED8B00?logo=openjdk&logoColor=white" /> <img alt="Spring Boot" src="https://img.shields.io/badge/Spring%20Boot-4.1.2-6DB33F?logo=springboot&logoColor=whit" /> <img alt="Spring Security" src="https://img.shields.io/badge/Spring%20Security-7-6DB33F?logo=springsecurity&logoColor=white" /> <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-15+-4169E1?logo=postgresql&logoColor=white" /> <img alt="Supabase" src="https://img.shields.io/badge/Supabase-Cloud-3ECF8E?logo=supabase&logoColor=white" /> <a href="https://opti-way-frontend.vercel.app/"><img alt="Frontend Vercel" src="https://img.shields.io/badge/Frontend-Vercel-000000?logo=vercel&logoColor=white" /></a> <a href="https://optiway-backend.onrender.com"><img alt="Render" src="https://img.shields.io/badge/Backend-Render-46E3B7?logo=render&logoColor=black" /></a> <img alt="Apache Maven" src="https://img.shields.io/badge/Apache%20Maven-3.9+-C71A36?logo=apachemaven&logoColor=white" />
 
 <img alt="API REST" src="https://img.shields.io/badge/API-REST-FF6C37?logo=postman&logoColor=white" /> <img alt="Arquitecture" src="https://img.shields.io/badge/Arquitectura-Hexagonal-6C5CE7" /> <a href="https://optiway-backend.onrender.com/swagger-ui.html"><img alt="Swagger UI" src="https://img.shields.io/badge/Swagger-Probar%20la%20API-85EA2D?logo=swagger&logoColor=black" /></a> <a href="https://optiway-backend.onrender.com/graph"><img alt="Graphify" src="https://img.shields.io/badge/Graphify-Ver%20grafo-6C5CE7" /></a>
 </div>
@@ -12,9 +12,10 @@ Sistema backend para la plataforma **OptiWay**, diseñado para la gestión y opt
 
 Desarrollado bajo los principios de **Arquitectura Hexagonal (Puertos y Adaptadores)** y **Clean Architecture** sobre el ecosistema Spring Boot y PostgreSQL (Supabase).
 
-### Enlaces de Despliegue
+### Enlaces de Despliegue y Repositorio Frontend
 
 * **Frontend Web (Vercel):** [https://opti-way-frontend.vercel.app/](https://opti-way-frontend.vercel.app/)
+* **Repositorio Frontend (GitHub):** [https://github.com/Empresa-Real/OptiWay-Frontend](https://github.com/Empresa-Real/OptiWay-Frontend)
 * **Backend API REST (Render):** [https://optiway-backend.onrender.com/](https://optiway-backend.onrender.com/)
 * **Swagger UI (Documentación interactiva):** [https://optiway-backend.onrender.com/swagger-ui.html](https://optiway-backend.onrender.com/swagger-ui.html)
 
@@ -31,7 +32,7 @@ Desarrollado bajo los principios de **Arquitectura Hexagonal (Puertos y Adaptado
 ## Tecnologías / Stack
 
 * **Lenguaje:** Java 17
-* **Framework Principal:** Spring Boot 4.1.1
+* **Framework Principal:** Spring Boot 4.1.2
 * **Seguridad & Autenticación:** Spring Security 7 (OAuth2 Resource Server con validación JWT) y Supabase Admin Auth
 * **Persistencia & ORM:** Spring Data JPA / Hibernate
 * **Base de Datos:** PostgreSQL en la nube (Supabase)
@@ -182,7 +183,7 @@ La aplicación iniciará por defecto en `http://localhost:8080`.
 
 ### Pruebas
 
-Por defecto, la suite de pruebas unitarias (JUnit 5 + Mockito) corre sobre **H2 en memoria** (`MODE=PostgreSQL`) para no depender de Supabase:
+Por defecto, la suite de pruebas unitarias y de integración (JUnit 5 + Mockito + Spring `MockMvc`) corre sobre **H2 en memoria** (`MODE=PostgreSQL`) para no depender de Supabase:
 
 ```powershell
 .\mvnw.cmd test
@@ -209,8 +210,16 @@ La aplicación en ejecución siempre usa PostgreSQL (Supabase).
 
 ## Documentación complementaria
 
+* [Documentación del sistema](docs/Documentacion-del-Sistema-OptiWay.md): visión técnica general, módulos, seguridad, observabilidad y estructura del proyecto.
+* [Arquitectura Hexagonal](docs/Hexagonal-Arquitecture.md): detalle del desacoplamiento por capas y puertos.
 * [Swagger / OpenAPI](docs/Swagger_OpenAPI.md): catálogo completo de operaciones, códigos de estado y ejemplos.
+* [Contrato de errores de la API](docs/Contrato-Errores-API.md): formato estándar de respuestas de error por endpoint.
 * [DTOs y contratos de API](docs/dto/README.md): esquemas JSON y tipos TypeScript para el frontend.
 * [Historias de Usuario](docs/Historias%20de%20Usuario/): especificación funcional por HU.
+* [CI/CD y Gitflow](docs/CI-CD-Gitflow.md): flujo de ramas, validaciones del pipeline y despliegue en Render.
+* [Logs y observabilidad](docs/logs.md): niveles por entorno, auditoría y panel interno `/admin`.
+* [Seguridad y evidencias (DAST / SCA)](docs/seguridad.md): controles de seguridad y resultados de OWASP ZAP y Dependency-Check.
+* [Documentación de pruebas](docs/tests/README.md): índice de pruebas de integración Spring y suites HTTP/E2E en Python.
+* [Diagramas](docs/diagramas/README.md): diagramas C4 y de secuencia en PlantUML (`PNG` y `SVG`).
 * [Deuda técnica](docs/deudaTecnica.md): trabajo abierto y decisiones de diseño pendientes.
 * [Changelog](docs/CHANGELOG.md): resumen de los cambios relevantes por tema.

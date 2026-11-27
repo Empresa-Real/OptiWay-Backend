@@ -4,7 +4,7 @@
 > El trabajo funcional (endpoints por conectar, features a completar) vive en las [historias de usuario](./Historias%20de%20Usuario/).
 > Los cambios ya ejecutados y justificados viven en [`docs/Fix´s/`](./Fix´s/).
 
-**Actualizado:** 21 de octubre de 2026
+**Actualizado:** 27 de noviembre de 2026
 
 ---
 
@@ -87,17 +87,15 @@ A favor de **mantenerlo propio**: en *consultas* (GET de listas), filtros en que
 
 ## 3. Cobertura de pruebas desbalanceada
 
-**Estado:** ⚠️ Activo · **Impacto:** Regresiones silenciosas · **Esfuerzo:** Medio
+**Estado:** ✅ Resuelto · **Impacto:** Regresiones silenciosas · **Esfuerzo:** Medio
 
-La suite actual cubre inventario, ingresos, ventas, usuarios, autorización, ubicación y grafo. **Sin ninguna prueba:**
+La brecha inicial de pruebas en los servicios de catálogo y red logística quedó cubierta con pruebas unitarias en `src/test/java/com/example/optiway/unit/application/` (además de las suites de integración en `integration/` y el umbral mínimo de 40 % en JaCoCo):
 
-| Servicio sin tests | Operaciones expuestas |
-| :--- | :--- |
-| `TiendaService` | crear tienda, listar, asignar encargado |
-| `CentroDistribucionService` | crear CD (capacidad), listar, asignar encargado |
-| `ProductoService` | crear, editar, cambiar estado |
-
-Son justo los servicios que ejecutan reglas de negocio (código único de tienda, aforo del CD, historial de ediciones de producto). Sugerencia: una clase por servicio siguiendo el molde de `VentaServiceTest` (Mockito + `AuthorizationService` real, como hace `UsuarioServiceTest`).
+| Servicio | Suite unitaria implementada | Operaciones cubiertas |
+| :--- | :--- | :--- |
+| `TiendaService` | `TiendaServiceTest` | crear tienda, listar, asignar encargado, cambiar estado |
+| `CentroDistribucionService` | `CentroDistribucionServiceTest` | crear CD (capacidad), listar, asignar encargado, cambiar estado |
+| `ProductoService` | `ProductoServiceTest` | crear, editar, cambiar estado |
 
 ---
 

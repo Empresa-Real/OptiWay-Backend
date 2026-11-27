@@ -226,16 +226,15 @@ La documentación individual de las suites de integración Spring y de los scrip
 
 | Ruta | Contenido |
 |---|---|
-| `docs/Resumen-Tecnico-OptiWay.md` | Resumen técnico del proyecto. |
 | `docs/Hexagonal-Arquitecture.md` | Explicación de arquitectura hexagonal. |
 | `docs/Swagger_OpenAPI.md` | Documentación de la API. |
 | `docs/Contrato-Errores-API.md` | Contrato estándar de respuestas de error por endpoint. |
+| `docs/dto/` | Esquemas JSON y contratos DTO para el frontend. |
 | `docs/logs.md` | Funcionamiento del sistema de logs, auditoría y observabilidad. |
 | `docs/CI-CD-Gitflow.md` | Flujo Gitflow, validaciones del pipeline CI y despliegue CD en Render. |
 | `docs/guias/` | Guías de trabajo del equipo (BD y snippet de frontend). |
 | `docs/seguridad.md` | Controles de seguridad y resumen de evidencias DAST (ZAP) y SCA. |
 | `docs/tests/` | Documentación individual de las pruebas de integración Spring y scripts Python. |
-| `docs/Matriz-Pruebas-HU-13-HU-20.md` | Matriz de pruebas de las historias HU-13 y HU-20. |
 | `docs/diagramas/` | Diagramas C4 y de secuencia. |
 | `docs/migrations/` | Scripts SQL de migración y ajuste de esquema en PostgreSQL (Supabase). |
 | `docs/deudaTecnica.md` | Deuda técnica y decisiones pendientes. |
