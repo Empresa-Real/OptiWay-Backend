@@ -224,7 +224,7 @@ El modelo actual implica reglas cardinales que **no están formalizadas** ni val
 
 ## 9. Logging: guía teórica sin implementación real
 
-> **Actualización (24/11/2026):** ya existe `docs/Politica-de-logs.md`, la configuración en `application.properties` (niveles por variable de entorno, archivo, patrones y rotación), `show-sql=false`, Actuator `health,info` y `log.info` de auditoría en seis servicios (Venta, Ajuste de inventario, Ingreso de mercancía, Recomendación, Usuario). El texto original se conserva como registro del estado en la review del Sprint 2.
+> **Actualización (24/11/2026):** ya existe `docs/logs.md`, la configuración en `application.properties` (niveles por variable de entorno, archivo, patrones y rotación), `show-sql=false`, Actuator `health,info` y `log.info` de auditoría en seis servicios (Venta, Ajuste de inventario, Ingreso de mercancía, Recomendación, Usuario). El texto original se conserva como registro del estado en la review del Sprint 2.
 
 **Estado:** ⚠️ Parcialmente resuelto · **Impacto:** Observabilidad / diagnóstico en producción · **Esfuerzo:** Bajo-Medio
 

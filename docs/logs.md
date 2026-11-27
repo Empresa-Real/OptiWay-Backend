@@ -1,4 +1,4 @@
-# Política de logs y observabilidad de OptiWay
+# Sistema de Logs y Observabilidad — OptiWay
 
 Aplica al equipo básico (lineamientos 4.1, 5.3, 6.2 y DoD 9.1). El foco de esta entrega es que el despliegue tenga **logs y métricas disponibles**, no solo configuración local.
 

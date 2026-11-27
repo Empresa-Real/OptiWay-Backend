@@ -249,7 +249,7 @@ La decisión de permisos se concentra en dos métodos de `Usuario` (dominio) y u
 | `esEncargadoDe(tienda/cd)` | Rol encargado **y** asignación a esa ubicación concreta. |
 | `admiteAsignacionDeUbicacion()` | Sólo encargados pueden recibir una ubicación asignada. |
 
-`AuthorizationService` traduce eso a guardas: `requireAdministrador` (usuarios), `requireGestionLogistica` (Admin + Planificador), `requireAuthenticated`, `requirePermisoTienda` y `requirePermisoCentroDistribucion` (gestión global o encargado asignado).
+`AuthorizationService` traduce eso a guardas: `requireAdministrador` (usuarios, activar/desactivar tiendas y CDs, logs/métricas), `requireGestionLogistica` (Admin + Planificador), `requirePlanificador` (solo Planificador), `requireAuthenticated`, `requirePermisoTienda`, `requirePermisoCentroDistribucion` (gestión global o encargado asignado) y `requireEncargadoDelCentro` (solo el `ENCARGADO_CD` asignado).
 
 La identidad llega a los servicios por el parámetro `@AuthUserId`, resuelto por `AuthUserIdArgumentResolver` a partir del JWT. El resolver es **estricto**: si no hay autenticación válida lanza `AutenticacionRequeridaException` (401) en lugar de devolver `null`, de modo que la ausencia de identidad es un error explícito y no un valor ambiguo que un servicio pueda malinterpretar.
 
@@ -263,7 +263,11 @@ Matriz de permisos por operación (fijada por `MatrizPermisosTest`):
 | Operación | ADMIN | PLANIFICADOR | ENCARGADO_TIENDA | ENCARGADO_CD |
 | :--- | :--- | :--- | :--- | :--- |
 | Gestión de usuarios y roles | ✅ | ❌ | ❌ | ❌ |
+| Activar / desactivar tiendas y CDs; ver `/admin` | ✅ | ❌ | ❌ | ❌ |
 | Crear / editar tiendas, CD, productos | ✅ | ✅ | ❌ | ❌ |
 | Asignar encargado a tienda / CD | ✅ | ✅ | ❌ | ❌ |
 | Consultar inventario de tienda / venta | ✅ | ✅ | ✅ (la suya) | ❌ |
-| Consultar inventario de CD / ingreso | ✅ | ✅ | ❌ | ✅ (el suyo) |
+| Ajustar inventario de tienda (HU-13) | ✅ | ✅ | ✅ (la suya) | ❌ |
+| Consultar inventario de CD / ingreso / órdenes de CD | ✅ | ✅ | ❌ | ✅ (el suyo) |
+| Ajustar inventario de CD (HU-17) | ❌ | ❌ | ❌ | ✅ (el suyo) |
+| Recomendaciones (HU-20/21), demanda (HU-19) y rotación (HU-27) | ❌ | ✅ | ❌ | ❌ |
